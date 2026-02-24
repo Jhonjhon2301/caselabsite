@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,35 +6,40 @@
 
 @layer base {
   :root {
-    --background: 30 10% 97%;
-    --foreground: 20 10% 10%;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 20 10% 10%;
+    --card-foreground: 0 0% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 20 10% 10%;
+    --popover-foreground: 0 0% 10%;
 
-    --primary: 30 80% 42%;
+    --primary: 30 85% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 20 10% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 10%;
 
-    --muted: 30 15% 92%;
-    --muted-foreground: 20 5% 45%;
+    --muted: 30 10% 95%;
+    --muted-foreground: 0 0% 45%;
 
-    --accent: 30 60% 50%;
+    --accent: 30 90% 50%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 30 15% 88%;
-    --input: 30 15% 88%;
-    --ring: 30 80% 42%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 30 85% 45%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
+
+    --brand-dark: 0 0% 8%;
+    --brand-orange: 30 85% 45%;
+    --brand-orange-light: 30 80% 55%;
+    --brand-warm: 30 20% 97%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -44,9 +49,6 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
-
-    --font-heading: 'Bebas Neue', sans-serif;
-    --font-body: 'Inter', sans-serif;
   }
 }
 
@@ -57,22 +59,50 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-body);
+    font-family: 'Inter', sans-serif;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading);
-    letter-spacing: 0.02em;
+    font-family: 'Montserrat', sans-serif;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-primary-foreground px-6 py-3 rounded-md font-semibold text-sm 
+           hover:opacity-90 transition-all duration-200 inline-flex items-center justify-center gap-2;
+  }
+  .btn-outline {
+    @apply border-2 border-foreground text-foreground px-6 py-3 rounded-md font-semibold text-sm
+           hover:bg-foreground hover:text-background transition-all duration-200 inline-flex items-center justify-center gap-2;
+  }
+  .btn-dark {
+    @apply bg-foreground text-background px-6 py-3 rounded-md font-semibold text-sm
+           hover:opacity-90 transition-all duration-200 inline-flex items-center justify-center gap-2;
   }
 }
 
 @layer utilities {
   .gradient-brand {
-    background: linear-gradient(135deg, hsl(30 80% 42%), hsl(25 90% 35%));
+    background: linear-gradient(135deg, hsl(30 85% 45%), hsl(25 90% 38%));
   }
-  .text-gradient-brand {
-    background: linear-gradient(135deg, hsl(30 80% 42%), hsl(20 70% 30%));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+  .bg-brand-warm {
+    background-color: hsl(var(--brand-warm));
   }
+  .bg-brand-dark {
+    background-color: hsl(var(--brand-dark));
+  }
+  .text-brand-orange {
+    color: hsl(var(--brand-orange));
+  }
+}
+
+/* Marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
 }
