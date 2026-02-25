@@ -81,8 +81,10 @@ export type Database = {
           created_at: string
           created_by: string
           description: string
+          due_date: string | null
           expense_date: string
           id: string
+          status: string
           updated_at: string
         }
         Insert: {
@@ -91,8 +93,10 @@ export type Database = {
           created_at?: string
           created_by: string
           description: string
+          due_date?: string | null
           expense_date?: string
           id?: string
+          status?: string
           updated_at?: string
         }
         Update: {
@@ -101,8 +105,46 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string
+          due_date?: string | null
           expense_date?: string
           id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      manual_sales: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string
+          customer_name: string | null
+          description: string
+          id: string
+          notes: string | null
+          sale_date: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          created_by: string
+          customer_name?: string | null
+          description: string
+          id?: string
+          notes?: string | null
+          sale_date?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string
+          customer_name?: string | null
+          description?: string
+          id?: string
+          notes?: string | null
+          sale_date?: string
           updated_at?: string
         }
         Relationships: []
