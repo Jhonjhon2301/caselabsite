@@ -104,7 +104,7 @@ serve(async (req) => {
       metadata: {
         order_id: order.id,
       },
-      payment_method_types: ["card", "boleto"],
+      payment_method_types: ["card", "boleto", "pix"],
     });
 
     // Save stripe session id to order
