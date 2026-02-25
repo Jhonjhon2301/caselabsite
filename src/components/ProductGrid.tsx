@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Product } from "@/types/product";
 import ProductCard from "./ProductCard";
 import CategoryBar from "./CategoryBar";
+import { Loader2 } from "lucide-react";
 
 interface ProductGridProps {
   searchQuery: string;
@@ -63,20 +64,27 @@ export default function ProductGrid({ searchQuery }: ProductGridProps) {
         onChange={setActiveCategory}
         categories={categoryNames}
       />
-      <section id="produtos" className="py-10 md:py-16">
+      <section id="produtos" className="py-12 md:py-20 bg-brand-warm">
         <div className="container mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="font-heading font-black text-3xl md:text-4xl text-foreground">Nossos Trabalhos</h2>
-            <p className="text-sm text-muted-foreground mt-1">Inspire-se e escolha o modelo perfeito — ou crie o seu!</p>
+          <div className="text-center mb-10">
+            <span className="text-[11px] font-bold text-primary uppercase tracking-[0.3em]">Catálogo</span>
+            <h2 className="font-heading font-black text-3xl md:text-4xl lg:text-5xl text-foreground mt-2 text-balance">
+              Nossos Trabalhos
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+              Inspire-se e escolha o modelo perfeito — ou crie o seu do zero!
+            </p>
           </div>
 
           {loading ? (
-            <div className="text-center py-16">
-              <p className="text-muted-foreground">Carregando produtos...</p>
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              <p className="text-sm text-muted-foreground">Carregando produtos...</p>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-muted-foreground">Nenhum modelo encontrado.</p>
+            <div className="text-center py-20">
+              <p className="text-lg text-muted-foreground">Nenhum modelo encontrado.</p>
+              <p className="text-sm text-muted-foreground mt-1">Tente buscar por outro termo.</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
