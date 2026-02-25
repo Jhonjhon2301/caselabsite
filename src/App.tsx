@@ -13,6 +13,8 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminCoupons from "./pages/admin/AdminCoupons";
 import AdminCategories from "./pages/admin/AdminCategories";
+import AdminFinancial from "./pages/admin/AdminFinancial";
+import AdminTeam from "./pages/admin/AdminTeam";
 
 const queryClient = new QueryClient();
 
@@ -38,8 +40,10 @@ const App = () => (
                 <Route index element={<Navigate to="/admin/products" replace />} />
                 <Route path="products" element={<AdminProducts />} />
                 <Route path="orders" element={<AdminOrders />} />
+                <Route path="financial" element={<AdminFinancial />} />
                 <Route path="coupons" element={<AdminCoupons />} />
                 <Route path="categories" element={<AdminCategories />} />
+                <Route path="team" element={<AdminTeam />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
