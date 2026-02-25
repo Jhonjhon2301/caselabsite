@@ -25,27 +25,30 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
   }, []);
 
   return (
-    <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "glass shadow-md" : "bg-background"} border-b border-border`}>
+    <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-background/95 backdrop-blur-xl shadow-sm" : "bg-background"} border-b border-border`}>
       <div className="container mx-auto py-3 flex items-center gap-4">
+        {/* Logo */}
         <a href="/" className="flex items-center gap-2.5 shrink-0 group">
-          <img src={logo} alt="Case Lab" className="w-10 h-10 rounded-full object-cover ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all" />
+          <img src={logo} alt="Case Lab" className="w-10 h-10 rounded-full object-cover" />
           <div className="hidden sm:block">
             <span className="font-heading text-lg font-extrabold text-foreground leading-none tracking-tight">CASE LAB</span>
             <span className="block text-[9px] font-semibold text-muted-foreground tracking-[0.3em] leading-none mt-0.5">PERSONALIZADOS</span>
           </div>
         </a>
 
+        {/* Search — Gocase style wide centered */}
         <div className="flex-1 max-w-xl mx-auto relative">
           <input
             type="text"
-            placeholder="Buscar garrafas personalizadas..."
+            placeholder="O que você está procurando?"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full pl-4 pr-10 py-2.5 rounded-full border border-border bg-secondary/80 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all"
+            className="w-full pl-4 pr-10 py-2.5 rounded-full border border-border bg-secondary text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all"
           />
           <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         </div>
 
+        {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
           {user ? (
             <div className="relative">
@@ -78,7 +81,7 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
           <button onClick={() => setIsCartOpen(true)} className="relative p-2.5 rounded-full hover:bg-secondary transition-colors" aria-label="Abrir carrinho">
             <ShoppingCart className="w-5 h-5 text-foreground" />
             {totalItems > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center animate-fade-in-up shadow-sm">
+              <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center shadow-sm">
                 {totalItems}
               </span>
             )}
@@ -90,22 +93,24 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
         </div>
       </div>
 
+      {/* Desktop nav — Gocase style */}
       <nav className="hidden md:block border-t border-border/60">
-        <div className="container mx-auto flex items-center gap-8 py-2.5">
-          <a href="#produtos" className="text-sm font-semibold text-foreground hover:text-primary transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-primary after:transition-all hover:after:w-full">
-            Garrafas Térmicas
+        <div className="container mx-auto flex items-center gap-6 py-2">
+          <a href="#produtos" className="text-sm font-bold text-foreground hover:text-primary transition-colors uppercase tracking-wide">
+            Mais Vendidos
           </a>
-          <a href="#sobre" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Sobre</a>
-          <a href="#contato" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Contato</a>
+          <a href="#produtos" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Térmicos</a>
+          <a href="#sobre" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Sobre</a>
+          <a href="#contato" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Contato</a>
           <a href="https://wa.me/5561992629861" target="_blank" rel="noopener noreferrer" className="ml-auto text-sm font-bold text-primary hover:text-accent transition-colors flex items-center gap-1">
-            Faça seu orçamento <span className="text-lg">→</span>
+            Faça seu orçamento →
           </a>
         </div>
       </nav>
 
       {mobileMenuOpen && (
-        <nav className="md:hidden border-t border-border bg-background px-5 py-4 space-y-3.5 animate-fade-in-up">
-          <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-foreground">Garrafas Térmicas</a>
+        <nav className="md:hidden border-t border-border bg-background px-5 py-4 space-y-3.5">
+          <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold text-foreground uppercase">Mais Vendidos</a>
           <a href="#sobre" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Sobre</a>
           <a href="#contato" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Contato</a>
           {!user && <button onClick={() => { navigate("/auth"); setMobileMenuOpen(false); }} className="block text-sm font-semibold text-primary">Entrar / Cadastrar</button>}
