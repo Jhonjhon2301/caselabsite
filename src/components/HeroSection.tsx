@@ -77,13 +77,6 @@ export default function HeroSection() {
 
               {/* Product showcase */}
               <div className="flex-1 flex justify-center items-end relative">
-                <div className="absolute top-0 right-0 md:top-4 md:right-4 bg-background rounded-2xl px-5 py-3 shadow-lg z-20">
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">A partir de</p>
-                  <p className="font-heading font-black text-2xl text-foreground leading-none mt-0.5">
-                    R$<span className="text-primary">129</span><span className="text-sm align-top">,90</span>
-                  </p>
-                </div>
-
                 <div className="flex items-end gap-0 mt-8 md:mt-0">
                   <img src={garrafa3} alt="Garrafa personalizada" className="w-24 md:w-32 lg:w-36 drop-shadow-2xl -rotate-12 hover:rotate-0 transition-transform duration-500" />
                   <img src={garrafa6} alt="Garrafa personalizada" className="w-32 md:w-44 lg:w-52 drop-shadow-2xl relative z-10 hover:scale-105 transition-transform duration-500" />
@@ -106,12 +99,6 @@ export default function HeroSection() {
         </div>
       </div>
 
-      {/* Promo */}
-      <div className="bg-primary py-3 text-center">
-        <p className="text-primary-foreground text-sm font-bold">
-          🎟️ CUPONS EXCLUSIVOS · <span className="underline">Frete Grátis a partir de R$299,90*</span>
-        </p>
-      </div>
     </section>
   );
 }
