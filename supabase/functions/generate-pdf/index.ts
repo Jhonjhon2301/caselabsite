@@ -58,7 +58,8 @@ function generateQuoteHtml(data: {
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;border-bottom:3px solid #1a1a2e;padding-bottom:20px;">
     <div>
       <h1 style="margin:0;font-size:28px;color:#1a1a2e;">ORÇAMENTO</h1>
-      <p style="margin:4px 0 0;color:#888;font-size:13px;">Case Lab - Capinhas Personalizadas</p>
+      <p style="margin:4px 0 0;color:#888;font-size:13px;">Case Lab - Garrafas Personalizadas</p>
+      <p style="margin:2px 0 0;color:#aaa;font-size:11px;">CNPJ: 64.964.419/0001-46</p>
     </div>
     <div style="text-align:right;">
       <p style="margin:0;font-size:13px;color:#888;">Nº ${escapeHtml(data.quoteNumber)}</p>
@@ -80,6 +81,11 @@ function generateQuoteHtml(data: {
     <p style="margin:0;">• Este orçamento é válido por 15 dias a partir da data de emissão.</p>
     <p style="margin:0;">• Produtos personalizados não possuem troca ou devolução.</p>
     <p style="margin:0;">• O prazo de produção é de 3 a 7 dias úteis após a confirmação do pagamento.</p>
+  </div>
+  <div style="margin-top:24px;text-align:center;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px;">
+    <p style="margin:2px 0;"><strong>Case Lab - Garrafas Personalizadas</strong></p>
+    <p style="margin:2px 0;">📞 (61) 99262-9861 · ✉ personalized.caselab@gmail.com</p>
+    <p style="margin:2px 0;">📸 @caselaboficial_ · CNPJ: 64.964.419/0001-46</p>
   </div>
 </body></html>`;
 }
@@ -112,7 +118,8 @@ function generateReceiptHtml(data: {
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;border-bottom:3px solid #1a1a2e;padding-bottom:20px;">
     <div>
       <h1 style="margin:0;font-size:28px;color:#1a1a2e;">RECIBO</h1>
-      <p style="margin:4px 0 0;color:#888;font-size:13px;">Case Lab - Capinhas Personalizadas</p>
+      <p style="margin:4px 0 0;color:#888;font-size:13px;">Case Lab - Garrafas Personalizadas</p>
+      <p style="margin:2px 0 0;color:#aaa;font-size:11px;">CNPJ: 64.964.419/0001-46</p>
     </div>
     <div style="text-align:right;">
       <p style="margin:0;font-size:13px;color:#888;">Pedido #${escapeHtml(o.id.slice(0, 8))}</p>
@@ -145,9 +152,11 @@ function generateReceiptHtml(data: {
       <span style="font-size:22px;font-weight:bold;margin-left:12px;">${fmt(Number(o.total))}</span>
     </div>
   </div>
-  <div style="margin-top:40px;text-align:center;font-size:12px;color:#999;">
+  <div style="margin-top:40px;text-align:center;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:12px;">
     <p>Este documento serve como comprovante de compra.</p>
-    <p>Case Lab - Capinhas Personalizadas</p>
+    <p style="margin:2px 0;"><strong>Case Lab - Garrafas Personalizadas</strong></p>
+    <p style="margin:2px 0;">📞 (61) 99262-9861 · ✉ personalized.caselab@gmail.com</p>
+    <p style="margin:2px 0;">📸 @caselaboficial_ · CNPJ: 64.964.419/0001-46</p>
   </div>
 </body></html>`;
 }
