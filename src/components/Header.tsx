@@ -1,5 +1,7 @@
-import { ShoppingCart, Search, Menu, X } from "lucide-react";
+import { ShoppingCart, Search, Menu, X, User, LogOut, Shield } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.jpeg";
 import { useState } from "react";
 
@@ -10,12 +12,14 @@ interface HeaderProps {
 
 export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
   const { totalItems, setIsCartOpen } = useCart();
+  const { user, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-background border-b border-border shadow-sm">
       <div className="container mx-auto py-3 flex items-center gap-4">
-        {/* Logo */}
         <a href="/" className="flex items-center gap-2 shrink-0">
           <img src={logo} alt="Case Lab" className="w-9 h-9 rounded-full object-cover" />
           <div className="hidden sm:block">
@@ -24,7 +28,6 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
           </div>
         </a>
 
-        {/* Search */}
         <div className="flex-1 max-w-xl mx-auto relative">
           <input
             type="text"
@@ -36,13 +39,34 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         </div>
 
-        {/* Actions */}
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => setIsCartOpen(true)}
-            className="relative p-2.5 rounded-full hover:bg-secondary transition-colors"
-            aria-label="Abrir carrinho"
-          >
+          {/* User menu */}
+          {user ? (
+            <div className="relative">
+              <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="p-2.5 rounded-full hover:bg-secondary transition-colors">
+                <User className="w-5 h-5 text-foreground" />
+              </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-card border border-border rounded-xl shadow-lg py-2 z-50">
+                  <p className="px-4 py-2 text-xs text-muted-foreground truncate">{user.email}</p>
+                  {isAdmin && (
+                    <button onClick={() => { navigate("/admin"); setUserMenuOpen(false); }} className="w-full px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2">
+                      <Shield className="w-4 h-4" /> Painel Admin
+                    </button>
+                  )}
+                  <button onClick={() => { signOut(); setUserMenuOpen(false); }} className="w-full px-4 py-2 text-sm text-left hover:bg-muted flex items-center gap-2 text-destructive">
+                    <LogOut className="w-4 h-4" /> Sair
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <button onClick={() => navigate("/auth")} className="p-2.5 rounded-full hover:bg-secondary transition-colors">
+              <User className="w-5 h-5 text-foreground" />
+            </button>
+          )}
+
+          <button onClick={() => setIsCartOpen(true)} className="relative p-2.5 rounded-full hover:bg-secondary transition-colors" aria-label="Abrir carrinho">
             <ShoppingCart className="w-5 h-5 text-foreground" />
             {totalItems > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
@@ -50,16 +74,13 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
               </span>
             )}
           </button>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2.5 rounded-full hover:bg-secondary"
-          >
+
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="md:hidden p-2.5 rounded-full hover:bg-secondary">
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Nav links */}
       <nav className="hidden md:block border-t border-border bg-background">
         <div className="container mx-auto flex items-center gap-6 py-2">
           <a href="#produtos" className="text-sm font-semibold text-foreground hover:text-primary transition-colors">Garrafas Térmicas</a>
@@ -76,6 +97,7 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
           <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-semibold text-foreground">Garrafas Térmicas</a>
           <a href="#sobre" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Sobre</a>
           <a href="#contato" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Contato</a>
+          {!user && <button onClick={() => { navigate("/auth"); setMobileMenuOpen(false); }} className="block text-sm font-semibold text-primary">Entrar / Cadastrar</button>}
           <a href="https://wa.me/5561992629861" target="_blank" rel="noopener noreferrer" className="block text-sm font-semibold text-primary">Faça seu orçamento →</a>
         </nav>
       )}
