@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useMemo } from "react";
-import { Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign, Users } from "lucide-react";
+import { Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign, Users, ImageIcon } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
 export default function AdminLayout() {
@@ -21,6 +21,7 @@ export default function AdminLayout() {
       { to: "/admin/financial", icon: DollarSign, label: "Financeiro", roles: ["ceo", "financeiro"] },
       { to: "/admin/coupons", icon: Tag, label: "Cupons", roles: ["ceo", "vendedor"] },
       { to: "/admin/categories", icon: Grid3X3, label: "Categorias", roles: ["ceo"] },
+      { to: "/admin/banner", icon: ImageIcon, label: "Banner", roles: ["ceo"] },
       { to: "/admin/team", icon: Users, label: "Equipe", roles: ["ceo"] },
     ];
 
