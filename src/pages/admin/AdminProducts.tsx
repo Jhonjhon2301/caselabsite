@@ -12,6 +12,8 @@ interface Product {
   category_id: string | null;
   is_active: boolean;
   is_customizable: boolean;
+  stock_quantity: number;
+  measurements: string | null;
 }
 
 interface Category {
@@ -25,7 +27,10 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
-  const [form, setForm] = useState({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false });
+  const [form, setForm] = useState({
+    name: "", description: "", price: "", category_id: "",
+    is_active: true, is_customizable: false, stock_quantity: "0", measurements: "",
+  });
   const [uploading, setUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
 
@@ -44,7 +49,7 @@ export default function AdminProducts() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false });
+    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, stock_quantity: "0", measurements: "" });
     setImageUrls([]);
     setShowForm(true);
   };
@@ -58,6 +63,8 @@ export default function AdminProducts() {
       category_id: p.category_id ?? "",
       is_active: p.is_active,
       is_customizable: p.is_customizable,
+      stock_quantity: String(p.stock_quantity ?? 0),
+      measurements: p.measurements ?? "",
     });
     setImageUrls(p.images ?? []);
     setShowForm(true);
@@ -67,16 +74,12 @@ export default function AdminProducts() {
     const files = e.target.files;
     if (!files?.length) return;
     setUploading(true);
-
     const newUrls: string[] = [];
     for (const file of Array.from(files)) {
       const ext = file.name.split(".").pop();
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error } = await supabase.storage.from("product-images").upload(path, file);
-      if (error) {
-        toast.error(`Erro ao enviar ${file.name}`);
-        continue;
-      }
+      if (error) { toast.error(`Erro ao enviar ${file.name}`); continue; }
       const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
       newUrls.push(urlData.publicUrl);
     }
@@ -84,16 +87,11 @@ export default function AdminProducts() {
     setUploading(false);
   };
 
-  const removeImage = (idx: number) => {
-    setImageUrls((prev) => prev.filter((_, i) => i !== idx));
-  };
+  const removeImage = (idx: number) => setImageUrls((prev) => prev.filter((_, i) => i !== idx));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim() || !form.price) {
-      toast.error("Preencha nome e preço");
-      return;
-    }
+    if (!form.name.trim() || !form.price) { toast.error("Preencha nome e preço"); return; }
 
     const payload = {
       name: form.name.trim(),
@@ -103,6 +101,8 @@ export default function AdminProducts() {
       is_active: form.is_active,
       is_customizable: form.is_customizable,
       images: imageUrls,
+      stock_quantity: parseInt(form.stock_quantity) || 0,
+      measurements: form.measurements.trim() || null,
     };
 
     if (editing) {
@@ -114,7 +114,6 @@ export default function AdminProducts() {
       if (error) { toast.error("Erro ao criar"); return; }
       toast.success("Produto criado!");
     }
-
     setShowForm(false);
     fetchData();
   };
@@ -134,9 +133,7 @@ export default function AdminProducts() {
           <h1 className="font-heading text-2xl font-bold">Produtos</h1>
           <p className="text-sm text-muted-foreground">{products.length} produto(s) cadastrado(s)</p>
         </div>
-        <button onClick={openCreate} className="btn-primary">
-          <Plus className="w-4 h-4" /> Novo Produto
-        </button>
+        <button onClick={openCreate} className="btn-primary"><Plus className="w-4 h-4" /> Novo Produto</button>
       </div>
 
       {showForm && (
@@ -167,16 +164,25 @@ export default function AdminProducts() {
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
-              <div className="flex items-center gap-6 pt-6">
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="rounded" />
-                  Ativo
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={form.is_customizable} onChange={(e) => setForm({ ...form, is_customizable: e.target.checked })} className="rounded" />
-                  Personalizável
-                </label>
+              <div>
+                <label className="block text-sm font-medium mb-1">Estoque (qtd)</label>
+                <input type="number" min="0" value={form.stock_quantity} onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" />
               </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Medidas</label>
+                <input type="text" value={form.measurements} onChange={(e) => setForm({ ...form, measurements: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" placeholder="Ex: 25x8cm, 500ml" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} className="rounded" />
+                Ativo
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={form.is_customizable} onChange={(e) => setForm({ ...form, is_customizable: e.target.checked })} className="rounded" />
+                Personalizável
+              </label>
             </div>
 
             <div>
@@ -185,9 +191,7 @@ export default function AdminProducts() {
                 {imageUrls.map((url, i) => (
                   <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
                     <img src={url} alt="" className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5">
-                      <X className="w-3 h-3" />
-                    </button>
+                    <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"><X className="w-3 h-3" /></button>
                   </div>
                 ))}
                 <label className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center cursor-pointer hover:border-primary transition-colors">
@@ -223,10 +227,14 @@ export default function AdminProducts() {
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-sm truncate">{p.name}</h3>
                 <p className="text-sm text-muted-foreground">R$ {Number(p.price).toFixed(2)}</p>
-                <div className="flex gap-2 mt-1">
+                <div className="flex flex-wrap gap-2 mt-1">
                   <span className={`text-xs px-2 py-0.5 rounded-full ${p.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                     {p.is_active ? "Ativo" : "Inativo"}
                   </span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full ${(p.stock_quantity ?? 0) > 0 ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700"}`}>
+                    Estoque: {p.stock_quantity ?? 0}
+                  </span>
+                  {p.measurements && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{p.measurements}</span>}
                   {p.is_customizable && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Personalizável</span>}
                 </div>
               </div>

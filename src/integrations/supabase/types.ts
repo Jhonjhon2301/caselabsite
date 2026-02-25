@@ -74,6 +74,39 @@ export type Database = {
         }
         Relationships: []
       }
+      expenses: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string
+          expense_date: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description: string
+          expense_date?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string
+          expense_date?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -175,8 +208,10 @@ export type Database = {
           images: string[] | null
           is_active: boolean
           is_customizable: boolean
+          measurements: string | null
           name: string
           price: number
+          stock_quantity: number
           updated_at: string
         }
         Insert: {
@@ -187,8 +222,10 @@ export type Database = {
           images?: string[] | null
           is_active?: boolean
           is_customizable?: boolean
+          measurements?: string | null
           name: string
           price?: number
+          stock_quantity?: number
           updated_at?: string
         }
         Update: {
@@ -199,8 +236,10 @@ export type Database = {
           images?: string[] | null
           is_active?: boolean
           is_customizable?: boolean
+          measurements?: string | null
           name?: string
           price?: number
+          stock_quantity?: number
           updated_at?: string
         }
         Relationships: [
@@ -247,18 +286,21 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          position: string | null
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
           created_at?: string
           id?: string
+          position?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
           created_at?: string
           id?: string
+          position?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
         }
