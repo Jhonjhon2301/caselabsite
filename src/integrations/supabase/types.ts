@@ -156,10 +156,23 @@ export type Database = {
         Row: {
           coupon_id: string | null
           created_at: string
+          customer_cpf: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
           discount: number
           id: string
           notes: string | null
+          payment_status: string
+          shipping_address: string | null
+          shipping_cep: string | null
+          shipping_city: string | null
+          shipping_complement: string | null
+          shipping_neighborhood: string | null
+          shipping_number: string | null
+          shipping_state: string | null
           status: string
+          stripe_session_id: string | null
           subtotal: number
           total: number
           updated_at: string
@@ -168,10 +181,23 @@ export type Database = {
         Insert: {
           coupon_id?: string | null
           created_at?: string
+          customer_cpf?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           discount?: number
           id?: string
           notes?: string | null
+          payment_status?: string
+          shipping_address?: string | null
+          shipping_cep?: string | null
+          shipping_city?: string | null
+          shipping_complement?: string | null
+          shipping_neighborhood?: string | null
+          shipping_number?: string | null
+          shipping_state?: string | null
           status?: string
+          stripe_session_id?: string | null
           subtotal?: number
           total?: number
           updated_at?: string
@@ -180,10 +206,23 @@ export type Database = {
         Update: {
           coupon_id?: string | null
           created_at?: string
+          customer_cpf?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           discount?: number
           id?: string
           notes?: string | null
+          payment_status?: string
+          shipping_address?: string | null
+          shipping_cep?: string | null
+          shipping_city?: string | null
+          shipping_complement?: string | null
+          shipping_neighborhood?: string | null
+          shipping_number?: string | null
+          shipping_state?: string | null
           status?: string
+          stripe_session_id?: string | null
           subtotal?: number
           total?: number
           updated_at?: string
