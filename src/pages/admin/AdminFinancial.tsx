@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, BarChart3, ShoppingBag, CheckCircle, Clock, X } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, BarChart3, ShoppingBag, CheckCircle, Clock, X, Repeat, ToggleLeft, ToggleRight } from "lucide-react";
 
 interface OrderWithItems {
   id: string;
@@ -34,29 +34,45 @@ interface ManualSale {
   created_at: string;
 }
 
+interface FixedExpense {
+  id: string;
+  description: string;
+  amount: number;
+  category: string | null;
+  recurrence: string;
+  day_of_month: number | null;
+  is_active: boolean;
+  created_at: string;
+}
+
 export default function AdminFinancial() {
   const { user } = useAuth();
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [manualSales, setManualSales] = useState<ManualSale[]>([]);
+  const [fixedExpenses, setFixedExpenses] = useState<FixedExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"7d" | "30d" | "all">("30d");
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [showSaleForm, setShowSaleForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"sales" | "expenses">("sales");
+  const [showFixedForm, setShowFixedForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<"sales" | "expenses" | "fixed">("sales");
   const [expForm, setExpForm] = useState({ description: "", amount: "", category: "", expense_date: new Date().toISOString().split("T")[0], due_date: "" });
   const [saleForm, setSaleForm] = useState({ description: "", amount: "", customer_name: "", sale_date: new Date().toISOString().split("T")[0], notes: "" });
+  const [fixedForm, setFixedForm] = useState({ description: "", amount: "", category: "", recurrence: "monthly", day_of_month: "1" });
 
   const fetchData = async () => {
     setLoading(true);
-    const [{ data: ords }, { data: exps }, { data: sales }] = await Promise.all([
+    const [{ data: ords }, { data: exps }, { data: sales }, { data: fixed }] = await Promise.all([
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("expenses").select("*").order("expense_date", { ascending: false }),
       supabase.from("manual_sales").select("*").order("sale_date", { ascending: false }),
+      supabase.from("fixed_expenses").select("*").order("description"),
     ]);
     setOrders((ords as any[]) ?? []);
     setExpenses((exps as any[]) ?? []);
     setManualSales((sales as any[]) ?? []);
+    setFixedExpenses((fixed as any[]) ?? []);
     setLoading(false);
   };
 
@@ -89,8 +105,9 @@ export default function AdminFinancial() {
   const totalOnlineRevenue = filteredOrders.filter((o) => o.status !== "cancelled").reduce((s, o) => s + Number(o.total), 0);
   const totalManualRevenue = filteredSales.reduce((s, sale) => s + Number(sale.amount), 0);
   const totalRevenue = totalOnlineRevenue + totalManualRevenue;
-  const totalExpenses = filteredExpenses.reduce((s, e) => s + Number(e.amount), 0);
-  const profit = totalRevenue - totalExpenses;
+  const totalExpensesVal = filteredExpenses.reduce((s, e) => s + Number(e.amount), 0);
+  const totalFixedMonthly = fixedExpenses.filter(f => f.is_active).reduce((s, f) => s + Number(f.amount), 0);
+  const profit = totalRevenue - totalExpensesVal;
   const pendingExpenses = filteredExpenses.filter((e) => e.status === "pending");
   const overdueExpenses = pendingExpenses.filter((e) => e.due_date && new Date(e.due_date) < new Date());
 
@@ -131,6 +148,24 @@ export default function AdminFinancial() {
     fetchData();
   };
 
+  const handleAddFixed = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fixedForm.description.trim() || !fixedForm.amount) { toast.error("Preencha descrição e valor"); return; }
+    const { error } = await supabase.from("fixed_expenses").insert({
+      description: fixedForm.description.trim(),
+      amount: parseFloat(fixedForm.amount),
+      category: fixedForm.category.trim() || null,
+      recurrence: fixedForm.recurrence,
+      day_of_month: parseInt(fixedForm.day_of_month) || 1,
+      created_by: user!.id,
+    });
+    if (error) { toast.error("Erro ao salvar gasto fixo"); return; }
+    toast.success("Gasto fixo registrado!");
+    setShowFixedForm(false);
+    setFixedForm({ description: "", amount: "", category: "", recurrence: "monthly", day_of_month: "1" });
+    fetchData();
+  };
+
   const handleDeleteExpense = async (id: string) => {
     if (!confirm("Excluir esta despesa?")) return;
     await supabase.from("expenses").delete().eq("id", id);
@@ -145,6 +180,13 @@ export default function AdminFinancial() {
     fetchData();
   };
 
+  const handleDeleteFixed = async (id: string) => {
+    if (!confirm("Excluir este gasto fixo?")) return;
+    await supabase.from("fixed_expenses").delete().eq("id", id);
+    toast.success("Gasto fixo removido");
+    fetchData();
+  };
+
   const handleToggleExpenseStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "paid" ? "pending" : "paid";
     await supabase.from("expenses").update({ status: newStatus }).eq("id", id);
@@ -152,9 +194,15 @@ export default function AdminFinancial() {
     fetchData();
   };
 
-  const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
+  const handleToggleFixedActive = async (id: string, currentActive: boolean) => {
+    await supabase.from("fixed_expenses").update({ is_active: !currentActive }).eq("id", id);
+    toast.success(!currentActive ? "Gasto fixo ativado" : "Gasto fixo desativado");
+    fetchData();
+  };
 
+  const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
   const isOverdue = (exp: Expense) => exp.status === "pending" && exp.due_date && new Date(exp.due_date) < new Date();
+  const recurrenceLabel: Record<string, string> = { monthly: "Mensal", weekly: "Semanal", yearly: "Anual" };
 
   if (loading) return <div className="p-8"><p className="text-muted-foreground">Carregando...</p></div>;
 
@@ -175,7 +223,7 @@ export default function AdminFinancial() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-green-100"><TrendingUp className="w-5 h-5 text-green-600" /></div>
@@ -193,10 +241,18 @@ export default function AdminFinancial() {
             <div className="p-2 rounded-lg bg-red-100"><TrendingDown className="w-5 h-5 text-red-600" /></div>
             <p className="text-sm text-muted-foreground">Despesas</p>
           </div>
-          <p className="text-2xl font-bold text-red-600">{fmt(totalExpenses)}</p>
+          <p className="text-2xl font-bold text-red-600">{fmt(totalExpensesVal)}</p>
           {overdueExpenses.length > 0 && (
             <p className="text-xs text-red-500 mt-1">⚠ {overdueExpenses.length} vencida(s)</p>
           )}
+        </div>
+        <div className="bg-card border border-border rounded-xl p-5">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 rounded-lg bg-purple-100"><Repeat className="w-5 h-5 text-purple-600" /></div>
+            <p className="text-sm text-muted-foreground">Gastos Fixos/mês</p>
+          </div>
+          <p className="text-2xl font-bold text-purple-600">{fmt(totalFixedMonthly)}</p>
+          <p className="text-xs text-muted-foreground mt-1">{fixedExpenses.filter(f => f.is_active).length} ativo(s)</p>
         </div>
         <div className="bg-card border border-border rounded-xl p-5">
           <div className="flex items-center gap-3 mb-2">
@@ -215,13 +271,16 @@ export default function AdminFinancial() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 mb-6">
-        <button onClick={() => setActiveTab("sales")} className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === "sales" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
+      <div className="flex gap-2 mb-6 overflow-x-auto">
+        <button onClick={() => setActiveTab("sales")} className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 shrink-0 ${activeTab === "sales" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
           <ShoppingBag className="w-4 h-4" /> Vendas Externas ({filteredSales.length})
         </button>
-        <button onClick={() => setActiveTab("expenses")} className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 ${activeTab === "expenses" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
+        <button onClick={() => setActiveTab("expenses")} className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 shrink-0 ${activeTab === "expenses" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
           <TrendingDown className="w-4 h-4" /> Despesas ({filteredExpenses.length})
           {overdueExpenses.length > 0 && <span className="w-5 h-5 rounded-full bg-red-500 text-white text-[10px] flex items-center justify-center">{overdueExpenses.length}</span>}
+        </button>
+        <button onClick={() => setActiveTab("fixed")} className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 shrink-0 ${activeTab === "fixed" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>
+          <Repeat className="w-4 h-4" /> Gastos Fixos ({fixedExpenses.length})
         </button>
       </div>
 
@@ -241,7 +300,7 @@ export default function AdminFinancial() {
               <input type="number" step="0.01" min="0.01" placeholder="Valor (R$) *" value={saleForm.amount} onChange={(e) => setSaleForm({ ...saleForm, amount: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" required />
               <input type="text" placeholder="Nome do cliente" value={saleForm.customer_name} onChange={(e) => setSaleForm({ ...saleForm, customer_name: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" maxLength={100} />
               <input type="date" value={saleForm.sale_date} onChange={(e) => setSaleForm({ ...saleForm, sale_date: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" />
-              <input type="text" placeholder="Observações" value={saleForm.notes} onChange={(e) => setSaleForm({ ...saleForm, notes: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm md:col-span-1" maxLength={500} />
+              <input type="text" placeholder="Observações" value={saleForm.notes} onChange={(e) => setSaleForm({ ...saleForm, notes: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" maxLength={500} />
               <div className="flex justify-end">
                 <button type="submit" className="btn-primary text-xs">Salvar Venda</button>
               </div>
@@ -330,6 +389,73 @@ export default function AdminFinancial() {
                   <div className="flex items-center gap-3">
                     <span className="text-sm font-semibold text-red-600">- {fmt(Number(ex.amount))}</span>
                     <button onClick={() => handleDeleteExpense(ex.id)} className="p-1.5 hover:bg-destructive/10 rounded text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Fixed Expenses Tab */}
+      {activeTab === "fixed" && (
+        <div className="bg-card border border-border rounded-xl p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-heading font-bold text-lg">Gastos Fixos</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">Despesas recorrentes como aluguel, internet, etc.</p>
+            </div>
+            <button onClick={() => setShowFixedForm(!showFixedForm)} className="btn-primary text-xs">
+              {showFixedForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {showFixedForm ? "Cancelar" : "Novo Gasto Fixo"}
+            </button>
+          </div>
+
+          {showFixedForm && (
+            <form onSubmit={handleAddFixed} className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 p-4 bg-muted/50 rounded-lg">
+              <input type="text" placeholder="Descrição * (ex: Aluguel)" value={fixedForm.description} onChange={(e) => setFixedForm({ ...fixedForm, description: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" required maxLength={200} />
+              <input type="number" step="0.01" min="0.01" placeholder="Valor (R$) *" value={fixedForm.amount} onChange={(e) => setFixedForm({ ...fixedForm, amount: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" required />
+              <input type="text" placeholder="Categoria (ex: Infraestrutura)" value={fixedForm.category} onChange={(e) => setFixedForm({ ...fixedForm, category: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" maxLength={50} />
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-muted-foreground">Recorrência</label>
+                <select value={fixedForm.recurrence} onChange={(e) => setFixedForm({ ...fixedForm, recurrence: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm">
+                  <option value="monthly">Mensal</option>
+                  <option value="weekly">Semanal</option>
+                  <option value="yearly">Anual</option>
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs text-muted-foreground">Dia do vencimento</label>
+                <input type="number" min="1" max="31" value={fixedForm.day_of_month} onChange={(e) => setFixedForm({ ...fixedForm, day_of_month: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" />
+              </div>
+              <div className="flex items-end">
+                <button type="submit" className="btn-primary text-xs w-full">Salvar Gasto Fixo</button>
+              </div>
+            </form>
+          )}
+
+          {fixedExpenses.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Nenhum gasto fixo registrado</p>
+          ) : (
+            <div className="space-y-2">
+              {fixedExpenses.map((fx) => (
+                <div key={fx.id} className={`flex items-center justify-between py-3 px-4 rounded-lg hover:bg-muted/50 transition-colors ${!fx.is_active ? "opacity-50" : ""}`}>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => handleToggleFixedActive(fx.id, fx.is_active)} className={`transition-colors ${fx.is_active ? "text-green-600" : "text-muted-foreground"}`} title={fx.is_active ? "Desativar" : "Ativar"}>
+                      {fx.is_active ? <ToggleRight className="w-6 h-6" /> : <ToggleLeft className="w-6 h-6" />}
+                    </button>
+                    <div>
+                      <p className="text-sm font-medium">{fx.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {recurrenceLabel[fx.recurrence] || fx.recurrence}
+                        {fx.day_of_month && ` · Dia ${fx.day_of_month}`}
+                        {fx.category && ` · ${fx.category}`}
+                        {!fx.is_active && " · Inativo"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-semibold text-purple-600">{fmt(Number(fx.amount))}</span>
+                    <button onClick={() => handleDeleteFixed(fx.id)} className="p-1.5 hover:bg-destructive/10 rounded text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
               ))}

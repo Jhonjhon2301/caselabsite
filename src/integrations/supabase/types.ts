@@ -113,6 +113,45 @@ export type Database = {
         }
         Relationships: []
       }
+      fixed_expenses: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          created_by: string
+          day_of_month: number | null
+          description: string
+          id: string
+          is_active: boolean
+          recurrence: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          created_by: string
+          day_of_month?: number | null
+          description: string
+          id?: string
+          is_active?: boolean
+          recurrence?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          day_of_month?: number | null
+          description?: string
+          id?: string
+          is_active?: boolean
+          recurrence?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       manual_sales: {
         Row: {
           amount: number

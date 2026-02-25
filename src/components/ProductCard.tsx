@@ -16,44 +16,47 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <>
-      <div className="group bg-card rounded-2xl overflow-hidden border border-border hover:border-primary/20 hover:shadow-lg transition-all duration-300">
-        <div className="relative aspect-[3/4] overflow-hidden bg-muted cursor-pointer" onClick={() => setShowModal(true)}>
-          <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" loading="lazy" />
+      {/* Gocase-style card — clean, minimal, image-first */}
+      <div className="group cursor-pointer" onClick={() => setShowModal(true)}>
+        <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted mb-3">
+          <img 
+            src={image} 
+            alt={product.name} 
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" 
+            loading="lazy" 
+          />
           
-          {/* Gradient overlay on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          {/* Quick view on hover */}
+          <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors duration-300" />
           
           {product.category_name && (
-            <div className="absolute top-3 left-3">
-              <span className="bg-background/90 backdrop-blur-sm text-foreground text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+            <div className="absolute top-2.5 left-2.5">
+              <span className="bg-background/90 backdrop-blur-sm text-foreground text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider">
                 {product.category_name}
               </span>
             </div>
           )}
+
+          {product.stock_quantity <= 0 && (
+            <div className="absolute top-2.5 right-2.5">
+              <span className="bg-destructive text-destructive-foreground text-[9px] font-bold px-2.5 py-1 rounded-full uppercase">
+                Esgotado
+              </span>
+            </div>
+          )}
+
           <button
-            onClick={(e) => { e.stopPropagation(); setShowModal(true); }}
-            className="absolute bottom-3 right-3 p-2.5 bg-background/90 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-md hover:bg-background"
+            onClick={(e) => { e.stopPropagation(); addToCart(product); }}
+            disabled={product.stock_quantity <= 0}
+            className="absolute bottom-3 right-3 p-3 bg-foreground text-background rounded-full opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 shadow-lg hover:scale-110 disabled:opacity-0"
           >
-            <Eye className="w-4 h-4 text-foreground" />
+            <ShoppingCart className="w-4 h-4" />
           </button>
         </div>
-        <div className="p-4">
+        
+        <div className="px-1">
           <h3 className="font-heading font-bold text-sm text-foreground leading-tight line-clamp-1">{product.name}</h3>
-          <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">{product.description}</p>
-          <div className="flex items-end justify-between mt-3">
-            <p className="text-lg font-extrabold text-primary">{fmt(product.price)}</p>
-            {product.stock_quantity <= 0 && (
-              <span className="text-[10px] font-bold text-destructive uppercase tracking-wide">Esgotado</span>
-            )}
-          </div>
-          <button
-            onClick={() => addToCart(product)}
-            disabled={product.stock_quantity <= 0}
-            className="mt-3 w-full btn-primary text-xs py-2.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
-          >
-            <ShoppingCart className="w-3.5 h-3.5" />
-            {product.stock_quantity > 0 ? "Adicionar ao Carrinho" : "Esgotado"}
-          </button>
+          <p className="text-lg font-black text-foreground mt-1">{fmt(product.price)}</p>
         </div>
       </div>
 
@@ -72,16 +75,16 @@ export default function ProductCard({ product }: ProductCardProps) {
               <h3 className="font-heading font-bold text-xl mt-1.5">{product.name}</h3>
               <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{product.description}</p>
               {product.measurements && <p className="text-xs text-muted-foreground mt-2 bg-muted rounded-lg px-3 py-2 inline-block">📐 Medidas: {product.measurements}</p>}
-              <p className="text-2xl font-extrabold text-primary mt-4">{fmt(product.price)}</p>
+              <p className="text-2xl font-extrabold text-foreground mt-4">{fmt(product.price)}</p>
               <div className="flex gap-3 mt-5">
                 <button
                   onClick={() => { addToCart(product); setShowModal(false); }}
                   disabled={product.stock_quantity <= 0}
-                  className="flex-1 btn-primary disabled:opacity-40 py-3"
+                  className="flex-1 btn-primary disabled:opacity-40 py-3 rounded-full"
                 >
                   <ShoppingCart className="w-4 h-4" /> Adicionar ao Carrinho
                 </button>
-                <button onClick={() => setShowModal(false)} className="btn-outline px-5">Fechar</button>
+                <button onClick={() => setShowModal(false)} className="btn-outline px-5 rounded-full">Fechar</button>
               </div>
             </div>
           </div>
