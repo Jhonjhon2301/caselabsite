@@ -1,10 +1,32 @@
-import { X, Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { X, Minus, Plus, Trash2, ShoppingBag, FileText } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useNavigate } from "react-router-dom";
+import { generateQuotePdf } from "@/lib/pdf-utils";
+import { toast } from "sonner";
+import { useState } from "react";
 
 export default function CartDrawer() {
   const { items, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, totalItems, totalPrice } = useCart();
   const navigate = useNavigate();
+  const [generatingQuote, setGeneratingQuote] = useState(false);
+
+  const handleQuote = async () => {
+    setGeneratingQuote(true);
+    try {
+      await generateQuotePdf(
+        items.map(({ product, quantity }) => ({
+          name: product.name,
+          quantity,
+          price: product.price,
+        }))
+      );
+      toast.success("Orçamento gerado!");
+    } catch {
+      toast.error("Erro ao gerar orçamento");
+    } finally {
+      setGeneratingQuote(false);
+    }
+  };
 
   const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
 
@@ -64,6 +86,14 @@ export default function CartDrawer() {
               className="w-full btn-primary py-3.5"
             >
               FINALIZAR COMPRA
+            </button>
+            <button
+              onClick={handleQuote}
+              disabled={generatingQuote}
+              className="w-full py-3 border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors flex items-center justify-center gap-2"
+            >
+              <FileText className="w-4 h-4" />
+              {generatingQuote ? "GERANDO..." : "SOLICITAR ORÇAMENTO"}
             </button>
           </div>
         )}

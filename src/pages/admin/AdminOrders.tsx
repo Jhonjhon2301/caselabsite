@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ShoppingCart, ChevronDown, ChevronUp } from "lucide-react";
+import { ShoppingCart, ChevronDown, ChevronUp, FileText, Receipt } from "lucide-react";
+import { generateReceiptPdf, generateQuotePdf } from "@/lib/pdf-utils";
 
 interface Order {
   id: string;
@@ -12,6 +13,10 @@ interface Order {
   total: number;
   notes: string | null;
   created_at: string;
+  customer_name: string | null;
+  customer_email: string | null;
+  customer_phone: string | null;
+  customer_cpf: string | null;
   profiles?: { full_name: string | null; email: string | null; phone: string | null } | null;
 }
 
@@ -140,6 +145,32 @@ export default function AdminOrders() {
                           <span>R$ {(Number(item.unit_price) * item.quantity).toFixed(2)}</span>
                         </div>
                       )) ?? <p className="text-xs text-muted-foreground">Carregando itens...</p>}
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        onClick={async () => {
+                          try {
+                            const items = orderItems[order.id];
+                            if (!items) return;
+                            await generateQuotePdf(
+                              items.map((i) => ({ name: i.product_name, quantity: i.quantity, price: Number(i.unit_price) })),
+                              { name: order.customer_name || profile?.full_name || undefined, email: order.customer_email || profile?.email || undefined }
+                            );
+                          } catch { toast.error("Erro ao gerar orçamento"); }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-secondary transition-colors"
+                      >
+                        <FileText className="w-3.5 h-3.5" /> Orçamento
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try { await generateReceiptPdf(order.id); } catch { toast.error("Erro ao gerar recibo"); }
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-secondary transition-colors"
+                      >
+                        <Receipt className="w-3.5 h-3.5" /> Recibo
+                      </button>
                     </div>
                   </div>
                 )}
