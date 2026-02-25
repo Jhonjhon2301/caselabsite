@@ -102,6 +102,8 @@ export default function AdminDocuments() {
 
     const validityText = form.type === "quote" ? `<p style="margin:4px 0 0;font-size:13px;color:#888;">Válido por ${form.validity} dias</p>` : "";
 
+    const logoUrl = new URL("/logo.jpeg", window.location.origin).href;
+
     const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><style>
   body{font-family:'Helvetica','Arial',sans-serif;margin:0;padding:40px;color:#222;font-size:14px;}
@@ -114,9 +116,13 @@ export default function AdminDocuments() {
   @media print{[contenteditable]:hover,[contenteditable]:focus{outline:none;background:none;}}
 </style></head><body>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;border-bottom:3px solid #1a1a2e;padding-bottom:20px;">
-    <div>
-      <h1 style="margin:0;font-size:28px;color:#1a1a2e;" contenteditable="true">${title}</h1>
-      <p style="margin:4px 0 0;color:#888;font-size:13px;" contenteditable="true">Case Lab - Garrafas Personalizadas</p>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <img src="${logoUrl}" alt="Case Lab" style="width:60px;height:60px;border-radius:50%;object-fit:cover;" />
+      <div>
+        <h1 style="margin:0;font-size:28px;color:#1a1a2e;" contenteditable="true">${title}</h1>
+        <p style="margin:4px 0 0;color:#888;font-size:13px;">Case Lab - Garrafas Personalizadas</p>
+        <p style="margin:2px 0 0;color:#aaa;font-size:11px;">CNPJ: 64.964.419/0001-46</p>
+      </div>
     </div>
     <div style="text-align:right;">
       <p style="margin:0;font-size:13px;color:#888;">Nº ${docNumber}</p>
@@ -134,9 +140,11 @@ export default function AdminDocuments() {
     <span style="font-size:22px;font-weight:bold;margin-left:12px;">${fmt(total)}</span>
   </div>
   ${notesHtml}
-  <div style="margin-top:40px;text-align:center;font-size:12px;color:#999;">
+  <div style="margin-top:40px;text-align:center;font-size:12px;color:#999;border-top:1px solid #eee;padding-top:16px;">
     <p contenteditable="true">Este documento serve como ${form.type === "quote" ? "proposta comercial" : "comprovante de venda"}.</p>
-    <p>Case Lab - Garrafas Personalizadas</p>
+    <p style="margin:4px 0;"><strong>Case Lab - Garrafas Personalizadas</strong></p>
+    <p style="margin:2px 0;">📞 (61) 99262-9861 · ✉ personalized.caselab@gmail.com</p>
+    <p style="margin:2px 0;">📸 @caselaboficial_ · CNPJ: 64.964.419/0001-46</p>
   </div>
 </body></html>`;
 
