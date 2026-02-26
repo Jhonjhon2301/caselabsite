@@ -95,22 +95,42 @@ serve(async (req) => {
       quantity: i.quantity,
     }));
 
-    const session = await stripe.checkout.sessions.create({
+    const checkoutBase = {
       line_items: lineItems,
-      mode: "payment",
+      mode: "payment" as const,
       success_url: `${req.headers.get("origin")}/payment-success?order_id=${order.id}`,
       cancel_url: `${req.headers.get("origin")}/payment-canceled`,
       customer_email: customer.email,
       metadata: {
         order_id: order.id,
       },
-      payment_method_types: ["card", "pix"],
-      payment_method_options: {
-        pix: {
-          expires_after_seconds: 1800,
+    };
+
+    let session;
+
+    try {
+      session = await stripe.checkout.sessions.create({
+        ...checkoutBase,
+        payment_method_types: ["card", "pix"],
+        payment_method_options: {
+          pix: {
+            expires_after_seconds: 1800,
+          },
         },
-      },
-    });
+      });
+    } catch (stripeError: any) {
+      const pixInvalid =
+        stripeError?.message?.includes("payment method type provided: pix is invalid") ||
+        stripeError?.code === "parameter_invalid_enum";
+
+      if (!pixInvalid) throw stripeError;
+
+      console.warn("Pix not enabled on Stripe account. Falling back to card-only checkout.");
+      session = await stripe.checkout.sessions.create({
+        ...checkoutBase,
+        payment_method_types: ["card"],
+      });
+    }
 
     // Save stripe session id to order
     await supabaseAdmin
