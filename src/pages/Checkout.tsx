@@ -4,14 +4,17 @@ import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, CreditCard, Loader2 } from "lucide-react";
+import { ArrowLeft, CreditCard, Loader2, QrCode } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
+
+type PaymentMethod = "card" | "pix";
 
 export default function Checkout() {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [form, setForm] = useState({
     name: "",
     email: user?.email || "",
@@ -94,42 +97,44 @@ export default function Checkout() {
     return Object.keys(e).length === 0;
   };
 
+  const buildBody = () => ({
+    items: items.map((i) => ({
+      product_id: i.product.id,
+      name: i.product.name,
+      price: i.product.price,
+      quantity: i.quantity,
+      image: i.product.images?.[0] || null,
+    })),
+    customer: {
+      name: form.name.trim(),
+      email: form.email.trim(),
+      phone: form.phone.trim(),
+      cpf: form.cpf.trim(),
+    },
+    shipping: {
+      cep: form.cep.trim(),
+      address: form.address.trim(),
+      number: form.number.trim(),
+      complement: form.complement.trim(),
+      neighborhood: form.neighborhood.trim(),
+      city: form.city.trim(),
+      state: form.state.trim(),
+    },
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
     setLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
-          items: items.map((i) => ({
-            product_id: i.product.id,
-            name: i.product.name,
-            price: i.product.price,
-            quantity: i.quantity,
-            image: i.product.images?.[0] || null,
-          })),
-          customer: {
-            name: form.name.trim(),
-            email: form.email.trim(),
-            phone: form.phone.trim(),
-            cpf: form.cpf.trim(),
-          },
-          shipping: {
-            cep: form.cep.trim(),
-            address: form.address.trim(),
-            number: form.number.trim(),
-            complement: form.complement.trim(),
-            neighborhood: form.neighborhood.trim(),
-            city: form.city.trim(),
-            state: form.state.trim(),
-          },
-        },
+      const functionName = paymentMethod === "pix" ? "create-pix-checkout" : "create-checkout";
+      const { data, error } = await supabase.functions.invoke(functionName, {
+        body: buildBody(),
       });
 
       if (error) throw error;
       if (data?.url) {
-        // Open Stripe in new tab, then clear cart and show success message
         window.open(data.url, "_blank");
         clearCart();
         toast.success("Redirecionando para pagamento em nova aba...");
@@ -239,6 +244,43 @@ export default function Checkout() {
                 </div>
               </div>
             </div>
+
+            {/* Payment Method */}
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h2 className="font-heading font-bold text-lg mb-4">Forma de Pagamento</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("pix")}
+                  className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all ${
+                    paymentMethod === "pix"
+                      ? "border-primary bg-primary/5 shadow-md"
+                      : "border-border hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <QrCode className={`w-8 h-8 ${paymentMethod === "pix" ? "text-primary" : "text-muted-foreground"}`} />
+                  <div className="text-center">
+                    <p className={`font-semibold text-sm ${paymentMethod === "pix" ? "text-primary" : "text-foreground"}`}>Pix</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Pagamento instantâneo</p>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("card")}
+                  className={`flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all ${
+                    paymentMethod === "card"
+                      ? "border-primary bg-primary/5 shadow-md"
+                      : "border-border hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <CreditCard className={`w-8 h-8 ${paymentMethod === "card" ? "text-primary" : "text-muted-foreground"}`} />
+                  <div className="text-center">
+                    <p className={`font-semibold text-sm ${paymentMethod === "card" ? "text-primary" : "text-foreground"}`}>Cartão</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">Crédito ou débito</p>
+                  </div>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Order summary */}
@@ -264,11 +306,17 @@ export default function Checkout() {
                 disabled={loading}
                 className="w-full mt-6 gradient-brand text-primary-foreground py-4 rounded-lg font-semibold text-sm tracking-wider hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                {loading ? "PROCESSANDO..." : "PAGAR AGORA"}
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : paymentMethod === "pix" ? (
+                  <QrCode className="w-4 h-4" />
+                ) : (
+                  <CreditCard className="w-4 h-4" />
+                )}
+                {loading ? "PROCESSANDO..." : paymentMethod === "pix" ? "PAGAR COM PIX" : "PAGAR COM CARTÃO"}
               </button>
               <p className="text-xs text-muted-foreground text-center mt-3">
-                Pagamento seguro via Stripe 🔒
+                {paymentMethod === "pix" ? "Pagamento via Pix pela InfinitePay 🔒" : "Pagamento seguro via Stripe 🔒"}
               </p>
             </div>
           </div>
