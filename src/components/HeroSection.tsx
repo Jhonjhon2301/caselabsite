@@ -10,9 +10,10 @@ import garrafa7 from "@/assets/products/garrafa-7.png";
 import garrafa8 from "@/assets/products/garrafa-8.png";
 import garrafa9 from "@/assets/products/garrafa-9.png";
 
-const bottleImages = [garrafa1, garrafa2, garrafa3, garrafa4, garrafa5, garrafa6, garrafa7, garrafa8, garrafa9];
+const defaultBottleImages = [garrafa1, garrafa2, garrafa3, garrafa4, garrafa5, garrafa6, garrafa7, garrafa8, garrafa9];
 
 interface BannerConfig {
+  banner_mode: "interactive" | "fixed";
   banner_image_url: string;
   marquee_text: string;
   countdown_end: string;
@@ -20,9 +21,12 @@ interface BannerConfig {
   promo_subtitle: string;
   cta_text: string;
   cta_link: string;
+  slide_interval: number;
+  interactive_images: string[];
 }
 
 const defaults: BannerConfig = {
+  banner_mode: "interactive",
   banner_image_url: "",
   marquee_text: "MELHORES OFERTAS DO ANO • GARRAFAS PERSONALIZADAS • FRETE GRÁTIS ACIMA DE R$299",
   countdown_end: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
@@ -30,6 +34,8 @@ const defaults: BannerConfig = {
   promo_subtitle: "Desconto + MIMO!",
   cta_text: "COMPRAR AGORA",
   cta_link: "#produtos",
+  slide_interval: 8,
+  interactive_images: [],
 };
 
 function useCountdown(target: string) {
@@ -68,28 +74,36 @@ export default function HeroSection() {
       });
   }, []);
 
-  // Auto-rotate featured bottles
+  // Determine which images to use
+  const bottleImages = cfg.interactive_images.length >= 3 ? cfg.interactive_images : defaultBottleImages;
+
+  // Build groups of 3
+  const bottleGroups: string[][] = [];
+  for (let i = 0; i < bottleImages.length; i += 3) {
+    const group = bottleImages.slice(i, i + 3);
+    if (group.length === 3) bottleGroups.push(group);
+  }
+  if (bottleGroups.length === 0) bottleGroups.push(defaultBottleImages.slice(0, 3));
+
+  // Auto-rotate with configurable interval
   useEffect(() => {
+    if (cfg.banner_mode !== "interactive" || bottleGroups.length <= 1) return;
+    const interval = (cfg.slide_interval || 8) * 1000;
     const id = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % 3);
-    }, 6000);
+      setActiveSlide((prev) => (prev + 1) % bottleGroups.length);
+    }, interval);
     return () => clearInterval(id);
-  }, []);
+  }, [cfg.banner_mode, cfg.slide_interval, bottleGroups.length]);
 
   const countdown = useCountdown(cfg.countdown_end);
   const pad = (n: number) => String(n).padStart(2, "0");
 
-  // 3 featured bottle groups
-  const bottleGroups = [
-    [bottleImages[0], bottleImages[1], bottleImages[2]],
-    [bottleImages[3], bottleImages[4], bottleImages[5]],
-    [bottleImages[6], bottleImages[7], bottleImages[8]],
-  ];
+  const isFixed = cfg.banner_mode === "fixed" && cfg.banner_image_url;
+  const safeSlide = activeSlide % (bottleGroups.length || 1);
 
   return (
     <section className="relative overflow-hidden">
-      {cfg.banner_image_url ? (
-        /* Custom banner uploaded via admin */
+      {isFixed ? (
         <a href={cfg.cta_link} className="block relative">
           <img src={cfg.banner_image_url} alt="Banner" className="w-full h-auto object-cover" />
           <div className="absolute bottom-6 left-6 md:left-12 flex flex-col items-start gap-3">
@@ -111,35 +125,25 @@ export default function HeroSection() {
           </div>
         </a>
       ) : (
-        /* Default interactive hero with bottle showcase */
         <div className="relative overflow-hidden">
-          {/* Background gradient */}
           <div className="absolute inset-0 bg-gradient-to-br from-[hsl(24,100%,52%)] via-[hsl(20,95%,45%)] to-[hsl(16,90%,35%)]" />
-          
-          {/* Decorative circles */}
           <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full" />
           <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-white/5 rounded-full" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/[0.03] rounded-full" />
 
           <div className="container mx-auto px-4 py-8 md:py-14 relative z-10">
             <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-10">
-              
-              {/* Left: Text + Countdown */}
               <div className="flex-1 text-center lg:text-left">
-                {/* Promo badge */}
                 <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5 mb-4">
                   <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
                   <span className="text-[11px] font-bold text-white uppercase tracking-wider">Oferta por tempo limitado</span>
                 </div>
-
                 <h1 className="font-heading font-black text-4xl md:text-5xl lg:text-6xl text-white uppercase leading-[0.95] tracking-tight mb-3">
                   {cfg.promo_title}
                 </h1>
                 <p className="text-white/85 font-semibold text-base md:text-lg mb-6 max-w-md mx-auto lg:mx-0">
                   {cfg.promo_subtitle}
                 </p>
-
-                {/* Countdown */}
                 <div className="flex items-center gap-2 justify-center lg:justify-start mb-6">
                   {[
                     { val: pad(countdown.h), label: "Horas" },
@@ -155,29 +159,21 @@ export default function HeroSection() {
                     </div>
                   ))}
                 </div>
-
-                <a
-                  href={cfg.cta_link}
-                  className="inline-flex items-center gap-2 bg-foreground text-background px-8 py-3.5 rounded-xl font-bold text-sm hover:scale-105 transition-transform shadow-2xl"
-                >
+                <a href={cfg.cta_link} className="inline-flex items-center gap-2 bg-foreground text-background px-8 py-3.5 rounded-xl font-bold text-sm hover:scale-105 transition-transform shadow-2xl">
                   {cfg.cta_text} →
                 </a>
               </div>
 
-              {/* Right: Interactive bottle showcase */}
               <div className="flex-1 relative flex items-center justify-center min-h-[280px] md:min-h-[360px]">
-                {/* Glow behind bottles */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-64 h-64 md:w-80 md:h-80 bg-white/10 rounded-full blur-3xl" />
                 </div>
-
-                {/* Bottle display */}
                 <div className="relative flex items-end justify-center gap-3 md:gap-5">
-                  {bottleGroups[activeSlide].map((bottle, i) => {
+                  {bottleGroups[safeSlide]?.map((bottle, i) => {
                     const isCenter = i === 1;
                     return (
                       <div
-                        key={`${activeSlide}-${i}`}
+                        key={`${safeSlide}-${i}`}
                         className="transition-all duration-700 ease-out"
                         style={{
                           transform: isCenter ? "scale(1.15) translateY(-10px)" : "scale(0.9)",
@@ -185,36 +181,28 @@ export default function HeroSection() {
                           zIndex: isCenter ? 10 : 1,
                         }}
                       >
-                        <img
-                          src={bottle}
-                          alt="Garrafa"
-                          className="h-48 md:h-72 lg:h-80 object-contain drop-shadow-2xl"
-                          draggable={false}
-                        />
+                        <img src={bottle} alt="Garrafa" className="h-48 md:h-72 lg:h-80 object-contain drop-shadow-2xl" draggable={false} />
                       </div>
                     );
                   })}
                 </div>
-
-                {/* Slide indicators */}
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
-                  {bottleGroups.map((_, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveSlide(i)}
-                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                        activeSlide === i ? "w-6 bg-white" : "w-1.5 bg-white/40"
-                      }`}
-                    />
-                  ))}
-                </div>
+                {bottleGroups.length > 1 && (
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
+                    {bottleGroups.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setActiveSlide(i)}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${safeSlide === i ? "w-6 bg-white" : "w-1.5 bg-white/40"}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Marquee */}
       <div className="bg-foreground py-2.5 overflow-hidden">
         <div className="animate-marquee whitespace-nowrap flex">
           {Array.from({ length: 8 }).map((_, i) => (

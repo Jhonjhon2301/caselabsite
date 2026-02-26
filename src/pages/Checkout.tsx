@@ -19,6 +19,7 @@ export default function Checkout() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponApplied, setCouponApplied] = useState(false);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
+  const [paymentConfig, setPaymentConfig] = useState({ active_gateway: "mercadopago", pix_enabled: true, card_enabled: true });
   const [form, setForm] = useState({
     name: "",
     email: user?.email || "",
@@ -37,6 +38,21 @@ export default function Checkout() {
   useEffect(() => {
     if (items.length === 0) navigate("/");
   }, [items.length, navigate]);
+
+  useEffect(() => {
+    supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "payment_config")
+      .single()
+      .then(({ data }) => {
+        if (data?.value) {
+          const v = data.value as any;
+          setPaymentConfig((prev) => ({ ...prev, ...v }));
+          if (!v.pix_enabled && v.card_enabled) setPaymentMethod("card");
+        }
+      });
+  }, []);
 
   if (items.length === 0) return null;
 

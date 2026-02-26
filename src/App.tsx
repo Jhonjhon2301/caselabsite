@@ -22,6 +22,9 @@ import AdminTeam from "./pages/admin/AdminTeam";
 import AdminBanner from "./pages/admin/AdminBanner";
 import AdminDocuments from "./pages/admin/AdminDocuments";
 import AdminStock from "./pages/admin/AdminStock";
+import AdminPayments from "./pages/admin/AdminPayments";
+import AdminReminders from "./pages/admin/AdminReminders";
+import AdminNotes from "./pages/admin/AdminNotes";
 
 const queryClient = new QueryClient();
 
@@ -58,6 +61,9 @@ const App = () => (
                 <Route path="banner" element={<AdminBanner />} />
                 <Route path="documents" element={<AdminDocuments />} />
                 <Route path="stock" element={<AdminStock />} />
+                <Route path="payments" element={<AdminPayments />} />
+                <Route path="reminders" element={<AdminReminders />} />
+                <Route path="notes" element={<AdminNotes />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
