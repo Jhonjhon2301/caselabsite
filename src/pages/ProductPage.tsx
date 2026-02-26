@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Product, ProductVariant } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
-import { ShoppingCart, Star, Truck, ShieldCheck, Repeat, CreditCard } from "lucide-react";
+import { ShoppingCart, Star, Truck, ShieldCheck, Repeat, CreditCard, Type, Palette } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -19,6 +19,11 @@ export default function ProductPage() {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [customName, setCustomName] = useState("");
+  const [textColor, setTextColor] = useState("#FFFFFF");
+  const [fontSize, setFontSize] = useState(28);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -36,6 +41,68 @@ export default function ProductPage() {
         setLoading(false);
       });
   }, [id]);
+
+  // Draw personalization preview on canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const img = imgRef.current;
+    if (!canvas || !img || !product) return;
+
+    const draw = () => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      canvas.width = img.naturalWidth || 600;
+      canvas.height = img.naturalHeight || 600;
+
+      // Draw base image
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+      // Apply color overlay if variant selected
+      if (selectedVariant?.hex) {
+        ctx.globalCompositeOperation = "multiply";
+        ctx.fillStyle = selectedVariant.hex;
+        ctx.globalAlpha = 0.25;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.globalCompositeOperation = "source-over";
+        ctx.globalAlpha = 1;
+      }
+
+      // Draw custom name text
+      if (customName.trim()) {
+        const scale = canvas.width / 600;
+        const size = Math.round(fontSize * scale);
+        ctx.font = `bold ${size}px 'Montserrat', sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        // Text position — centered on the bottle body (~40% from top)
+        const x = canvas.width / 2;
+        const y = canvas.height * 0.42;
+
+        // Shadow for readability
+        ctx.shadowColor = "rgba(0,0,0,0.5)";
+        ctx.shadowBlur = 4 * scale;
+        ctx.shadowOffsetX = 1 * scale;
+        ctx.shadowOffsetY = 1 * scale;
+
+        ctx.fillStyle = textColor;
+        ctx.fillText(customName, x, y, canvas.width * 0.6);
+
+        // Reset shadow
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      }
+    };
+
+    if (img.complete) {
+      draw();
+    } else {
+      img.onload = draw;
+    }
+  }, [product, selectedVariant, customName, textColor, fontSize, activeImageIdx]);
 
   if (loading) {
     return (
@@ -62,13 +129,24 @@ export default function ProductPage() {
   const hasDiscount = originalPrice > currentPrice;
   const discountPercent = hasDiscount ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100) : 0;
 
+  const isCustomizable = product.is_customizable;
+
+  const textColorOptions = [
+    { label: "Branco", hex: "#FFFFFF" },
+    { label: "Preto", hex: "#000000" },
+    { label: "Dourado", hex: "#D4AF37" },
+    { label: "Prata", hex: "#C0C0C0" },
+    { label: "Rosa", hex: "#FF69B4" },
+    { label: "Vermelho", hex: "#FF0000" },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <TopBar />
       <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
       <main>
-        {/* Breadcrumb — GoCase style */}
+        {/* Breadcrumb */}
         <div className="border-b border-border">
           <div className="container mx-auto px-4 py-3">
             <nav className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -85,12 +163,11 @@ export default function ProductPage() {
           </div>
         </div>
 
-        {/* Product detail — GoCase layout */}
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-            {/* Left — Vertical thumbnails + main image */}
+            {/* Left — Image preview */}
             <div className="flex gap-3 lg:flex-1">
-              {/* Vertical thumbnail strip */}
+              {/* Vertical thumbnails */}
               {images.length > 1 && (
                 <div className="hidden sm:flex flex-col gap-2 w-16 shrink-0">
                   {images.map((img, i) => (
@@ -109,14 +186,40 @@ export default function ProductPage() {
                 </div>
               )}
 
-              {/* Main image */}
+              {/* Main image / Canvas preview */}
               <div className="flex-1 relative">
-                <div className="aspect-square overflow-hidden rounded-xl bg-muted">
+                <div className="aspect-square overflow-hidden rounded-xl bg-muted relative">
+                  {/* Hidden image for canvas source */}
                   <img
+                    ref={imgRef}
                     src={images[activeImageIdx]}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className={isCustomizable || selectedVariant ? "hidden" : "w-full h-full object-cover"}
+                    crossOrigin="anonymous"
                   />
+                  {/* Canvas preview when customizing */}
+                  {(isCustomizable || selectedVariant) && (
+                    <canvas
+                      ref={canvasRef}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                  {/* Fallback: show image with CSS overlay when no customization */}
+                  {!isCustomizable && !selectedVariant && (
+                    <img
+                      src={images[activeImageIdx]}
+                      alt={product.name}
+                      className="w-full h-full object-cover absolute inset-0"
+                    />
+                  )}
+
+                  {/* Personalization badge */}
+                  {isCustomizable && (
+                    <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                      <Type className="w-3 h-3" />
+                      Personalizável
+                    </div>
+                  )}
                 </div>
 
                 {/* Mobile thumbnails */}
@@ -138,8 +241,8 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Right — Product info */}
-            <div className="lg:w-[420px] xl:w-[460px] flex flex-col">
+            {/* Right — Product info + customization */}
+            <div className="lg:w-[440px] xl:w-[480px] flex flex-col">
               <h1 className="font-heading font-black text-xl md:text-2xl text-foreground leading-tight">
                 {product.name}
               </h1>
@@ -187,11 +290,82 @@ export default function ProductPage() {
                 </p>
               )}
 
+              {/* === PERSONALIZATION SECTION === */}
+              {isCustomizable && (
+                <div className="mt-5 border border-border rounded-xl p-4 bg-muted/30">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Type className="w-4 h-4 text-primary" />
+                    <h3 className="text-sm font-bold text-foreground">Personalize sua garrafa</h3>
+                  </div>
+
+                  {/* Name input */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                      Digite seu nome ou texto
+                    </label>
+                    <input
+                      type="text"
+                      value={customName}
+                      onChange={(e) => setCustomName(e.target.value.slice(0, 20))}
+                      placeholder="Ex: Marcelo"
+                      maxLength={20}
+                      className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all"
+                    />
+                    <p className="text-[10px] text-muted-foreground mt-1">{customName.length}/20 caracteres</p>
+                  </div>
+
+                  {/* Text color picker */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                      <Palette className="w-3.5 h-3.5" />
+                      Cor do texto
+                    </label>
+                    <div className="flex gap-2 flex-wrap">
+                      {textColorOptions.map((c) => (
+                        <button
+                          key={c.hex}
+                          onClick={() => setTextColor(c.hex)}
+                          title={c.label}
+                          className={`w-8 h-8 rounded-full border-2 transition-all ${
+                            textColor === c.hex
+                              ? "border-primary scale-110 shadow-md"
+                              : "border-border hover:border-muted-foreground"
+                          }`}
+                          style={{ backgroundColor: c.hex }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Font size */}
+                  <div>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                      Tamanho do texto
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="range"
+                        min={16}
+                        max={48}
+                        value={fontSize}
+                        onChange={(e) => setFontSize(Number(e.target.value))}
+                        className="flex-1 accent-primary"
+                      />
+                      <span className="text-xs font-mono text-muted-foreground w-8 text-right">{fontSize}px</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Color Variants — GoCase card style */}
               {variants.length > 0 && (
                 <div className="mt-5">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-                    Cores disponíveis
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <Palette className="w-3.5 h-3.5" />
+                    Cor da garrafa
+                    {selectedVariant && (
+                      <span className="text-primary ml-1">— {selectedVariant.name}</span>
+                    )}
                   </p>
                   <div className="grid grid-cols-4 gap-2">
                     {variants.map((v, i) => (
