@@ -322,8 +322,10 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
+          circumference_cm: number | null
           created_at: string
           description: string | null
+          height_cm: number | null
           id: string
           images: string[] | null
           is_active: boolean
@@ -331,14 +333,17 @@ export type Database = {
           measurements: string | null
           name: string
           price: number
+          purchase_cost: number
           stock_quantity: number
           updated_at: string
           variants: Json | null
         }
         Insert: {
           category_id?: string | null
+          circumference_cm?: number | null
           created_at?: string
           description?: string | null
+          height_cm?: number | null
           id?: string
           images?: string[] | null
           is_active?: boolean
@@ -346,14 +351,17 @@ export type Database = {
           measurements?: string | null
           name: string
           price?: number
+          purchase_cost?: number
           stock_quantity?: number
           updated_at?: string
           variants?: Json | null
         }
         Update: {
           category_id?: string | null
+          circumference_cm?: number | null
           created_at?: string
           description?: string | null
+          height_cm?: number | null
           id?: string
           images?: string[] | null
           is_active?: boolean
@@ -361,6 +369,7 @@ export type Database = {
           measurements?: string | null
           name?: string
           price?: number
+          purchase_cost?: number
           stock_quantity?: number
           updated_at?: string
           variants?: Json | null

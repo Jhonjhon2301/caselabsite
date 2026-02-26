@@ -36,7 +36,7 @@ export default function AdminProducts() {
   const [editing, setEditing] = useState<Product | null>(null);
   const [form, setForm] = useState({
     name: "", description: "", price: "", category_id: "",
-    is_active: true, is_customizable: false, stock_quantity: "0", measurements: "",
+    is_active: true, is_customizable: false,
   });
   const [uploading, setUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -58,7 +58,7 @@ export default function AdminProducts() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, stock_quantity: "0", measurements: "" });
+    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false });
     setImageUrls([]);
     setVariants([]);
     setShowForm(true);
@@ -69,7 +69,6 @@ export default function AdminProducts() {
     setForm({
       name: p.name, description: p.description ?? "", price: String(p.price),
       category_id: p.category_id ?? "", is_active: p.is_active, is_customizable: p.is_customizable,
-      stock_quantity: String(p.stock_quantity ?? 0), measurements: p.measurements ?? "",
     });
     setImageUrls(p.images ?? []);
     setVariants((p.variants as ProductVariant[]) ?? []);
@@ -169,8 +168,6 @@ export default function AdminProducts() {
       is_active: form.is_active,
       is_customizable: form.is_customizable,
       images: imageUrls,
-      stock_quantity: parseInt(form.stock_quantity) || 0,
-      measurements: form.measurements.trim() || null,
       variants: (variants.length > 0 ? variants : []) as any,
     };
 
@@ -225,21 +222,13 @@ export default function AdminProducts() {
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none min-h-[80px]" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
               <div>
                 <label className="block text-sm font-medium mb-1">Categoria</label>
                 <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none">
                   <option value="">Sem categoria</option>
                   {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Estoque (qtd)</label>
-                <input type="number" min="0" value={form.stock_quantity} onChange={(e) => setForm({ ...form, stock_quantity: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Medidas</label>
-                <input type="text" value={form.measurements} onChange={(e) => setForm({ ...form, measurements: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" placeholder="Ex: 25x8cm, 500ml" />
               </div>
             </div>
 
@@ -343,9 +332,6 @@ export default function AdminProducts() {
                   <div className="flex flex-wrap gap-2 mt-1">
                     <span className={`text-xs px-2 py-0.5 rounded-full ${p.is_active ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
                       {p.is_active ? "Ativo" : "Inativo"}
-                    </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                      Estoque: {p.stock_quantity ?? 0}
                     </span>
                     {pVariants.length > 0 && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground flex items-center gap-1">
