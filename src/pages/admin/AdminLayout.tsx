@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useMemo } from "react";
-import { Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign, Users, ImageIcon, FileText, Warehouse } from "lucide-react";
+import { Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign, Users, ImageIcon, FileText, Warehouse, CreditCard, Bell, StickyNote } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
 export default function AdminLayout() {
@@ -24,6 +24,9 @@ export default function AdminLayout() {
       { to: "/admin/categories", icon: Grid3X3, label: "Categorias", roles: ["ceo"] },
       { to: "/admin/documents", icon: FileText, label: "Documentos", roles: ["ceo", "vendedor"] },
       { to: "/admin/banner", icon: ImageIcon, label: "Banner", roles: ["ceo"] },
+      { to: "/admin/payments", icon: CreditCard, label: "Pagamentos", roles: ["ceo"] },
+      { to: "/admin/reminders", icon: Bell, label: "Lembretes", roles: ["ceo", "vendedor"] },
+      { to: "/admin/notes", icon: StickyNote, label: "Notas", roles: ["ceo", "vendedor"] },
       { to: "/admin/team", icon: Users, label: "Equipe", roles: ["ceo"] },
     ];
 
