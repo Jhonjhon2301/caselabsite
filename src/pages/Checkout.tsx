@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,8 +27,13 @@ export default function Checkout() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    if (items.length === 0) {
+      navigate("/");
+    }
+  }, [items.length, navigate]);
+
   if (items.length === 0) {
-    navigate("/");
     return null;
   }
 
