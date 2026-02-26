@@ -88,6 +88,13 @@ export default function ProductPage() {
   const discountPercent = hasDiscount ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100) : 0;
   const isCustomizable = product.is_customizable;
 
+  // If variant has its own image, show that; otherwise show gallery image
+  const displayImage = selectedVariant?.image || images[activeImageIdx];
+
+  // Text position from DB (defaults: top 42%, left 50%)
+  const textTop = product.text_top ?? 42;
+  const textLeft = product.text_left ?? 50;
+
   return (
     <div className="min-h-screen bg-background">
       <TopBar />
@@ -116,51 +123,65 @@ export default function ProductPage() {
 
             {/* ===== LEFT — Image Gallery + Live Preview ===== */}
             <div className="flex gap-3 lg:flex-1">
-              {/* Vertical thumbnails */}
-              {images.length > 1 && (
-                <div className="hidden sm:flex flex-col gap-2 w-16 shrink-0">
-                  {images.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveImageIdx(i)}
-                      className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                        activeImageIdx === i
-                          ? "border-primary shadow-md"
-                          : "border-border opacity-60 hover:opacity-100"
-                      }`}
-                    >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
+              {/* Vertical thumbnails (gallery images + variant images) */}
+              <div className="hidden sm:flex flex-col gap-2 w-16 shrink-0">
+                {/* Gallery thumbnails */}
+                {images.map((img, i) => (
+                  <button
+                    key={`img-${i}`}
+                    onClick={() => { setActiveImageIdx(i); setSelectedVariant(null); }}
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      !selectedVariant && activeImageIdx === i
+                        ? "border-primary shadow-md"
+                        : "border-border opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+                {/* Variant image thumbnails */}
+                {variants.filter(v => v.image).map((v, i) => (
+                  <button
+                    key={`var-${i}`}
+                    onClick={() => setSelectedVariant(v)}
+                    className={`w-16 h-16 rounded-lg overflow-hidden border-2 transition-all relative ${
+                      selectedVariant?.hex === v.hex
+                        ? "border-primary shadow-md"
+                        : "border-border opacity-60 hover:opacity-100"
+                    }`}
+                  >
+                    <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
+                    <div
+                      className="absolute bottom-0.5 right-0.5 w-3 h-3 rounded-full border border-background"
+                      style={{ backgroundColor: v.hex }}
+                    />
+                  </button>
+                ))}
+              </div>
 
               {/* Main image with CSS overlay */}
               <div className="flex-1 relative">
                 <div className="aspect-square overflow-hidden rounded-xl bg-muted relative select-none">
-                  {/* Product image */}
+                  {/* Product image — shows variant image or gallery image */}
                   <img
-                    src={images[activeImageIdx]}
+                    src={displayImage}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-all duration-300"
                     draggable={false}
                   />
 
-                  {/* Color tint overlay using CSS */}
-                  {selectedVariant?.hex && (
-                    <div
-                      className="absolute inset-0 mix-blend-multiply opacity-20 pointer-events-none transition-colors duration-300"
-                      style={{ backgroundColor: selectedVariant.hex }}
-                    />
-                  )}
-
-                  {/* Text overlay — CSS positioned, no canvas */}
+                  {/* Text overlay — CSS positioned using DB coordinates */}
                   {isCustomizable && customName.trim() && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                      style={{ paddingTop: "0%" }}
+                    <div
+                      className="absolute pointer-events-none"
+                      style={{
+                        top: `${textTop}%`,
+                        left: `${textLeft}%`,
+                        transform: "translate(-50%, -50%)",
+                      }}
                     >
                       <span
-                        className="max-w-[60%] text-center leading-tight drop-shadow-lg select-none"
+                        className="text-center leading-tight select-none whitespace-nowrap"
                         style={{
                           fontFamily: selectedFont.family,
                           fontWeight: selectedFont.weight,
@@ -168,7 +189,6 @@ export default function ProductPage() {
                           color: textColor,
                           textShadow: "0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3)",
                           letterSpacing: "0.02em",
-                          wordBreak: "break-word",
                         }}
                       >
                         {customName}
@@ -176,15 +196,13 @@ export default function ProductPage() {
                     </div>
                   )}
 
-                  {/* Personalizável badge */}
+                  {/* Badges */}
                   {isCustomizable && (
                     <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
                       <Type className="w-3 h-3" />
                       Personalizável
                     </div>
                   )}
-
-                  {/* Discount badge */}
                   {hasDiscount && discountPercent > 0 && (
                     <div className="absolute top-3 right-3 bg-destructive text-destructive-foreground text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md">
                       {discountPercent}% OFF
@@ -193,21 +211,30 @@ export default function ProductPage() {
                 </div>
 
                 {/* Mobile thumbnails */}
-                {images.length > 1 && (
-                  <div className="flex sm:hidden gap-2 mt-2 overflow-x-auto pb-1">
-                    {images.map((img, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setActiveImageIdx(i)}
-                        className={`w-14 h-14 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all ${
-                          activeImageIdx === i ? "border-primary" : "border-border opacity-60"
-                        }`}
-                      >
-                        <img src={img} alt="" className="w-full h-full object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className="flex sm:hidden gap-2 mt-2 overflow-x-auto pb-1">
+                  {images.map((img, i) => (
+                    <button
+                      key={`m-img-${i}`}
+                      onClick={() => { setActiveImageIdx(i); setSelectedVariant(null); }}
+                      className={`w-14 h-14 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all ${
+                        !selectedVariant && activeImageIdx === i ? "border-primary" : "border-border opacity-60"
+                      }`}
+                    >
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                  {variants.filter(v => v.image).map((v, i) => (
+                    <button
+                      key={`m-var-${i}`}
+                      onClick={() => setSelectedVariant(v)}
+                      className={`w-14 h-14 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all relative ${
+                        selectedVariant?.hex === v.hex ? "border-primary" : "border-border opacity-60"
+                      }`}
+                    >
+                      <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 

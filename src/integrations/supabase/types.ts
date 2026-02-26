@@ -335,6 +335,8 @@ export type Database = {
           price: number
           purchase_cost: number
           stock_quantity: number
+          text_left: number | null
+          text_top: number | null
           updated_at: string
           variants: Json | null
         }
@@ -353,6 +355,8 @@ export type Database = {
           price?: number
           purchase_cost?: number
           stock_quantity?: number
+          text_left?: number | null
+          text_top?: number | null
           updated_at?: string
           variants?: Json | null
         }
@@ -371,6 +375,8 @@ export type Database = {
           price?: number
           purchase_cost?: number
           stock_quantity?: number
+          text_left?: number | null
+          text_top?: number | null
           updated_at?: string
           variants?: Json | null
         }
