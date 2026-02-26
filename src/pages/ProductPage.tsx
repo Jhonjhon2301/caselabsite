@@ -1,14 +1,33 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import type { Product, ProductVariant } from "@/types/product";
 import { useCart } from "@/contexts/CartContext";
-import { ShoppingCart, Star, Truck, ShieldCheck, Repeat, CreditCard, Type, Palette } from "lucide-react";
+import { ShoppingCart, Star, Truck, ShieldCheck, Repeat, CreditCard, Type, Palette, ChevronRight } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
+
+const FONT_OPTIONS = [
+  { label: "Clássica", family: "'Montserrat', sans-serif", weight: "700" },
+  { label: "Elegante", family: "'Georgia', serif", weight: "400" },
+  { label: "Moderna", family: "'Inter', sans-serif", weight: "600" },
+  { label: "Cursiva", family: "'Segoe Script', 'Brush Script MT', cursive", weight: "400" },
+  { label: "Forte", family: "'Impact', 'Arial Black', sans-serif", weight: "700" },
+  { label: "Light", family: "'Montserrat', sans-serif", weight: "300" },
+];
+
+const TEXT_COLORS = [
+  { label: "Branco", hex: "#FFFFFF" },
+  { label: "Preto", hex: "#000000" },
+  { label: "Dourado", hex: "#D4AF37" },
+  { label: "Prata", hex: "#C0C0C0" },
+  { label: "Rosa", hex: "#FF69B4" },
+  { label: "Vermelho", hex: "#FF0000" },
+  { label: "Azul", hex: "#1E90FF" },
+];
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -19,11 +38,12 @@ export default function ProductPage() {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Personalization state
   const [customName, setCustomName] = useState("");
   const [textColor, setTextColor] = useState("#FFFFFF");
-  const [fontSize, setFontSize] = useState(28);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const [fontSize, setFontSize] = useState(24);
+  const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
 
   useEffect(() => {
     if (!id) return;
@@ -41,68 +61,6 @@ export default function ProductPage() {
         setLoading(false);
       });
   }, [id]);
-
-  // Draw personalization preview on canvas
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const img = imgRef.current;
-    if (!canvas || !img || !product) return;
-
-    const draw = () => {
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      canvas.width = img.naturalWidth || 600;
-      canvas.height = img.naturalHeight || 600;
-
-      // Draw base image
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // Apply color overlay if variant selected
-      if (selectedVariant?.hex) {
-        ctx.globalCompositeOperation = "multiply";
-        ctx.fillStyle = selectedVariant.hex;
-        ctx.globalAlpha = 0.25;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.globalCompositeOperation = "source-over";
-        ctx.globalAlpha = 1;
-      }
-
-      // Draw custom name text
-      if (customName.trim()) {
-        const scale = canvas.width / 600;
-        const size = Math.round(fontSize * scale);
-        ctx.font = `bold ${size}px 'Montserrat', sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        // Text position — centered on the bottle body (~40% from top)
-        const x = canvas.width / 2;
-        const y = canvas.height * 0.42;
-
-        // Shadow for readability
-        ctx.shadowColor = "rgba(0,0,0,0.5)";
-        ctx.shadowBlur = 4 * scale;
-        ctx.shadowOffsetX = 1 * scale;
-        ctx.shadowOffsetY = 1 * scale;
-
-        ctx.fillStyle = textColor;
-        ctx.fillText(customName, x, y, canvas.width * 0.6);
-
-        // Reset shadow
-        ctx.shadowColor = "transparent";
-        ctx.shadowBlur = 0;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = 0;
-      }
-    };
-
-    if (img.complete) {
-      draw();
-    } else {
-      img.onload = draw;
-    }
-  }, [product, selectedVariant, customName, textColor, fontSize, activeImageIdx]);
 
   if (loading) {
     return (
@@ -128,17 +86,7 @@ export default function ProductPage() {
   const originalPrice = product.purchase_cost > currentPrice ? product.purchase_cost : currentPrice * 1.3;
   const hasDiscount = originalPrice > currentPrice;
   const discountPercent = hasDiscount ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100) : 0;
-
   const isCustomizable = product.is_customizable;
-
-  const textColorOptions = [
-    { label: "Branco", hex: "#FFFFFF" },
-    { label: "Preto", hex: "#000000" },
-    { label: "Dourado", hex: "#D4AF37" },
-    { label: "Prata", hex: "#C0C0C0" },
-    { label: "Rosa", hex: "#FF69B4" },
-    { label: "Vermelho", hex: "#FF0000" },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -149,13 +97,13 @@ export default function ProductPage() {
         {/* Breadcrumb */}
         <div className="border-b border-border">
           <div className="container mx-auto px-4 py-3">
-            <nav className="flex items-center gap-2 text-xs text-muted-foreground">
+            <nav className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <a href="/" className="hover:text-foreground transition-colors">Início</a>
-              <span>›</span>
+              <ChevronRight className="w-3 h-3" />
               {product.category_name && (
                 <>
                   <span>{product.category_name}</span>
-                  <span>›</span>
+                  <ChevronRight className="w-3 h-3" />
                 </>
               )}
               <span className="text-foreground font-medium truncate">{product.name}</span>
@@ -165,7 +113,8 @@ export default function ProductPage() {
 
         <div className="container mx-auto px-4 py-6">
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
-            {/* Left — Image preview */}
+
+            {/* ===== LEFT — Image Gallery + Live Preview ===== */}
             <div className="flex gap-3 lg:flex-1">
               {/* Vertical thumbnails */}
               {images.length > 1 && (
@@ -186,45 +135,66 @@ export default function ProductPage() {
                 </div>
               )}
 
-              {/* Main image / Canvas preview */}
+              {/* Main image with CSS overlay */}
               <div className="flex-1 relative">
-                <div className="aspect-square overflow-hidden rounded-xl bg-muted relative">
-                  {/* Hidden image for canvas source */}
+                <div className="aspect-square overflow-hidden rounded-xl bg-muted relative select-none">
+                  {/* Product image */}
                   <img
-                    ref={imgRef}
                     src={images[activeImageIdx]}
                     alt={product.name}
-                    className={isCustomizable || selectedVariant ? "hidden" : "w-full h-full object-cover"}
-                    crossOrigin="anonymous"
+                    className="w-full h-full object-cover"
+                    draggable={false}
                   />
-                  {/* Canvas preview when customizing */}
-                  {(isCustomizable || selectedVariant) && (
-                    <canvas
-                      ref={canvasRef}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-                  {/* Fallback: show image with CSS overlay when no customization */}
-                  {!isCustomizable && !selectedVariant && (
-                    <img
-                      src={images[activeImageIdx]}
-                      alt={product.name}
-                      className="w-full h-full object-cover absolute inset-0"
+
+                  {/* Color tint overlay using CSS */}
+                  {selectedVariant?.hex && (
+                    <div
+                      className="absolute inset-0 mix-blend-multiply opacity-20 pointer-events-none transition-colors duration-300"
+                      style={{ backgroundColor: selectedVariant.hex }}
                     />
                   )}
 
-                  {/* Personalization badge */}
+                  {/* Text overlay — CSS positioned, no canvas */}
+                  {isCustomizable && customName.trim() && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none"
+                      style={{ paddingTop: "0%" }}
+                    >
+                      <span
+                        className="max-w-[60%] text-center leading-tight drop-shadow-lg select-none"
+                        style={{
+                          fontFamily: selectedFont.family,
+                          fontWeight: selectedFont.weight,
+                          fontSize: `${fontSize}px`,
+                          color: textColor,
+                          textShadow: "0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3)",
+                          letterSpacing: "0.02em",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {customName}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Personalizável badge */}
                   {isCustomizable && (
-                    <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1">
+                    <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-[10px] font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-md">
                       <Type className="w-3 h-3" />
                       Personalizável
+                    </div>
+                  )}
+
+                  {/* Discount badge */}
+                  {hasDiscount && discountPercent > 0 && (
+                    <div className="absolute top-3 right-3 bg-destructive text-destructive-foreground text-[10px] font-bold px-2.5 py-1 rounded-full shadow-md">
+                      {discountPercent}% OFF
                     </div>
                   )}
                 </div>
 
                 {/* Mobile thumbnails */}
                 {images.length > 1 && (
-                  <div className="flex sm:hidden gap-2 mt-2 overflow-x-auto">
+                  <div className="flex sm:hidden gap-2 mt-2 overflow-x-auto pb-1">
                     {images.map((img, i) => (
                       <button
                         key={i}
@@ -241,58 +211,86 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Right — Product info + customization */}
-            <div className="lg:w-[440px] xl:w-[480px] flex flex-col">
+            {/* ===== RIGHT — Product Info + Customization ===== */}
+            <div className="lg:w-[440px] xl:w-[480px] flex flex-col gap-4">
               <h1 className="font-heading font-black text-xl md:text-2xl text-foreground leading-tight">
                 {product.name}
               </h1>
 
-              {/* Price + Rating */}
-              <div className="flex items-start justify-between mt-3">
-                <div>
-                  {hasDiscount && (
-                    <p className="text-sm text-muted-foreground line-through">{fmt(originalPrice)}</p>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <p className="text-2xl font-black text-foreground">{fmt(currentPrice)}</p>
-                    {hasDiscount && discountPercent > 0 && (
-                      <span className="text-xs font-bold text-destructive">{discountPercent}% OFF</span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    ou <span className="font-bold">3x de {fmt(currentPrice / 3)}</span> sem juros
-                  </p>
-                </div>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-primary text-primary" />
-                  ))}
-                  <span className="text-[10px] text-muted-foreground ml-1">avaliações</span>
-                </div>
+              {/* Rating */}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className="w-3.5 h-3.5 fill-primary text-primary" />
+                ))}
+                <span className="text-[10px] text-muted-foreground ml-1">(avaliações)</span>
               </div>
 
-              {/* Promo callout */}
-              <div className="mt-4 border-l-4 border-primary bg-primary/5 rounded-r-lg p-3">
-                <p className="text-xs font-bold text-foreground">
-                  PISCOU, PERDEU: Garrafas a partir de {fmt(currentPrice)} + MIMO!
+              {/* Price */}
+              <div>
+                {hasDiscount && (
+                  <p className="text-sm text-muted-foreground line-through">{fmt(originalPrice)}</p>
+                )}
+                <div className="flex items-center gap-2">
+                  <p className="text-2xl font-black text-foreground">{fmt(currentPrice)}</p>
+                  {hasDiscount && discountPercent > 0 && (
+                    <span className="text-xs font-bold bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">{discountPercent}% OFF</span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  ou <span className="font-bold">3x de {fmt(currentPrice / 3)}</span> sem juros
                 </p>
               </div>
 
               {/* Description */}
               {product.description && (
-                <p className="text-sm text-muted-foreground mt-4 leading-relaxed">{product.description}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
               )}
 
               {/* Measurements */}
               {product.measurements && (
-                <p className="text-xs text-muted-foreground mt-3 bg-muted rounded-lg px-3 py-2 inline-block w-fit">
+                <p className="text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2 inline-block w-fit">
                   📐 Medidas: {product.measurements}
                 </p>
               )}
 
-              {/* === PERSONALIZATION SECTION === */}
+              {/* ===== COLOR VARIANTS ===== */}
+              {variants.length > 0 && (
+                <div className="border border-border rounded-xl p-4 bg-card">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <Palette className="w-3.5 h-3.5" />
+                    Cor da garrafa
+                    {selectedVariant && (
+                      <span className="text-primary ml-1 normal-case">— {selectedVariant.name}</span>
+                    )}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {variants.map((v, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setSelectedVariant(selectedVariant?.hex === v.hex ? null : v)}
+                        className={`flex items-center gap-2 rounded-full border-2 px-3 py-1.5 transition-all text-xs ${
+                          selectedVariant?.hex === v.hex
+                            ? "border-primary bg-primary/5 shadow-sm"
+                            : "border-border hover:border-muted-foreground/40"
+                        }`}
+                      >
+                        <div
+                          className="w-5 h-5 rounded-full border border-border/50 shrink-0"
+                          style={{ backgroundColor: v.hex }}
+                        />
+                        <span className="font-semibold text-foreground">{v.name}</span>
+                        {v.price && v.price !== product.price && (
+                          <span className="font-black text-primary">{fmt(v.price)}</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ===== PERSONALIZATION SECTION ===== */}
               {isCustomizable && (
-                <div className="mt-5 border border-border rounded-xl p-4 bg-muted/30">
+                <div className="border border-primary/30 rounded-xl p-4 bg-primary/5">
                   <div className="flex items-center gap-2 mb-4">
                     <Type className="w-4 h-4 text-primary" />
                     <h3 className="text-sm font-bold text-foreground">Personalize sua garrafa</h3>
@@ -309,9 +307,37 @@ export default function ProductPage() {
                       onChange={(e) => setCustomName(e.target.value.slice(0, 20))}
                       placeholder="Ex: Marcelo"
                       maxLength={20}
-                      className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/30 transition-all"
+                      className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                     />
                     <p className="text-[10px] text-muted-foreground mt-1">{customName.length}/20 caracteres</p>
+                  </div>
+
+                  {/* Font picker */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                      Escolha a fonte
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {FONT_OPTIONS.map((font) => (
+                        <button
+                          key={font.label}
+                          onClick={() => setSelectedFont(font)}
+                          className={`rounded-lg border-2 px-3 py-2.5 text-center transition-all ${
+                            selectedFont.label === font.label
+                              ? "border-primary bg-primary/10 shadow-sm"
+                              : "border-border hover:border-muted-foreground/40 bg-background"
+                          }`}
+                        >
+                          <span
+                            className="text-sm text-foreground block leading-tight"
+                            style={{ fontFamily: font.family, fontWeight: font.weight }}
+                          >
+                            {customName.trim() || "Abc"}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground mt-0.5 block">{font.label}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {/* Text color picker */}
@@ -321,96 +347,64 @@ export default function ProductPage() {
                       Cor do texto
                     </label>
                     <div className="flex gap-2 flex-wrap">
-                      {textColorOptions.map((c) => (
+                      {TEXT_COLORS.map((c) => (
                         <button
                           key={c.hex}
                           onClick={() => setTextColor(c.hex)}
                           title={c.label}
-                          className={`w-8 h-8 rounded-full border-2 transition-all ${
+                          className={`w-8 h-8 rounded-full border-2 transition-all relative ${
                             textColor === c.hex
                               ? "border-primary scale-110 shadow-md"
                               : "border-border hover:border-muted-foreground"
                           }`}
                           style={{ backgroundColor: c.hex }}
-                        />
+                        >
+                          {textColor === c.hex && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-2.5 h-2.5 rounded-full border-2 border-primary bg-primary" />
+                            </div>
+                          )}
+                        </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Font size */}
+                  {/* Font size slider */}
                   <div>
                     <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
                       Tamanho do texto
                     </label>
                     <div className="flex items-center gap-3">
+                      <span className="text-[10px] text-muted-foreground">A</span>
                       <input
                         type="range"
-                        min={16}
-                        max={48}
+                        min={14}
+                        max={42}
                         value={fontSize}
                         onChange={(e) => setFontSize(Number(e.target.value))}
-                        className="flex-1 accent-primary"
+                        className="flex-1 accent-primary h-1.5"
                       />
-                      <span className="text-xs font-mono text-muted-foreground w-8 text-right">{fontSize}px</span>
+                      <span className="text-sm font-bold text-muted-foreground">A</span>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Color Variants — GoCase card style */}
-              {variants.length > 0 && (
-                <div className="mt-5">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                    <Palette className="w-3.5 h-3.5" />
-                    Cor da garrafa
-                    {selectedVariant && (
-                      <span className="text-primary ml-1">— {selectedVariant.name}</span>
-                    )}
-                  </p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {variants.map((v, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setSelectedVariant(selectedVariant?.hex === v.hex ? null : v)}
-                        className={`rounded-xl border-2 p-2 text-center transition-all ${
-                          selectedVariant?.hex === v.hex
-                            ? "border-primary shadow-md bg-primary/5"
-                            : "border-border hover:border-muted-foreground/40"
-                        }`}
-                      >
-                        <div
-                          className="w-10 h-10 rounded-full mx-auto mb-1 border border-border/50"
-                          style={{ backgroundColor: v.hex }}
-                        />
-                        <p className="text-[10px] font-semibold text-foreground leading-tight line-clamp-1">
-                          {v.name}
-                        </p>
-                        <p className="text-[11px] font-black text-primary mt-0.5">
-                          {fmt(v.price ?? product.price)}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* CTA */}
-              <div className="mt-6">
-                <button
-                  onClick={() => addToCart(product)}
-                  disabled={product.stock_quantity <= 0}
-                  className="w-full bg-primary text-primary-foreground py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all disabled:opacity-40 shadow-lg"
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                  {product.stock_quantity <= 0 ? "PRODUTO ESGOTADO" : "COMPRAR"}
-                </button>
-              </div>
+              <button
+                onClick={() => addToCart(product)}
+                disabled={product.stock_quantity <= 0}
+                className="w-full bg-primary text-primary-foreground py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all disabled:opacity-40 shadow-lg mt-2"
+              >
+                <ShoppingCart className="w-5 h-5" />
+                {product.stock_quantity <= 0 ? "PRODUTO ESGOTADO" : "COMPRAR AGORA"}
+              </button>
 
               {/* Trust badges */}
-              <div className="grid grid-cols-2 gap-3 mt-5 pt-5 border-t border-border">
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Truck className="w-4 h-4 text-primary shrink-0" />
-                  <span>Frete grátis a partir de R$299,90</span>
+                  <span>Frete grátis acima de R$299,90</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <CreditCard className="w-4 h-4 text-primary shrink-0" />
