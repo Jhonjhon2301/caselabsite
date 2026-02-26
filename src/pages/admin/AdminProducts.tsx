@@ -3,6 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, X, Package } from "lucide-react";
 
+interface ProductVariant {
+  name: string;
+  hex: string;
+  price?: number;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -14,7 +20,7 @@ interface Product {
   is_customizable: boolean;
   stock_quantity: number;
   measurements: string | null;
-  colors: string[] | null;
+  variants: ProductVariant[] | null;
 }
 
 interface Category {
@@ -32,10 +38,10 @@ export default function AdminProducts() {
     name: "", description: "", price: "", category_id: "",
     is_active: true, is_customizable: false, stock_quantity: "0", measurements: "",
   });
-  const [productColors, setProductColors] = useState<string[]>([]);
-  const [newColor, setNewColor] = useState("#000000");
   const [uploading, setUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [newVariant, setNewVariant] = useState({ name: "", hex: "#000000", price: "" });
 
   const fetchData = async () => {
     setLoading(true);
@@ -54,24 +60,19 @@ export default function AdminProducts() {
     setEditing(null);
     setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, stock_quantity: "0", measurements: "" });
     setImageUrls([]);
-    setProductColors([]);
+    setVariants([]);
     setShowForm(true);
   };
 
   const openEdit = (p: Product) => {
     setEditing(p);
     setForm({
-      name: p.name,
-      description: p.description ?? "",
-      price: String(p.price),
-      category_id: p.category_id ?? "",
-      is_active: p.is_active,
-      is_customizable: p.is_customizable,
-      stock_quantity: String(p.stock_quantity ?? 0),
-      measurements: p.measurements ?? "",
+      name: p.name, description: p.description ?? "", price: String(p.price),
+      category_id: p.category_id ?? "", is_active: p.is_active, is_customizable: p.is_customizable,
+      stock_quantity: String(p.stock_quantity ?? 0), measurements: p.measurements ?? "",
     });
     setImageUrls(p.images ?? []);
-    setProductColors(p.colors ?? []);
+    setVariants((p.variants as ProductVariant[]) ?? []);
     setShowForm(true);
   };
 
@@ -94,6 +95,18 @@ export default function AdminProducts() {
 
   const removeImage = (idx: number) => setImageUrls((prev) => prev.filter((_, i) => i !== idx));
 
+  const addVariant = () => {
+    if (!newVariant.name.trim()) { toast.error("Informe o nome da cor"); return; }
+    setVariants((prev) => [...prev, {
+      name: newVariant.name.trim(),
+      hex: newVariant.hex,
+      price: newVariant.price ? parseFloat(newVariant.price) : undefined,
+    }]);
+    setNewVariant({ name: "", hex: "#000000", price: "" });
+  };
+
+  const removeVariant = (idx: number) => setVariants((prev) => prev.filter((_, i) => i !== idx));
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim() || !form.price) { toast.error("Preencha nome e preço"); return; }
@@ -108,15 +121,15 @@ export default function AdminProducts() {
       images: imageUrls,
       stock_quantity: parseInt(form.stock_quantity) || 0,
       measurements: form.measurements.trim() || null,
-      colors: productColors.length > 0 ? productColors : [],
+      variants: (variants.length > 0 ? variants : []) as any,
     };
 
     if (editing) {
-      const { error } = await supabase.from("products").update(payload).eq("id", editing.id);
+      const { error } = await supabase.from("products").update(payload as any).eq("id", editing.id);
       if (error) { toast.error("Erro ao atualizar"); return; }
       toast.success("Produto atualizado!");
     } else {
-      const { error } = await supabase.from("products").insert(payload);
+      const { error } = await supabase.from("products").insert(payload as any);
       if (error) { toast.error("Erro ao criar"); return; }
       toast.success("Produto criado!");
     }
@@ -152,7 +165,7 @@ export default function AdminProducts() {
                 <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" required />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Preço (R$) *</label>
+                <label className="block text-sm font-medium mb-1">Preço base (R$) *</label>
                 <input type="number" step="0.01" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" required />
               </div>
             </div>
@@ -191,6 +204,7 @@ export default function AdminProducts() {
               </label>
             </div>
 
+            {/* Images */}
             <div>
               <label className="block text-sm font-medium mb-2">Imagens</label>
               <div className="flex flex-wrap gap-3 mb-3">
@@ -208,23 +222,38 @@ export default function AdminProducts() {
               {uploading && <p className="text-xs text-muted-foreground">Enviando...</p>}
             </div>
 
+            {/* Variants */}
             <div>
-              <label className="block text-sm font-medium mb-2">Cores disponíveis</label>
-              <div className="flex flex-wrap items-center gap-2 mb-2">
-                {productColors.map((color, i) => (
-                  <div key={i} className="flex items-center gap-1 bg-muted rounded-full pl-1 pr-2 py-1">
-                    <div className="w-6 h-6 rounded-full border border-border" style={{ backgroundColor: color }} />
-                    <span className="text-xs font-mono">{color}</span>
-                    <button type="button" onClick={() => setProductColors(prev => prev.filter((_, idx) => idx !== i))} className="ml-1 text-muted-foreground hover:text-destructive">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} className="w-10 h-10 rounded-lg cursor-pointer border-0" />
-                <button type="button" onClick={() => { if (!productColors.includes(newColor)) { setProductColors(prev => [...prev, newColor]); } }} className="btn-outline text-xs px-3 py-2">
-                  <Plus className="w-3 h-3" /> Adicionar cor
+              <label className="block text-sm font-medium mb-2">Variantes de cor</label>
+              {variants.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-3">
+                  {variants.map((v, i) => (
+                    <div key={i} className="relative rounded-xl border border-border p-3 text-center bg-muted/50">
+                      <button type="button" onClick={() => removeVariant(i)} className="absolute top-1.5 right-1.5 text-muted-foreground hover:text-destructive">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="w-8 h-8 rounded-full mx-auto mb-1 border border-border" style={{ backgroundColor: v.hex }} />
+                      <p className="text-xs font-semibold truncate">{v.name}</p>
+                      {v.price && <p className="text-[10px] text-primary font-bold">R$ {v.price.toFixed(2)}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="flex flex-wrap items-end gap-2 bg-muted/30 rounded-xl p-3 border border-border">
+                <div className="flex-1 min-w-[120px]">
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase">Nome da cor</label>
+                  <input type="text" value={newVariant.name} onChange={(e) => setNewVariant({ ...newVariant, name: e.target.value })} placeholder="Ex: Rosa, Azul Marinho" className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase">Cor</label>
+                  <input type="color" value={newVariant.hex} onChange={(e) => setNewVariant({ ...newVariant, hex: e.target.value })} className="w-10 h-10 rounded-lg cursor-pointer border border-input" />
+                </div>
+                <div className="w-28">
+                  <label className="block text-[10px] font-medium text-muted-foreground mb-1 uppercase">Preço (opcional)</label>
+                  <input type="number" step="0.01" min="0" value={newVariant.price} onChange={(e) => setNewVariant({ ...newVariant, price: e.target.value })} placeholder="R$" className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-ring" />
+                </div>
+                <button type="button" onClick={addVariant} className="btn-outline text-xs px-4 py-2.5 rounded-lg">
+                  <Plus className="w-3.5 h-3.5" /> Adicionar
                 </button>
               </div>
             </div>
@@ -246,31 +275,40 @@ export default function AdminProducts() {
         </div>
       ) : (
         <div className="grid gap-4">
-          {products.map((p) => (
-            <div key={p.id} className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
-              <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" /> : <Package className="w-full h-full p-3 text-muted-foreground" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-sm truncate">{p.name}</h3>
-                <p className="text-sm text-muted-foreground">R$ {Number(p.price).toFixed(2)}</p>
-                <div className="flex flex-wrap gap-2 mt-1">
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${p.is_active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                    {p.is_active ? "Ativo" : "Inativo"}
-                  </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${(p.stock_quantity ?? 0) > 0 ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700"}`}>
-                    Estoque: {p.stock_quantity ?? 0}
-                  </span>
-                  {p.measurements && <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{p.measurements}</span>}
-                  {p.is_customizable && <span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">Personalizável</span>}
+          {products.map((p) => {
+            const pVariants = (p.variants as ProductVariant[]) ?? [];
+            return (
+              <div key={p.id} className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" /> : <Package className="w-full h-full p-3 text-muted-foreground" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm truncate">{p.name}</h3>
+                  <p className="text-sm text-muted-foreground">R$ {Number(p.price).toFixed(2)}</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${p.is_active ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
+                      {p.is_active ? "Ativo" : "Inativo"}
+                    </span>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                      Estoque: {p.stock_quantity ?? 0}
+                    </span>
+                    {pVariants.length > 0 && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground flex items-center gap-1">
+                        {pVariants.slice(0, 4).map((v, i) => (
+                          <span key={i} className="w-3 h-3 rounded-full inline-block border border-border" style={{ backgroundColor: v.hex }} />
+                        ))}
+                        {pVariants.length > 4 && <span>+{pVariants.length - 4}</span>}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => openEdit(p)} className="p-2 hover:bg-muted rounded-lg transition-colors"><Pencil className="w-4 h-4" /></button>
+                  <button onClick={() => handleDelete(p.id)} className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-destructive"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => openEdit(p)} className="p-2 hover:bg-muted rounded-lg transition-colors"><Pencil className="w-4 h-4" /></button>
-                <button onClick={() => handleDelete(p.id)} className="p-2 hover:bg-destructive/10 rounded-lg transition-colors text-destructive"><Trash2 className="w-4 h-4" /></button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
