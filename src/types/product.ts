@@ -9,6 +9,7 @@ export interface Product {
   name: string;
   description: string | null;
   price: number;
+  purchase_cost: number;
   images: string[] | null;
   category_id: string | null;
   is_active: boolean;
