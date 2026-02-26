@@ -20,8 +20,8 @@ export default function Footer() {
             <div className="flex flex-col items-center text-center gap-2">
               <CreditCard className="w-7 h-7 text-primary" />
               <div>
-                <p className="text-xs font-bold text-foreground">3X SEM JUROS</p>
-                <p className="text-[10px] text-muted-foreground">A partir de R$199,90</p>
+                <p className="text-xs font-bold text-foreground">PAGAMENTO SEGURO</p>
+                <p className="text-[10px] text-muted-foreground">Cartão, Pix e boleto</p>
               </div>
             </div>
             <div className="flex flex-col items-center text-center gap-2">

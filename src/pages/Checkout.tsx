@@ -216,7 +216,7 @@ export default function Checkout() {
         <div className="container mx-auto px-4 py-2.5 flex items-center justify-center gap-6 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-primary" /> Compra Segura</span>
           <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5 text-primary" /> Frete Grátis +R$299</span>
-          <span className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5 text-primary" /> 3x sem juros</span>
+          <span className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5 text-primary" /> Pagamento Seguro</span>
         </div>
       </div>
 

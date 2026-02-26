@@ -72,7 +72,7 @@ export default function HeroSection() {
   useEffect(() => {
     const id = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % 3);
-    }, 3000);
+    }, 6000);
     return () => clearInterval(id);
   }, []);
 
