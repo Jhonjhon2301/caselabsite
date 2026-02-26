@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Upload, X, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, X, Package, Loader2 } from "lucide-react";
 
 interface ProductVariant {
   name: string;
@@ -76,6 +76,43 @@ export default function AdminProducts() {
     setShowForm(true);
   };
 
+  const [processingImages, setProcessingImages] = useState<Set<number>>(new Set());
+
+  const processImageWithAI = async (originalUrl: string, index: number): Promise<string | null> => {
+    try {
+      setProcessingImages(prev => new Set(prev).add(index));
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-product-image`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ imageUrl: originalUrl }),
+        }
+      );
+      if (!response.ok) {
+        const err = await response.json();
+        toast.error(err.error || "Erro ao processar imagem com IA");
+        return null;
+      }
+      const { processedUrl } = await response.json();
+      toast.success("Imagem processada com IA!");
+      return processedUrl;
+    } catch (err) {
+      console.error("AI processing error:", err);
+      toast.error("Erro ao processar imagem");
+      return null;
+    } finally {
+      setProcessingImages(prev => {
+        const next = new Set(prev);
+        next.delete(index);
+        return next;
+      });
+    }
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
@@ -91,6 +128,19 @@ export default function AdminProducts() {
     }
     setImageUrls((prev) => [...prev, ...newUrls]);
     setUploading(false);
+
+    // Process each uploaded image with AI automatically
+    const startIdx = imageUrls.length;
+    for (let i = 0; i < newUrls.length; i++) {
+      const processedUrl = await processImageWithAI(newUrls[i], startIdx + i);
+      if (processedUrl) {
+        setImageUrls(prev => {
+          const updated = [...prev];
+          updated[startIdx + i] = processedUrl;
+          return updated;
+        });
+      }
+    }
   };
 
   const removeImage = (idx: number) => setImageUrls((prev) => prev.filter((_, i) => i !== idx));
@@ -211,6 +261,11 @@ export default function AdminProducts() {
                 {imageUrls.map((url, i) => (
                   <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
                     <img src={url} alt="" className="w-full h-full object-cover" />
+                    {processingImages.has(i) && (
+                      <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
+                        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                      </div>
+                    )}
                     <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"><X className="w-3 h-3" /></button>
                   </div>
                 ))}
