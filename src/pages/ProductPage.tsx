@@ -94,6 +94,7 @@ export default function ProductPage() {
   // Text position from DB (defaults: top 42%, left 50%)
   const textTop = product.text_top ?? 42;
   const textLeft = product.text_left ?? 50;
+  const textRotation = product.text_rotation ?? 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -177,7 +178,7 @@ export default function ProductPage() {
                       style={{
                         top: `${textTop}%`,
                         left: `${textLeft}%`,
-                        transform: "translate(-50%, -50%)",
+                        transform: `translate(-50%, -50%) rotate(${textRotation}deg)`,
                       }}
                     >
                       <span

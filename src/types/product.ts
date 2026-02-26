@@ -19,6 +19,7 @@ export interface Product {
   measurements: string | null;
   variants: ProductVariant[] | null;
   category_name?: string;
-  text_top?: number;  // posição vertical (%) do texto personalizado
-  text_left?: number; // posição horizontal (%) do texto personalizado
+  text_top?: number;
+  text_left?: number;
+  text_rotation?: number; // ângulo de rotação do texto (0=horizontal, 90=vertical)
 }
