@@ -25,6 +25,7 @@ interface Product {
   text_top: number | null;
   text_left: number | null;
   text_rotation: number | null;
+  discount_percent: number;
 }
 
 interface Category {
@@ -41,7 +42,7 @@ export default function AdminProducts() {
   const [form, setForm] = useState({
     name: "", description: "", price: "", category_id: "",
     is_active: true, is_customizable: false,
-    text_top: "42", text_left: "50", text_rotation: "0",
+    text_top: "42", text_left: "50", text_rotation: "0", discount_percent: "0",
   });
   const [uploading, setUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -64,7 +65,7 @@ export default function AdminProducts() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50", text_rotation: "0" });
+    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50", text_rotation: "0", discount_percent: "0" });
     setImageUrls([]);
     setVariants([]);
     setShowForm(true);
@@ -75,7 +76,7 @@ export default function AdminProducts() {
     setForm({
       name: p.name, description: p.description ?? "", price: String(p.price),
       category_id: p.category_id ?? "", is_active: p.is_active, is_customizable: p.is_customizable,
-      text_top: String(p.text_top ?? 42), text_left: String(p.text_left ?? 50), text_rotation: String(p.text_rotation ?? 0),
+      text_top: String(p.text_top ?? 42), text_left: String(p.text_left ?? 50), text_rotation: String(p.text_rotation ?? 0), discount_percent: String(p.discount_percent ?? 0),
     });
     setImageUrls(p.images ?? []);
     setVariants((p.variants as ProductVariant[]) ?? []);
@@ -199,6 +200,7 @@ export default function AdminProducts() {
       text_top: form.is_customizable ? parseFloat(form.text_top) || 42 : null,
       text_left: form.is_customizable ? parseFloat(form.text_left) || 50 : null,
       text_rotation: form.is_customizable ? parseFloat(form.text_rotation) || 0 : null,
+      discount_percent: parseFloat(form.discount_percent) || 0,
     };
 
     if (editing) {
@@ -236,14 +238,23 @@ export default function AdminProducts() {
         <div className="bg-card border border-border rounded-xl p-6 mb-8">
           <h2 className="font-heading font-bold text-lg mb-4">{editing ? "Editar Produto" : "Novo Produto"}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Nome *</label>
                 <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" required />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Preço base (R$) *</label>
+                <label className="block text-sm font-medium mb-1">Preço (R$) *</label>
                 <input type="number" step="0.01" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Desconto (%)</label>
+                <input type="number" step="1" min="0" max="100" value={form.discount_percent} onChange={(e) => setForm({ ...form, discount_percent: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" placeholder="0" />
+                {parseFloat(form.discount_percent) > 0 && parseFloat(form.price) > 0 && (
+                  <p className="text-xs text-primary mt-1 font-semibold">
+                    De R$ {(parseFloat(form.price) / (1 - parseFloat(form.discount_percent) / 100)).toFixed(2)} por R$ {parseFloat(form.price).toFixed(2)} ({form.discount_percent}% OFF)
+                  </p>
+                )}
               </div>
             </div>
 

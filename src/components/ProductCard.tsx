@@ -18,10 +18,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   const variants: ProductVariant[] = (product.variants as ProductVariant[]) ?? [];
   const currentPrice = selectedVariant?.price ?? product.price;
 
-  // Simulate original price (20-35% higher) for discount display
-  const originalPrice = product.purchase_cost > currentPrice ? product.purchase_cost : currentPrice * 1.3;
-  const hasDiscount = originalPrice > currentPrice;
-  const discountPercent = hasDiscount ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100) : 0;
+  // Discount from admin
+  const discountPercent = product.discount_percent ?? 0;
+  const hasDiscount = discountPercent > 0;
+  const originalPrice = hasDiscount ? currentPrice / (1 - discountPercent / 100) : currentPrice;
 
   return (
     <div className="group cursor-pointer bg-background rounded-xl border border-border hover:shadow-lg transition-shadow duration-300">
@@ -31,7 +31,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         onClick={() => navigate(`/produto/${product.id}`)}
       >
         <img
-          src={images[0]}
+          src={selectedVariant?.image || images[0]}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
@@ -43,11 +43,16 @@ export default function ProductCard({ product }: ProductCardProps) {
             Esgotado
           </span>
         )}
+        {hasDiscount && (
+          <span className="absolute top-2 right-2 bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">
+            {discountPercent}% OFF
+          </span>
+        )}
       </div>
 
       {/* Info */}
       <div className="p-3">
-        {/* Color swatches - always visible */}
+        {/* Color swatches */}
         {variants.length > 0 && (
           <div className="flex items-center gap-1 mb-2">
             {variants.slice(0, 5).map((v, i) => (
@@ -89,15 +94,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           )}
           <div className="flex items-center gap-2">
             <p className="text-base font-black text-foreground">{fmt(currentPrice)}</p>
-            {hasDiscount && discountPercent > 0 && (
-              <span className="text-[10px] font-bold text-destructive bg-destructive/10 px-1.5 py-0.5 rounded">
-                {discountPercent}% OFF
-              </span>
-            )}
           </div>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            ou 3x de {fmt(currentPrice / 3)} sem juros
-          </p>
         </div>
 
         {/* Buy button */}
