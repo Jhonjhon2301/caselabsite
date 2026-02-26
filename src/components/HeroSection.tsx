@@ -27,7 +27,7 @@ const defaults: BannerConfig = {
   marquee_text: "MELHORES OFERTAS DO ANO • GARRAFAS PERSONALIZADAS • FRETE GRÁTIS ACIMA DE R$299",
   countdown_end: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
   promo_title: "PISCOU, PERDEU",
-  promo_subtitle: "Garrafas a partir de R$79,90 + MIMO!",
+  promo_subtitle: "Desconto + MIMO!",
   cta_text: "COMPRAR AGORA",
   cta_link: "#produtos",
 };
