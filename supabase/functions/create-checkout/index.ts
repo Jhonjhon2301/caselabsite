@@ -104,7 +104,14 @@ serve(async (req) => {
       metadata: {
         order_id: order.id,
       },
-      payment_method_types: ["card"],
+      payment_method_types: ["card", "pix"],
+      payment_intent_data: {
+        payment_method_options: {
+          pix: {
+            expires_after_seconds: 1800,
+          },
+        },
+      },
     });
 
     // Save stripe session id to order
