@@ -105,11 +105,9 @@ serve(async (req) => {
         order_id: order.id,
       },
       payment_method_types: ["card", "pix"],
-      payment_intent_data: {
-        payment_method_options: {
-          pix: {
-            expires_after_seconds: 1800,
-          },
+      payment_method_options: {
+        pix: {
+          expires_after_seconds: 1800,
         },
       },
     });
