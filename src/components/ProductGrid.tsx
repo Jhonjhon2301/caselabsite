@@ -60,13 +60,11 @@ export default function ProductGrid({ searchQuery }: ProductGridProps) {
   return (
     <>
       <CategoryBar active={activeCategory} onChange={setActiveCategory} categories={categoryNames} />
-      <section id="produtos" className="py-10 md:py-14 bg-background">
-        <div className="container mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="font-heading font-black text-2xl md:text-3xl text-foreground">
-              Tendências e Lançamentos
-            </h2>
-          </div>
+      <section id="produtos" className="py-8 md:py-12 bg-background">
+        <div className="container mx-auto px-4">
+          <h2 className="font-heading font-black text-xl md:text-2xl text-foreground text-center mb-8">
+            Tendências e Lançamentos
+          </h2>
 
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 gap-3">
@@ -79,7 +77,7 @@ export default function ProductGrid({ searchQuery }: ProductGridProps) {
               <p className="text-sm text-muted-foreground mt-1">Tente buscar por outro termo.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4">
               {filtered.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
