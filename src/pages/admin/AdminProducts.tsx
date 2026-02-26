@@ -24,6 +24,7 @@ interface Product {
   variants: ProductVariant[] | null;
   text_top: number | null;
   text_left: number | null;
+  text_rotation: number | null;
 }
 
 interface Category {
@@ -40,7 +41,7 @@ export default function AdminProducts() {
   const [form, setForm] = useState({
     name: "", description: "", price: "", category_id: "",
     is_active: true, is_customizable: false,
-    text_top: "42", text_left: "50",
+    text_top: "42", text_left: "50", text_rotation: "0",
   });
   const [uploading, setUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -63,7 +64,7 @@ export default function AdminProducts() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50" });
+    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50", text_rotation: "0" });
     setImageUrls([]);
     setVariants([]);
     setShowForm(true);
@@ -74,7 +75,7 @@ export default function AdminProducts() {
     setForm({
       name: p.name, description: p.description ?? "", price: String(p.price),
       category_id: p.category_id ?? "", is_active: p.is_active, is_customizable: p.is_customizable,
-      text_top: String(p.text_top ?? 42), text_left: String(p.text_left ?? 50),
+      text_top: String(p.text_top ?? 42), text_left: String(p.text_left ?? 50), text_rotation: String(p.text_rotation ?? 0),
     });
     setImageUrls(p.images ?? []);
     setVariants((p.variants as ProductVariant[]) ?? []);
@@ -197,6 +198,7 @@ export default function AdminProducts() {
       variants: (variants.length > 0 ? variants : []) as any,
       text_top: form.is_customizable ? parseFloat(form.text_top) || 42 : null,
       text_left: form.is_customizable ? parseFloat(form.text_left) || 50 : null,
+      text_rotation: form.is_customizable ? parseFloat(form.text_rotation) || 0 : null,
     };
 
     if (editing) {
@@ -279,7 +281,7 @@ export default function AdminProducts() {
                 <p className="text-xs text-muted-foreground mb-3">
                   Defina onde o nome personalizado aparece sobre a imagem (em %). Ex: Top 42%, Left 50% = centro da garrafa.
                 </p>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1">Posição vertical (Top %)</label>
                     <input
@@ -297,6 +299,16 @@ export default function AdminProducts() {
                       onChange={(e) => setForm({ ...form, text_left: e.target.value })}
                       className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
                     />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Rotação (graus)</label>
+                    <input
+                      type="number" step="1" min="-180" max="180"
+                      value={form.text_rotation}
+                      onChange={(e) => setForm({ ...form, text_rotation: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
+                    />
+                    <p className="text-[9px] text-muted-foreground mt-1">0 = horizontal, 90 = vertical, -90 = vertical invertido</p>
                   </div>
                 </div>
               </div>
