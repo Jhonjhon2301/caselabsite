@@ -433,7 +433,7 @@ export default function ProductPage() {
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <CreditCard className="w-4 h-4 text-primary shrink-0" />
-                  <span>3x sem juros</span>
+                  <span>Pagamento seguro</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <ShieldCheck className="w-4 h-4 text-primary shrink-0" />

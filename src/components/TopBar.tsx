@@ -4,7 +4,7 @@ export default function TopBar() {
   return (
     <div className="bg-secondary border-b border-border">
       <div className="container mx-auto flex items-center justify-between py-1.5 text-[11px]">
-        <span className="font-semibold text-foreground">3X sem juros a partir de R$199,90</span>
+        <span className="font-semibold text-foreground">Frete Grátis acima de R$299</span>
         <div className="flex items-center gap-1 sm:gap-4">
           <a
             href="https://wa.me/5561992629861"

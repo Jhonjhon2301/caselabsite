@@ -4,17 +4,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, ImageIcon } from "lucide-react";
+import { Save, Upload, ImageIcon, Trash2 } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
 interface BannerConfig {
   banner_image_url: string;
   marquee_text: string;
+  countdown_end: string;
+  promo_title: string;
+  promo_subtitle: string;
+  cta_text: string;
+  cta_link: string;
 }
 
 const defaultConfig: BannerConfig = {
   banner_image_url: "",
-  marquee_text: "GARRAFAS PERSONALIZADAS • QUALIDADE PREMIUM • ENTREGA PARA TODO BRASIL • SUA MARCA, SUA GARRAFA •",
+  marquee_text: "MELHORES OFERTAS DO ANO • GARRAFAS PERSONALIZADAS • FRETE GRÁTIS ACIMA DE R$299",
+  countdown_end: "",
+  promo_title: "PISCOU, PERDEU",
+  promo_subtitle: "Garrafas com desconto + MIMO!",
+  cta_text: "COMPRAR AGORA",
+  cta_link: "#produtos",
 };
 
 export default function AdminBanner() {
@@ -31,11 +41,8 @@ export default function AdminBanner() {
       .single()
       .then(({ data }) => {
         if (data?.value) {
-          const v = data.value as unknown as BannerConfig;
-          setConfig({
-            banner_image_url: v.banner_image_url || "",
-            marquee_text: v.marquee_text || defaultConfig.marquee_text,
-          });
+          const v = data.value as unknown as Partial<BannerConfig>;
+          setConfig((prev) => ({ ...prev, ...v }));
         }
       });
   }, []);
@@ -44,8 +51,10 @@ export default function AdminBanner() {
     setSaving(true);
     const { error } = await supabase
       .from("site_settings")
-      .update({ value: config as unknown as Json })
-      .eq("key", "hero_banner");
+      .upsert(
+        { key: "hero_banner", value: config as unknown as Json, updated_at: new Date().toISOString() },
+        { onConflict: "key" }
+      );
 
     if (error) {
       toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
@@ -76,12 +85,17 @@ export default function AdminBanner() {
     toast({ title: "Imagem enviada!" });
   };
 
+  const update = (field: keyof BannerConfig, value: string) =>
+    setConfig((prev) => ({ ...prev, [field]: value }));
+
   return (
     <div className="p-6 max-w-3xl">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-heading font-bold">Banner Principal</h1>
-          <p className="text-sm text-muted-foreground">Envie a arte pronta do banner e edite a faixa de texto</p>
+          <p className="text-sm text-muted-foreground">
+            Configure todos os elementos do banner da página inicial
+          </p>
         </div>
         <Button onClick={handleSave} disabled={saving}>
           <Save className="w-4 h-4 mr-2" />
@@ -90,21 +104,31 @@ export default function AdminBanner() {
       </div>
 
       <div className="space-y-6">
-        {/* Banner image */}
+        {/* Banner image override */}
         <div className="space-y-2">
-          <Label>Arte do Banner</Label>
+          <Label>Arte do Banner (opcional — substitui o banner interativo)</Label>
           <div className="border border-border rounded-lg p-4 space-y-3">
             <div className="bg-muted rounded-md px-3 py-2 text-xs text-muted-foreground">
               <strong>Medidas recomendadas:</strong> 1920 × 600px (desktop) — formato 16:5, landscape.
-              Formatos aceitos: PNG, JPG, WEBP. Peso máximo: 2MB.
+              Se enviada, substitui o banner interativo com garrafas.
             </div>
 
             {config.banner_image_url ? (
-              <img
-                src={config.banner_image_url}
-                alt="Banner atual"
-                className="w-full max-h-64 object-cover rounded-md"
-              />
+              <div className="relative">
+                <img
+                  src={config.banner_image_url}
+                  alt="Banner atual"
+                  className="w-full max-h-64 object-cover rounded-md"
+                />
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2"
+                  onClick={() => update("banner_image_url", "")}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             ) : (
               <div className="h-40 flex items-center justify-center text-muted-foreground bg-muted/50 rounded-md">
                 <ImageIcon className="w-10 h-10" />
@@ -128,16 +152,69 @@ export default function AdminBanner() {
           </div>
         </div>
 
+        {/* Promo title */}
+        <div className="space-y-2">
+          <Label>Título da promoção</Label>
+          <Input
+            value={config.promo_title}
+            onChange={(e) => update("promo_title", e.target.value)}
+            placeholder="Ex: PISCOU, PERDEU"
+          />
+        </div>
+
+        {/* Promo subtitle */}
+        <div className="space-y-2">
+          <Label>Subtítulo da promoção</Label>
+          <Input
+            value={config.promo_subtitle}
+            onChange={(e) => update("promo_subtitle", e.target.value)}
+            placeholder="Ex: Garrafas com desconto + MIMO!"
+          />
+        </div>
+
+        {/* CTA */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Texto do botão (CTA)</Label>
+            <Input
+              value={config.cta_text}
+              onChange={(e) => update("cta_text", e.target.value)}
+              placeholder="COMPRAR AGORA"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Link do botão</Label>
+            <Input
+              value={config.cta_link}
+              onChange={(e) => update("cta_link", e.target.value)}
+              placeholder="#produtos"
+            />
+          </div>
+        </div>
+
+        {/* Countdown */}
+        <div className="space-y-2">
+          <Label>Data/hora fim do countdown</Label>
+          <Input
+            type="datetime-local"
+            value={config.countdown_end ? config.countdown_end.slice(0, 16) : ""}
+            onChange={(e) => update("countdown_end", e.target.value ? new Date(e.target.value).toISOString() : "")}
+          />
+          <p className="text-xs text-muted-foreground">
+            Deixe vazio para usar um countdown automático de 6 horas.
+          </p>
+        </div>
+
         {/* Marquee text */}
         <div className="space-y-2">
           <Label>Texto da faixa preta (marquee)</Label>
           <Input
             value={config.marquee_text}
-            onChange={(e) => setConfig((prev) => ({ ...prev, marquee_text: e.target.value }))}
+            onChange={(e) => update("marquee_text", e.target.value)}
             placeholder="Texto que roda na faixa preta..."
           />
           <p className="text-xs text-muted-foreground">
-            Use " • " para separar os itens. Ex: ITEM 1 • ITEM 2 • ITEM 3 •
+            Use " • " para separar os itens. Ex: ITEM 1 • ITEM 2 • ITEM 3
           </p>
         </div>
       </div>
