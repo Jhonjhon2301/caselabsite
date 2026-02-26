@@ -2,6 +2,7 @@ export interface ProductVariant {
   name: string;
   hex: string;
   price?: number;
+  image?: string; // URL da imagem específica desta cor
 }
 
 export interface Product {
@@ -18,4 +19,6 @@ export interface Product {
   measurements: string | null;
   variants: ProductVariant[] | null;
   category_name?: string;
+  text_top?: number;  // posição vertical (%) do texto personalizado
+  text_left?: number; // posição horizontal (%) do texto personalizado
 }

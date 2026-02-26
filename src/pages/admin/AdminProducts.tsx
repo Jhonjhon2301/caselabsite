@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Upload, X, Package, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Upload, X, Package, Loader2, Image, Move } from "lucide-react";
 
 interface ProductVariant {
   name: string;
   hex: string;
   price?: number;
+  image?: string;
 }
 
 interface Product {
@@ -21,6 +22,8 @@ interface Product {
   stock_quantity: number;
   measurements: string | null;
   variants: ProductVariant[] | null;
+  text_top: number | null;
+  text_left: number | null;
 }
 
 interface Category {
@@ -37,11 +40,13 @@ export default function AdminProducts() {
   const [form, setForm] = useState({
     name: "", description: "", price: "", category_id: "",
     is_active: true, is_customizable: false,
+    text_top: "42", text_left: "50",
   });
   const [uploading, setUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [newVariant, setNewVariant] = useState({ name: "", hex: "#000000", price: "" });
+  const [variantUploading, setVariantUploading] = useState<number | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -58,7 +63,7 @@ export default function AdminProducts() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false });
+    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50" });
     setImageUrls([]);
     setVariants([]);
     setShowForm(true);
@@ -69,6 +74,7 @@ export default function AdminProducts() {
     setForm({
       name: p.name, description: p.description ?? "", price: String(p.price),
       category_id: p.category_id ?? "", is_active: p.is_active, is_customizable: p.is_customizable,
+      text_top: String(p.text_top ?? 42), text_left: String(p.text_left ?? 50),
     });
     setImageUrls(p.images ?? []);
     setVariants((p.variants as ProductVariant[]) ?? []);
@@ -112,23 +118,27 @@ export default function AdminProducts() {
     }
   };
 
+  const uploadFile = async (file: File): Promise<string | null> => {
+    const ext = file.name.split(".").pop();
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file);
+    if (error) { toast.error(`Erro ao enviar ${file.name}`); return null; }
+    const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
+    return urlData.publicUrl;
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
     setUploading(true);
     const newUrls: string[] = [];
     for (const file of Array.from(files)) {
-      const ext = file.name.split(".").pop();
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error } = await supabase.storage.from("product-images").upload(path, file);
-      if (error) { toast.error(`Erro ao enviar ${file.name}`); continue; }
-      const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
-      newUrls.push(urlData.publicUrl);
+      const url = await uploadFile(file);
+      if (url) newUrls.push(url);
     }
     setImageUrls((prev) => [...prev, ...newUrls]);
     setUploading(false);
 
-    // Process each uploaded image with AI automatically
     const startIdx = imageUrls.length;
     for (let i = 0; i < newUrls.length; i++) {
       const processedUrl = await processImageWithAI(newUrls[i], startIdx + i);
@@ -140,6 +150,22 @@ export default function AdminProducts() {
         });
       }
     }
+  };
+
+  const handleVariantImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, variantIdx: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setVariantUploading(variantIdx);
+    const url = await uploadFile(file);
+    if (url) {
+      setVariants(prev => {
+        const updated = [...prev];
+        updated[variantIdx] = { ...updated[variantIdx], image: url };
+        return updated;
+      });
+      toast.success(`Imagem da variante "${variants[variantIdx].name}" enviada!`);
+    }
+    setVariantUploading(null);
   };
 
   const removeImage = (idx: number) => setImageUrls((prev) => prev.filter((_, i) => i !== idx));
@@ -169,6 +195,8 @@ export default function AdminProducts() {
       is_customizable: form.is_customizable,
       images: imageUrls,
       variants: (variants.length > 0 ? variants : []) as any,
+      text_top: form.is_customizable ? parseFloat(form.text_top) || 42 : null,
+      text_left: form.is_customizable ? parseFloat(form.text_left) || 50 : null,
     };
 
     if (editing) {
@@ -223,13 +251,11 @@ export default function AdminProducts() {
             </div>
 
             <div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Categoria</label>
-                <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none">
-                  <option value="">Sem categoria</option>
-                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
+              <label className="block text-sm font-medium mb-1">Categoria</label>
+              <select value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none">
+                <option value="">Sem categoria</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
             </div>
 
             <div className="flex items-center gap-6">
@@ -243,9 +269,42 @@ export default function AdminProducts() {
               </label>
             </div>
 
+            {/* Text position — only shown if customizable */}
+            {form.is_customizable && (
+              <div className="border border-primary/30 rounded-xl p-4 bg-primary/5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Move className="w-4 h-4 text-primary" />
+                  <h3 className="text-sm font-bold text-foreground">Posição do texto na garrafa</h3>
+                </div>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Defina onde o nome personalizado aparece sobre a imagem (em %). Ex: Top 42%, Left 50% = centro da garrafa.
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Posição vertical (Top %)</label>
+                    <input
+                      type="number" step="1" min="0" max="100"
+                      value={form.text_top}
+                      onChange={(e) => setForm({ ...form, text_top: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-muted-foreground mb-1">Posição horizontal (Left %)</label>
+                    <input
+                      type="number" step="1" min="0" max="100"
+                      value={form.text_left}
+                      onChange={(e) => setForm({ ...form, text_left: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Images */}
             <div>
-              <label className="block text-sm font-medium mb-2">Imagens</label>
+              <label className="block text-sm font-medium mb-2">Imagens do produto</label>
               <div className="flex flex-wrap gap-3 mb-3">
                 {imageUrls.map((url, i) => (
                   <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden border border-border">
@@ -266,19 +325,53 @@ export default function AdminProducts() {
               {uploading && <p className="text-xs text-muted-foreground">Enviando...</p>}
             </div>
 
-            {/* Variants */}
+            {/* Variants with image upload */}
             <div>
-              <label className="block text-sm font-medium mb-2">Variantes de cor</label>
+              <label className="block text-sm font-medium mb-2">Variantes de cor (cada uma com sua imagem)</label>
               {variants.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                   {variants.map((v, i) => (
-                    <div key={i} className="relative rounded-xl border border-border p-3 text-center bg-muted/50">
-                      <button type="button" onClick={() => removeVariant(i)} className="absolute top-1.5 right-1.5 text-muted-foreground hover:text-destructive">
+                    <div key={i} className="relative rounded-xl border border-border p-3 bg-muted/50 flex gap-3 items-start">
+                      <button type="button" onClick={() => removeVariant(i)} className="absolute top-2 right-2 text-muted-foreground hover:text-destructive">
                         <X className="w-3.5 h-3.5" />
                       </button>
-                      <div className="w-8 h-8 rounded-full mx-auto mb-1 border border-border" style={{ backgroundColor: v.hex }} />
-                      <p className="text-xs font-semibold truncate">{v.name}</p>
-                      {v.price && <p className="text-[10px] text-primary font-bold">R$ {v.price.toFixed(2)}</p>}
+                      {/* Color circle */}
+                      <div className="flex flex-col items-center gap-1 shrink-0">
+                        <div className="w-10 h-10 rounded-full border-2 border-border" style={{ backgroundColor: v.hex }} />
+                        <p className="text-[10px] font-semibold truncate max-w-[60px]">{v.name}</p>
+                        {v.price && <p className="text-[10px] text-primary font-bold">R$ {v.price.toFixed(2)}</p>}
+                      </div>
+                      {/* Variant image */}
+                      <div className="flex-1">
+                        {v.image ? (
+                          <div className="relative w-full h-20 rounded-lg overflow-hidden border border-border">
+                            <img src={v.image} alt={v.name} className="w-full h-full object-cover" />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = [...variants];
+                                updated[i] = { ...updated[i], image: undefined };
+                                setVariants(updated);
+                              }}
+                              className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="w-full h-20 rounded-lg border-2 border-dashed border-border flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-colors gap-1">
+                            {variantUploading === i ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                            ) : (
+                              <>
+                                <Image className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-[10px] text-muted-foreground">Imagem desta cor</span>
+                              </>
+                            )}
+                            <input type="file" accept="image/*" onChange={(e) => handleVariantImageUpload(e, i)} className="hidden" />
+                          </label>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -333,6 +426,11 @@ export default function AdminProducts() {
                     <span className={`text-xs px-2 py-0.5 rounded-full ${p.is_active ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"}`}>
                       {p.is_active ? "Ativo" : "Inativo"}
                     </span>
+                    {p.is_customizable && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                        ✏️ Personalizável
+                      </span>
+                    )}
                     {pVariants.length > 0 && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground flex items-center gap-1">
                         {pVariants.slice(0, 4).map((v, i) => (
