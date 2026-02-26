@@ -9,5 +9,6 @@ export interface Product {
   is_customizable: boolean;
   stock_quantity: number;
   measurements: string | null;
+  colors: string[] | null;
   category_name?: string;
 }
