@@ -21,5 +21,6 @@ export interface Product {
   category_name?: string;
   text_top?: number;
   text_left?: number;
-  text_rotation?: number; // ângulo de rotação do texto (0=horizontal, 90=vertical)
+  text_rotation?: number;
+  discount_percent?: number; // 0-100, set in admin
 }

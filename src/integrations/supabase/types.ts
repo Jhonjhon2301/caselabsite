@@ -325,6 +325,7 @@ export type Database = {
           circumference_cm: number | null
           created_at: string
           description: string | null
+          discount_percent: number | null
           height_cm: number | null
           id: string
           images: string[] | null
@@ -346,6 +347,7 @@ export type Database = {
           circumference_cm?: number | null
           created_at?: string
           description?: string | null
+          discount_percent?: number | null
           height_cm?: number | null
           id?: string
           images?: string[] | null
@@ -367,6 +369,7 @@ export type Database = {
           circumference_cm?: number | null
           created_at?: string
           description?: string | null
+          discount_percent?: number | null
           height_cm?: number | null
           id?: string
           images?: string[] | null

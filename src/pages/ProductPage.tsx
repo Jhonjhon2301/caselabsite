@@ -83,9 +83,9 @@ export default function ProductPage() {
   const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   const variants: ProductVariant[] = (product.variants as ProductVariant[]) ?? [];
   const currentPrice = selectedVariant?.price ?? product.price;
-  const originalPrice = product.purchase_cost > currentPrice ? product.purchase_cost : currentPrice * 1.3;
-  const hasDiscount = originalPrice > currentPrice;
-  const discountPercent = hasDiscount ? Math.round(((originalPrice - currentPrice) / originalPrice) * 100) : 0;
+  const discountPercent = product.discount_percent ?? 0;
+  const hasDiscount = discountPercent > 0;
+  const originalPrice = hasDiscount ? currentPrice / (1 - discountPercent / 100) : currentPrice;
   const isCustomizable = product.is_customizable;
 
   // If variant has its own image, show that; otherwise show gallery image
@@ -264,9 +264,6 @@ export default function ProductPage() {
                     <span className="text-xs font-bold bg-destructive/10 text-destructive px-2 py-0.5 rounded-full">{discountPercent}% OFF</span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  ou <span className="font-bold">3x de {fmt(currentPrice / 3)}</span> sem juros
-                </p>
               </div>
 
               {/* Description */}
