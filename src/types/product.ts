@@ -1,3 +1,9 @@
+export interface ProductVariant {
+  name: string;
+  hex: string;
+  price?: number;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -9,6 +15,6 @@ export interface Product {
   is_customizable: boolean;
   stock_quantity: number;
   measurements: string | null;
-  colors: string[] | null;
+  variants: ProductVariant[] | null;
   category_name?: string;
 }

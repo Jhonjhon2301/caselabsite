@@ -322,7 +322,6 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
-          colors: string[] | null
           created_at: string
           description: string | null
           id: string
@@ -334,10 +333,10 @@ export type Database = {
           price: number
           stock_quantity: number
           updated_at: string
+          variants: Json | null
         }
         Insert: {
           category_id?: string | null
-          colors?: string[] | null
           created_at?: string
           description?: string | null
           id?: string
@@ -349,10 +348,10 @@ export type Database = {
           price?: number
           stock_quantity?: number
           updated_at?: string
+          variants?: Json | null
         }
         Update: {
           category_id?: string | null
-          colors?: string[] | null
           created_at?: string
           description?: string | null
           id?: string
@@ -364,6 +363,7 @@ export type Database = {
           price?: number
           stock_quantity?: number
           updated_at?: string
+          variants?: Json | null
         }
         Relationships: [
           {
