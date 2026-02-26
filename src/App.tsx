@@ -20,6 +20,7 @@ import AdminFinancial from "./pages/admin/AdminFinancial";
 import AdminTeam from "./pages/admin/AdminTeam";
 import AdminBanner from "./pages/admin/AdminBanner";
 import AdminDocuments from "./pages/admin/AdminDocuments";
+import AdminStock from "./pages/admin/AdminStock";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ const App = () => (
                 <Route path="team" element={<AdminTeam />} />
                 <Route path="banner" element={<AdminBanner />} />
                 <Route path="documents" element={<AdminDocuments />} />
+                <Route path="stock" element={<AdminStock />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

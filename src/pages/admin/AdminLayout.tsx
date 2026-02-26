@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useMemo } from "react";
-import { Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign, Users, ImageIcon, FileText } from "lucide-react";
+import { Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign, Users, ImageIcon, FileText, Warehouse } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
 export default function AdminLayout() {
@@ -17,6 +17,7 @@ export default function AdminLayout() {
   const links = useMemo(() => {
     const all = [
       { to: "/admin/products", icon: Package, label: "Produtos", roles: ["ceo", "vendedor"] },
+      { to: "/admin/stock", icon: Warehouse, label: "Estoque", roles: ["ceo", "vendedor", "estoquista"] },
       { to: "/admin/orders", icon: ShoppingCart, label: "Pedidos", roles: ["ceo", "vendedor"] },
       { to: "/admin/financial", icon: DollarSign, label: "Financeiro", roles: ["ceo", "financeiro"] },
       { to: "/admin/coupons", icon: Tag, label: "Cupons", roles: ["ceo", "vendedor"] },
