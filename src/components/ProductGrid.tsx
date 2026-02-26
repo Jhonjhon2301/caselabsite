@@ -21,7 +21,7 @@ export default function ProductGrid({ searchQuery }: ProductGridProps) {
         supabase.from("products").select("*").eq("is_active", true).order("created_at", { ascending: false }),
         supabase.from("categories").select("id, name").order("name"),
       ]);
-      
+
       const catMap = new Map((cats ?? []).map((c: any) => [c.id, c.name]));
       setProducts(
         (prods ?? []).map((p: any) => ({
@@ -59,20 +59,13 @@ export default function ProductGrid({ searchQuery }: ProductGridProps) {
 
   return (
     <>
-      <CategoryBar
-        active={activeCategory}
-        onChange={setActiveCategory}
-        categories={categoryNames}
-      />
-      <section id="produtos" className="py-12 md:py-16 bg-background">
+      <CategoryBar active={activeCategory} onChange={setActiveCategory} categories={categoryNames} />
+      <section id="produtos" className="py-10 md:py-14 bg-background">
         <div className="container mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="font-heading font-black text-3xl md:text-4xl text-foreground">
+          <div className="text-center mb-8">
+            <h2 className="font-heading font-black text-2xl md:text-3xl text-foreground">
               Tendências e Lançamentos
             </h2>
-            <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
-              Inspire-se e escolha o modelo perfeito — ou crie o seu do zero!
-            </p>
           </div>
 
           {loading ? (
@@ -86,7 +79,7 @@ export default function ProductGrid({ searchQuery }: ProductGridProps) {
               <p className="text-sm text-muted-foreground mt-1">Tente buscar por outro termo.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
               {filtered.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}

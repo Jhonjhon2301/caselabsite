@@ -11,7 +11,7 @@ interface BannerConfig {
 
 const defaults: BannerConfig = {
   banner_image_url: "",
-  marquee_text: "GARRAFAS PERSONALIZADAS • QUALIDADE PREMIUM • ENTREGA PARA TODO BRASIL • SUA MARCA, SUA GARRAFA •",
+  marquee_text: "MELHORES OFERTAS DO ANO • GARRAFAS PERSONALIZADAS • QUALIDADE PREMIUM • ENTREGA PARA TODO BRASIL •",
 };
 
 export default function HeroSection() {
@@ -48,11 +48,11 @@ export default function HeroSection() {
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-background rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
           </div>
 
-          <div className="container mx-auto px-4 py-12 md:py-20 relative z-10">
+          <div className="container mx-auto px-4 py-10 md:py-16 relative z-10">
             <div className="flex flex-col md:flex-row items-center gap-8 md:gap-12">
               {/* Text content */}
               <div className="flex-1 text-center md:text-left">
-                <span className="inline-block bg-background/15 backdrop-blur-sm text-primary-foreground text-[10px] font-bold tracking-[0.3em] uppercase px-4 py-1.5 rounded-full mb-5">
+                <span className="inline-block bg-background/15 backdrop-blur-sm text-primary-foreground text-[10px] font-bold tracking-[0.3em] uppercase px-4 py-1.5 rounded-full mb-4">
                   ✨ Garrafas Térmicas Premium
                 </span>
 
@@ -61,26 +61,38 @@ export default function HeroSection() {
                   <span className="block text-2xl sm:text-3xl md:text-4xl font-bold opacity-90 mt-1">SUA GARRAFA</span>
                 </h1>
 
-                <p className="text-primary-foreground/80 text-sm md:text-base max-w-md leading-relaxed mb-8 mx-auto md:mx-0">
-                  A cara da sua empresa, profissão ou estilo pessoal em uma garrafa térmica exclusiva e de alta qualidade.
+                <p className="text-primary-foreground/80 text-sm md:text-base max-w-md leading-relaxed mb-6 mx-auto md:mx-0">
+                  A cara da sua empresa, profissão ou estilo pessoal em uma garrafa térmica exclusiva.
                 </p>
 
                 <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                  <a href="#produtos" className="bg-background text-foreground px-8 py-3.5 rounded-full font-bold text-sm hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 inline-flex items-center gap-2">
-                    VER MODELOS
-                  </a>
-                  <a href="https://wa.me/5561992629861" target="_blank" rel="noopener noreferrer" className="border-2 border-primary-foreground/40 text-primary-foreground px-8 py-3.5 rounded-full font-bold text-sm hover:bg-primary-foreground/10 active:scale-[0.98] transition-all duration-200">
-                    ORÇAMENTO
+                  <a
+                    href="#produtos"
+                    className="bg-foreground text-background px-8 py-3 rounded-full font-bold text-sm hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 inline-flex items-center gap-2"
+                  >
+                    CONFERIR →
                   </a>
                 </div>
               </div>
 
               {/* Product showcase */}
               <div className="flex-1 flex justify-center items-end relative">
-                <div className="flex items-end gap-0 mt-8 md:mt-0">
-                  <img src={garrafa3} alt="Garrafa personalizada" className="w-24 md:w-32 lg:w-36 drop-shadow-2xl -rotate-12 hover:rotate-0 transition-transform duration-500" />
-                  <img src={garrafa6} alt="Garrafa personalizada" className="w-32 md:w-44 lg:w-52 drop-shadow-2xl relative z-10 hover:scale-105 transition-transform duration-500" />
-                  <img src={garrafa1} alt="Garrafa personalizada" className="w-24 md:w-32 lg:w-36 drop-shadow-2xl rotate-12 hover:rotate-0 transition-transform duration-500" />
+                <div className="flex items-end gap-0 mt-4 md:mt-0">
+                  <img
+                    src={garrafa3}
+                    alt="Garrafa personalizada"
+                    className="w-24 md:w-32 lg:w-36 drop-shadow-2xl -rotate-12 hover:rotate-0 transition-transform duration-500"
+                  />
+                  <img
+                    src={garrafa6}
+                    alt="Garrafa personalizada"
+                    className="w-32 md:w-44 lg:w-52 drop-shadow-2xl relative z-10 hover:scale-105 transition-transform duration-500"
+                  />
+                  <img
+                    src={garrafa1}
+                    alt="Garrafa personalizada"
+                    className="w-24 md:w-32 lg:w-36 drop-shadow-2xl rotate-12 hover:rotate-0 transition-transform duration-500"
+                  />
                 </div>
               </div>
             </div>
@@ -88,17 +100,16 @@ export default function HeroSection() {
         </div>
       )}
 
-      {/* Marquee */}
-      <div className="bg-foreground py-2.5 overflow-hidden">
+      {/* Marquee — GoCase style */}
+      <div className="bg-foreground py-2 overflow-hidden">
         <div className="animate-marquee whitespace-nowrap flex">
           {Array.from({ length: 6 }).map((_, i) => (
-            <span key={i} className="text-[11px] font-bold text-background/50 tracking-[0.25em] mx-8 uppercase">
+            <span key={i} className="text-[11px] font-bold text-primary tracking-[0.25em] mx-8 uppercase">
               {cfg.marquee_text}
             </span>
           ))}
         </div>
       </div>
-
     </section>
   );
 }

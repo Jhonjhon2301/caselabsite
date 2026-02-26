@@ -2,6 +2,8 @@ import { useState } from "react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
+import PromoBanner from "@/components/PromoBanner";
+import CategoryIcons from "@/components/CategoryIcons";
 import ProductGrid from "@/components/ProductGrid";
 import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
@@ -16,6 +18,8 @@ const Index = () => {
       <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       <main>
         <HeroSection />
+        <PromoBanner />
+        <CategoryIcons />
         <ProductGrid searchQuery={searchQuery} />
       </main>
       <Footer />
