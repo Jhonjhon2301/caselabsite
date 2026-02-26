@@ -14,6 +14,7 @@ interface Product {
   is_customizable: boolean;
   stock_quantity: number;
   measurements: string | null;
+  colors: string[] | null;
 }
 
 interface Category {
@@ -31,6 +32,8 @@ export default function AdminProducts() {
     name: "", description: "", price: "", category_id: "",
     is_active: true, is_customizable: false, stock_quantity: "0", measurements: "",
   });
+  const [productColors, setProductColors] = useState<string[]>([]);
+  const [newColor, setNewColor] = useState("#000000");
   const [uploading, setUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
 
@@ -51,6 +54,7 @@ export default function AdminProducts() {
     setEditing(null);
     setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, stock_quantity: "0", measurements: "" });
     setImageUrls([]);
+    setProductColors([]);
     setShowForm(true);
   };
 
@@ -67,6 +71,7 @@ export default function AdminProducts() {
       measurements: p.measurements ?? "",
     });
     setImageUrls(p.images ?? []);
+    setProductColors(p.colors ?? []);
     setShowForm(true);
   };
 
@@ -103,6 +108,7 @@ export default function AdminProducts() {
       images: imageUrls,
       stock_quantity: parseInt(form.stock_quantity) || 0,
       measurements: form.measurements.trim() || null,
+      colors: productColors.length > 0 ? productColors : [],
     };
 
     if (editing) {
@@ -200,6 +206,27 @@ export default function AdminProducts() {
                 </label>
               </div>
               {uploading && <p className="text-xs text-muted-foreground">Enviando...</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Cores disponíveis</label>
+              <div className="flex flex-wrap items-center gap-2 mb-2">
+                {productColors.map((color, i) => (
+                  <div key={i} className="flex items-center gap-1 bg-muted rounded-full pl-1 pr-2 py-1">
+                    <div className="w-6 h-6 rounded-full border border-border" style={{ backgroundColor: color }} />
+                    <span className="text-xs font-mono">{color}</span>
+                    <button type="button" onClick={() => setProductColors(prev => prev.filter((_, idx) => idx !== i))} className="ml-1 text-muted-foreground hover:text-destructive">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input type="color" value={newColor} onChange={(e) => setNewColor(e.target.value)} className="w-10 h-10 rounded-lg cursor-pointer border-0" />
+                <button type="button" onClick={() => { if (!productColors.includes(newColor)) { setProductColors(prev => [...prev, newColor]); } }} className="btn-outline text-xs px-3 py-2">
+                  <Plus className="w-3 h-3" /> Adicionar cor
+                </button>
+              </div>
             </div>
 
             <div className="flex gap-3">
