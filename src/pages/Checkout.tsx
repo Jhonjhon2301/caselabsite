@@ -129,8 +129,11 @@ export default function Checkout() {
 
       if (error) throw error;
       if (data?.url) {
+        // Open Stripe in new tab, then clear cart and show success message
+        window.open(data.url, "_blank");
         clearCart();
-        window.location.href = data.url;
+        toast.success("Redirecionando para pagamento em nova aba...");
+        navigate("/");
       } else {
         throw new Error("URL de pagamento não retornada");
       }
