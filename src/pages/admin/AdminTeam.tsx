@@ -12,17 +12,23 @@ interface TeamMember {
   full_name: string | null;
 }
 
-const POSITIONS = [
-  { value: "ceo", label: "CEO — Acesso total" },
-  { value: "vendedor", label: "Vendedor — Produtos, Pedidos e Cupons" },
-  { value: "financeiro", label: "Financeiro — Área financeira" },
-];
+interface PositionOption {
+  value: string;
+  label: string;
+}
 
 export default function AdminTeam() {
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [positions, setPositions] = useState<PositionOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPosition, setEditPosition] = useState("");
+
+  useEffect(() => {
+    supabase.from("custom_positions").select("name, label").order("created_at").then(({ data }) => {
+      setPositions((data ?? []).map((p: any) => ({ value: p.name, label: p.label })));
+    });
+  }, []);
 
   const fetchMembers = async () => {
     setLoading(true);
@@ -99,12 +105,12 @@ export default function AdminTeam() {
                 {editingId === m.id ? (
                   <div className="flex gap-2">
                     <select value={editPosition} onChange={(e) => setEditPosition(e.target.value)} className="px-2 py-1 rounded border border-input bg-background text-sm">
-                      {POSITIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
+                      {positions.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                     </select>
                     <button onClick={() => savePosition(m.id)} className="text-xs btn-primary py-1 px-3">Salvar</button>
                   </div>
                 ) : (
-                  <span className="text-sm capitalize">{POSITIONS.find((p) => p.value === m.position)?.label.split("—")[0] || m.position || "CEO"}</span>
+                  <span className="text-sm capitalize">{positions.find((p) => p.value === m.position)?.label.split("—")[0] || m.position || "CEO"}</span>
                 )}
               </div>
               <div className="flex gap-2">

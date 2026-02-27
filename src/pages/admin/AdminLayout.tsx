@@ -1,12 +1,53 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useMemo } from "react";
-import { Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign, Users, ImageIcon, FileText, Warehouse, CreditCard, Bell, StickyNote } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign,
+  Users, ImageIcon, FileText, Warehouse, CreditCard, Bell, StickyNote,
+  Palette, Shield
+} from "lucide-react";
 import logo from "@/assets/logo.jpeg";
+
+const ICON_MAP: Record<string, React.ElementType> = {
+  products: Package,
+  stock: Warehouse,
+  orders: ShoppingCart,
+  financial: DollarSign,
+  coupons: Tag,
+  categories: Grid3X3,
+  documents: FileText,
+  banner: ImageIcon,
+  payments: CreditCard,
+  reminders: Bell,
+  notes: StickyNote,
+  team: Users,
+  designer: Palette,
+  roles: Shield,
+};
+
+const LABEL_MAP: Record<string, string> = {
+  products: "Produtos",
+  stock: "Estoque",
+  orders: "Pedidos",
+  financial: "Financeiro",
+  coupons: "Cupons",
+  categories: "Categorias",
+  documents: "Documentos",
+  banner: "Banner",
+  payments: "Pagamentos",
+  reminders: "Lembretes",
+  notes: "Notas",
+  team: "Equipe",
+  designer: "Designer Drive",
+  roles: "Cargos",
+};
 
 export default function AdminLayout() {
   const { user, isAdmin, adminPosition, isLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [positionLabel, setPositionLabel] = useState("Admin");
 
   useEffect(() => {
     if (!isLoading && (!user || !isAdmin)) {
@@ -14,37 +55,42 @@ export default function AdminLayout() {
     }
   }, [user, isAdmin, isLoading, navigate]);
 
-  const links = useMemo(() => {
-    const all = [
-      { to: "/admin/products", icon: Package, label: "Produtos", roles: ["ceo", "vendedor"] },
-      { to: "/admin/stock", icon: Warehouse, label: "Estoque", roles: ["ceo", "vendedor", "estoquista"] },
-      { to: "/admin/orders", icon: ShoppingCart, label: "Pedidos", roles: ["ceo", "vendedor"] },
-      { to: "/admin/financial", icon: DollarSign, label: "Financeiro", roles: ["ceo", "financeiro"] },
-      { to: "/admin/coupons", icon: Tag, label: "Cupons", roles: ["ceo", "vendedor"] },
-      { to: "/admin/categories", icon: Grid3X3, label: "Categorias", roles: ["ceo"] },
-      { to: "/admin/documents", icon: FileText, label: "Documentos", roles: ["ceo", "vendedor"] },
-      { to: "/admin/banner", icon: ImageIcon, label: "Banner", roles: ["ceo"] },
-      { to: "/admin/payments", icon: CreditCard, label: "Pagamentos", roles: ["ceo"] },
-      { to: "/admin/reminders", icon: Bell, label: "Lembretes", roles: ["ceo", "vendedor"] },
-      { to: "/admin/notes", icon: StickyNote, label: "Notas", roles: ["ceo", "vendedor"] },
-      { to: "/admin/team", icon: Users, label: "Equipe", roles: ["ceo"] },
-    ];
-
-    const pos = adminPosition || "ceo";
-    return all.filter((l) => l.roles.includes(pos));
+  // Fetch permissions from custom_positions table
+  useEffect(() => {
+    if (!adminPosition) return;
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("custom_positions")
+        .select("label, permissions")
+        .eq("name", adminPosition)
+        .maybeSingle();
+      if (data) {
+        setPermissions(data.permissions as string[]);
+        setPositionLabel(data.label as string);
+      } else {
+        // Fallback: CEO gets everything
+        setPermissions(Object.keys(LABEL_MAP));
+        setPositionLabel("CEO");
+      }
+    };
+    fetch();
   }, [adminPosition]);
+
+  const links = useMemo(() => {
+    return permissions
+      .filter((p) => LABEL_MAP[p])
+      .map((p) => ({
+        to: `/admin/${p}`,
+        icon: ICON_MAP[p] || Package,
+        label: LABEL_MAP[p],
+      }));
+  }, [permissions]);
 
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center"><p>Carregando...</p></div>;
   }
 
   if (!isAdmin) return null;
-
-  const positionLabel: Record<string, string> = {
-    ceo: "CEO",
-    vendedor: "Vendedor",
-    financeiro: "Financeiro",
-  };
 
   return (
     <div className="min-h-screen flex bg-muted/30">
@@ -53,13 +99,11 @@ export default function AdminLayout() {
           <img src={logo} alt="Case Lab" className="h-10 w-10 rounded-full object-cover" />
           <div>
             <p className="font-heading font-bold text-sm">CASE LAB</p>
-            <p className="text-xs text-muted-foreground">
-              {positionLabel[adminPosition || "ceo"] || "Admin"}
-            </p>
+            <p className="text-xs text-muted-foreground">{positionLabel}</p>
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {links.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}

@@ -20,6 +20,8 @@ import AdminCategories from "./pages/admin/AdminCategories";
 import AdminFinancial from "./pages/admin/AdminFinancial";
 import AdminTeam from "./pages/admin/AdminTeam";
 import AdminBanner from "./pages/admin/AdminBanner";
+import AdminDesigner from "./pages/admin/AdminDesigner";
+import AdminRoles from "./pages/admin/AdminRoles";
 import AdminDocuments from "./pages/admin/AdminDocuments";
 import AdminStock from "./pages/admin/AdminStock";
 import AdminPayments from "./pages/admin/AdminPayments";
@@ -64,6 +66,8 @@ const App = () => (
                 <Route path="payments" element={<AdminPayments />} />
                 <Route path="reminders" element={<AdminReminders />} />
                 <Route path="notes" element={<AdminNotes />} />
+                <Route path="designer" element={<AdminDesigner />} />
+                <Route path="roles" element={<AdminRoles />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
