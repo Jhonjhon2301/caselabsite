@@ -9,11 +9,11 @@ const corsHeaders = {
 
 const ORIGIN_CEP = "72005247";
 
-// Per-bottle box dimensions
-const BOX_HEIGHT_CM = 27;
-const BOX_WIDTH_CM = 11.5;
-const BOX_LENGTH_CM = 11.5;
-const BOX_WEIGHT_KG = 0.85;
+// Single bottle dimensions
+const UNIT_HEIGHT_CM = 27;
+const UNIT_WIDTH_CM = 11.5;
+const UNIT_DEPTH_CM = 11.5; // depth stacks when multiple
+const UNIT_WEIGHT_KG = 0.85;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -70,19 +70,18 @@ serve(async (req) => {
     const isFreeShipping = subtotal >= freeThreshold;
     const missingForFree = Math.max(0, freeThreshold - subtotal);
 
-    // Each bottle = 1 box. We send qty products, each with its own box dimensions.
-    const products = [];
-    for (let i = 0; i < qty; i++) {
-      products.push({
-        id: String(i + 1),
-        width: BOX_WIDTH_CM,
-        height: BOX_HEIGHT_CM,
-        length: BOX_LENGTH_CM,
-        weight: BOX_WEIGHT_KG,
-        insurance_value: subtotal / qty,
+    // All bottles in one box: height & width fixed, depth stacks, weight sums
+    const products = [
+      {
+        id: "1",
+        width: UNIT_WIDTH_CM,
+        height: UNIT_HEIGHT_CM,
+        length: UNIT_DEPTH_CM * qty,
+        weight: UNIT_WEIGHT_KG * qty,
+        insurance_value: subtotal,
         quantity: 1,
-      });
-    }
+      },
+    ];
 
     const meBody = {
       from: { postal_code: ORIGIN_CEP },
