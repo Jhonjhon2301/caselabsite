@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "npm:@supabase/supabase-js@2.57.2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,10 +8,12 @@ const corsHeaders = {
 };
 
 const ORIGIN_CEP = "72005247";
-const WEIGHT_KG = 0.85;
-const HEIGHT_CM = 10;
-const WIDTH_CM = 20;
-const LENGTH_CM = 25;
+
+// Per-bottle box dimensions
+const BOX_HEIGHT_CM = 27;
+const BOX_WIDTH_CM = 11.5;
+const BOX_LENGTH_CM = 11.5;
+const BOX_WEIGHT_KG = 0.85;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -21,11 +24,36 @@ serve(async (req) => {
     const token = Deno.env.get("MELHOR_ENVIO_TOKEN");
     if (!token) throw new Error("MELHOR_ENVIO_TOKEN não configurado");
 
-    const { cep, subtotal } = await req.json();
+    const { cep, subtotal, totalQuantity } = await req.json();
     if (!cep) throw new Error("CEP é obrigatório");
 
     const destCep = cep.replace(/\D/g, "");
     if (destCep.length !== 8) throw new Error("CEP inválido");
+
+    const qty = Math.max(1, totalQuantity || 1);
+
+    // Fetch shipping config from site_settings (margin)
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    let marginType = "fixed"; // "fixed" | "percentage"
+    let marginValue = 0;
+
+    try {
+      const { data: settingsData } = await supabaseAdmin
+        .from("site_settings")
+        .select("value")
+        .eq("key", "shipping_config")
+        .single();
+
+      if (settingsData?.value) {
+        const cfg = settingsData.value as any;
+        marginType = cfg.margin_type || "fixed";
+        marginValue = Number(cfg.margin_value) || 0;
+      }
+    } catch {}
 
     // Detect UF via ViaCEP
     let uf = "";
@@ -35,30 +63,31 @@ serve(async (req) => {
       if (!viaData.erro) {
         uf = viaData.uf || "";
       }
-    } catch {
-      // fallback: will check from melhor envio response
-    }
+    } catch {}
 
     const isDF = uf === "DF";
     const freeThreshold = isDF ? 180 : 200;
     const isFreeShipping = subtotal >= freeThreshold;
     const missingForFree = Math.max(0, freeThreshold - subtotal);
 
-    // Calculate shipping via Melhor Envio
+    // Each bottle = 1 box. We send qty products, each with its own box dimensions.
+    const products = [];
+    for (let i = 0; i < qty; i++) {
+      products.push({
+        id: String(i + 1),
+        width: BOX_WIDTH_CM,
+        height: BOX_HEIGHT_CM,
+        length: BOX_LENGTH_CM,
+        weight: BOX_WEIGHT_KG,
+        insurance_value: subtotal / qty,
+        quantity: 1,
+      });
+    }
+
     const meBody = {
       from: { postal_code: ORIGIN_CEP },
       to: { postal_code: destCep },
-      products: [
-        {
-          id: "1",
-          width: WIDTH_CM,
-          height: HEIGHT_CM,
-          length: LENGTH_CM,
-          weight: WEIGHT_KG,
-          insurance_value: subtotal,
-          quantity: 1,
-        },
-      ],
+      products,
     };
 
     const meRes = await fetch("https://melhorenvio.com.br/api/v2/me/shipment/calculate", {
@@ -74,7 +103,7 @@ serve(async (req) => {
 
     const meData = await meRes.json();
 
-    // Filter valid options (no error, has price)
+    // Filter valid options
     const validOptions = (Array.isArray(meData) ? meData : [])
       .filter((opt: any) => !opt.error && opt.price && Number(opt.price) > 0)
       .map((opt: any) => ({
@@ -91,10 +120,20 @@ serve(async (req) => {
       throw new Error("Nenhuma opção de frete disponível para este CEP");
     }
 
-    // Pick cheapest
     const best = validOptions[0];
 
-    // Build free shipping message
+    // Apply margin
+    let finalPrice = best.price;
+    if (marginValue > 0) {
+      if (marginType === "percentage") {
+        finalPrice = best.price * (1 + marginValue / 100);
+      } else {
+        finalPrice = best.price + marginValue;
+      }
+    }
+    finalPrice = Math.round(finalPrice * 100) / 100;
+
+    // Free shipping message
     let freeShippingMessage = "";
     if (isFreeShipping) {
       freeShippingMessage = "Você ganhou frete grátis! 🚚";
@@ -106,7 +145,7 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        shipping_cost: isFreeShipping ? 0 : best.price,
+        shipping_cost: isFreeShipping ? 0 : finalPrice,
         shipping_original_cost: best.price,
         shipping_carrier: best.company,
         shipping_service: best.name,
@@ -114,6 +153,7 @@ serve(async (req) => {
         is_free_shipping: isFreeShipping,
         free_shipping_message: freeShippingMessage,
         uf,
+        total_boxes: qty,
         all_options: validOptions,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
