@@ -107,7 +107,7 @@ export default function Checkout() {
     setCalculatingShipping(true);
     try {
       const { data, error } = await supabase.functions.invoke("calculate-shipping", {
-        body: { cep: digits, subtotal: totalPrice },
+        body: { cep: digits, subtotal: totalPrice, totalQuantity: items.reduce((s, i) => s + i.quantity, 0) },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
