@@ -31,8 +31,8 @@ const defaults: BannerConfig = {
   marquee_text: "MELHORES OFERTAS DO ANO • GARRAFAS PERSONALIZADAS • FRETE GRÁTIS ACIMA DE R$299",
   countdown_end: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
   promo_title: "PISCOU, PERDEU",
-  promo_subtitle: "Desconto + MIMO!",
-  cta_text: "COMPRAR AGORA",
+  promo_subtitle: "Garrafas com desconto + MIMO!",
+  cta_text: "VER MODELOS",
   cta_link: "#produtos",
   slide_interval: 8,
   interactive_images: [],
@@ -42,7 +42,12 @@ function useCountdown(target: string) {
   const [time, setTime] = useState({ h: 0, m: 0, s: 0 });
   useEffect(() => {
     const tick = () => {
-      const diff = Math.max(0, new Date(target).getTime() - Date.now());
+      const end = new Date(target).getTime();
+      if (isNaN(end)) {
+        setTime({ h: 0, m: 0, s: 0 });
+        return;
+      }
+      const diff = Math.max(0, end - Date.now());
       setTime({
         h: Math.floor(diff / 3600000),
         m: Math.floor((diff % 3600000) / 60000),
@@ -74,10 +79,8 @@ export default function HeroSection() {
       });
   }, []);
 
-  // Determine which images to use
   const bottleImages = cfg.interactive_images.length >= 3 ? cfg.interactive_images : defaultBottleImages;
 
-  // Build groups of 3
   const bottleGroups: string[][] = [];
   for (let i = 0; i < bottleImages.length; i += 3) {
     const group = bottleImages.slice(i, i + 3);
@@ -85,7 +88,6 @@ export default function HeroSection() {
   }
   if (bottleGroups.length === 0) bottleGroups.push(defaultBottleImages.slice(0, 3));
 
-  // Auto-rotate with configurable interval
   useEffect(() => {
     if (cfg.banner_mode !== "interactive" || bottleGroups.length <= 1) return;
     const interval = (cfg.slide_interval || 8) * 1000;
@@ -106,18 +108,18 @@ export default function HeroSection() {
       {isFixed ? (
         <a href={cfg.cta_link} className="block relative">
           <img src={cfg.banner_image_url} alt="Banner" className="w-full h-auto object-cover" />
-          <div className="absolute bottom-6 left-6 md:left-12 flex flex-col items-start gap-3">
-            <div className="flex items-center gap-2">
+          <div className="absolute bottom-4 left-4 md:bottom-6 md:left-12 flex flex-col items-start gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {[
                 { val: pad(countdown.h), label: "H" },
                 { val: pad(countdown.m), label: "M" },
                 { val: pad(countdown.s), label: "S" },
               ].map((item, i) => (
-                <div key={i} className="flex items-center gap-1.5">
-                  {i > 0 && <span className="text-xl font-black text-white">:</span>}
-                  <div className="bg-background/95 backdrop-blur-sm rounded-lg px-3 py-1.5 text-center min-w-[52px] shadow-lg">
-                    <span className="block text-xl font-black text-primary leading-none">{item.val}</span>
-                    <span className="block text-[8px] font-bold text-muted-foreground uppercase">{item.label}</span>
+                <div key={i} className="flex items-center gap-1">
+                  {i > 0 && <span className="text-lg sm:text-xl font-black text-white">:</span>}
+                  <div className="bg-background/95 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 text-center min-w-[44px] sm:min-w-[52px] shadow-lg">
+                    <span className="block text-lg sm:text-xl font-black text-primary leading-none">{item.val}</span>
+                    <span className="block text-[7px] sm:text-[8px] font-bold text-muted-foreground uppercase">{item.label}</span>
                   </div>
                 </div>
               ))}
@@ -127,48 +129,47 @@ export default function HeroSection() {
       ) : (
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-[hsl(24,100%,52%)] via-[hsl(20,95%,45%)] to-[hsl(16,90%,35%)]" />
-          <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/5 rounded-full" />
-          <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-white/5 rounded-full" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-white/[0.03] rounded-full" />
+          <div className="absolute -top-20 -right-20 w-60 sm:w-80 h-60 sm:h-80 bg-white/5 rounded-full" />
+          <div className="absolute -bottom-32 -left-32 w-72 sm:w-96 h-72 sm:h-96 bg-white/5 rounded-full" />
 
-          <div className="container mx-auto px-4 py-8 md:py-14 relative z-10">
-            <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-10">
+          <div className="container mx-auto px-4 py-6 sm:py-8 md:py-14 relative z-10">
+            <div className="flex flex-col lg:flex-row items-center gap-4 sm:gap-6 lg:gap-10">
               <div className="flex-1 text-center lg:text-left">
-                <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5 mb-4">
+                <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-3 sm:px-4 py-1.5 mb-3 sm:mb-4">
                   <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                  <span className="text-[11px] font-bold text-white uppercase tracking-wider">Oferta por tempo limitado</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold text-white uppercase tracking-wider">Oferta por tempo limitado</span>
                 </div>
-                <h1 className="font-heading font-black text-4xl md:text-5xl lg:text-6xl text-white uppercase leading-[0.95] tracking-tight mb-3">
+                <h1 className="font-heading font-black text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white uppercase leading-[0.95] tracking-tight mb-2 sm:mb-3">
                   {cfg.promo_title}
                 </h1>
-                <p className="text-white/85 font-semibold text-base md:text-lg mb-6 max-w-md mx-auto lg:mx-0">
+                <p className="text-white/85 font-semibold text-sm sm:text-base md:text-lg mb-4 sm:mb-6 max-w-md mx-auto lg:mx-0">
                   {cfg.promo_subtitle}
                 </p>
-                <div className="flex items-center gap-2 justify-center lg:justify-start mb-6">
+                <div className="flex items-center gap-1.5 sm:gap-2 justify-center lg:justify-start mb-4 sm:mb-6">
                   {[
                     { val: pad(countdown.h), label: "Horas" },
                     { val: pad(countdown.m), label: "Min" },
                     { val: pad(countdown.s), label: "Seg" },
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      {i > 0 && <span className="text-2xl font-black text-white/60">:</span>}
-                      <div className="bg-white rounded-xl px-4 py-2 text-center min-w-[68px] shadow-xl">
-                        <span className="block text-2xl md:text-3xl font-black text-primary leading-none">{item.val}</span>
-                        <span className="block text-[9px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">{item.label}</span>
+                    <div key={i} className="flex items-center gap-1.5 sm:gap-2">
+                      {i > 0 && <span className="text-xl sm:text-2xl font-black text-white/60">:</span>}
+                      <div className="bg-white rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-center min-w-[56px] sm:min-w-[68px] shadow-xl">
+                        <span className="block text-xl sm:text-2xl md:text-3xl font-black text-primary leading-none">{item.val}</span>
+                        <span className="block text-[8px] sm:text-[9px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">{item.label}</span>
                       </div>
                     </div>
                   ))}
                 </div>
-                <a href={cfg.cta_link} className="inline-flex items-center gap-2 bg-foreground text-background px-8 py-3.5 rounded-xl font-bold text-sm hover:scale-105 transition-transform shadow-2xl">
+                <a href={cfg.cta_link} className="inline-flex items-center gap-2 bg-foreground text-background px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl font-bold text-xs sm:text-sm hover:scale-105 transition-transform shadow-2xl">
                   {cfg.cta_text} →
                 </a>
               </div>
 
-              <div className="flex-1 relative flex items-center justify-center min-h-[280px] md:min-h-[360px]">
+              <div className="flex-1 relative flex items-center justify-center min-h-[220px] sm:min-h-[280px] md:min-h-[360px]">
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-64 h-64 md:w-80 md:h-80 bg-white/10 rounded-full blur-3xl" />
+                  <div className="w-48 h-48 sm:w-64 sm:h-64 md:w-80 md:h-80 bg-white/10 rounded-full blur-3xl" />
                 </div>
-                <div className="relative flex items-end justify-center gap-3 md:gap-5">
+                <div className="relative flex items-end justify-center gap-2 sm:gap-3 md:gap-5">
                   {bottleGroups[safeSlide]?.map((bottle, i) => {
                     const isCenter = i === 1;
                     return (
@@ -181,13 +182,13 @@ export default function HeroSection() {
                           zIndex: isCenter ? 10 : 1,
                         }}
                       >
-                        <img src={bottle} alt="Garrafa" className="h-48 md:h-72 lg:h-80 object-contain drop-shadow-2xl" draggable={false} />
+                        <img src={bottle} alt="Garrafa" className="h-36 sm:h-48 md:h-72 lg:h-80 object-contain drop-shadow-2xl" draggable={false} />
                       </div>
                     );
                   })}
                 </div>
                 {bottleGroups.length > 1 && (
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
+                  <div className="absolute bottom-1 sm:bottom-2 left-1/2 -translate-x-1/2 flex gap-2">
                     {bottleGroups.map((_, i) => (
                       <button
                         key={i}
@@ -203,10 +204,10 @@ export default function HeroSection() {
         </div>
       )}
 
-      <div className="bg-foreground py-2.5 overflow-hidden">
+      <div className="bg-foreground py-2 sm:py-2.5 overflow-hidden">
         <div className="animate-marquee whitespace-nowrap flex">
           {Array.from({ length: 8 }).map((_, i) => (
-            <span key={i} className="text-[11px] font-bold text-primary tracking-[0.2em] mx-8 uppercase">
+            <span key={i} className="text-[10px] sm:text-[11px] font-bold text-primary tracking-[0.15em] sm:tracking-[0.2em] mx-4 sm:mx-8 uppercase">
               {cfg.marquee_text} •
             </span>
           ))}

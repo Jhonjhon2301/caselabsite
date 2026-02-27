@@ -17,6 +17,7 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -30,10 +31,10 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
         scrolled ? "bg-background/95 backdrop-blur-xl shadow-sm" : "bg-background"
       } border-b border-border`}
     >
-      <div className="container mx-auto py-3 flex items-center gap-4">
+      <div className="container mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-4">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2.5 shrink-0 group">
-          <img src={logo} alt="Case Lab" className="w-10 h-10 rounded-full object-cover" />
+        <a href="/" className="flex items-center gap-2 shrink-0 group">
+          <img src={logo} alt="Case Lab" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover" />
           <div className="hidden sm:block">
             <span className="font-heading text-lg font-extrabold text-foreground leading-none tracking-tight">
               CASE LAB
@@ -44,8 +45,8 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
           </div>
         </a>
 
-        {/* Search — GoCase style */}
-        <div className="flex-1 max-w-xl mx-auto relative">
+        {/* Search — desktop */}
+        <div className="hidden sm:block flex-1 max-w-xl mx-auto relative">
           <input
             type="text"
             placeholder="O que você está procurando?"
@@ -58,13 +59,46 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
           </button>
         </div>
 
+        {/* Mobile search compact */}
+        <div className="flex-1 sm:hidden">
+          {mobileSearchOpen ? (
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Buscar..."
+                value={searchQuery}
+                onChange={(e) => onSearchChange(e.target.value)}
+                autoFocus
+                className="w-full pl-3 pr-9 py-2 rounded-full border border-border bg-secondary text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+              />
+              <button
+                onClick={() => {
+                  setMobileSearchOpen(false);
+                  onSearchChange("");
+                }}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 rounded-full text-muted-foreground"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setMobileSearchOpen(true)}
+              className="flex items-center gap-1.5 w-full px-3 py-2 rounded-full border border-border bg-secondary text-xs text-muted-foreground"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span className="truncate">O que você está procurando?</span>
+            </button>
+          )}
+        </div>
+
         {/* Actions */}
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
           {user ? (
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="p-2.5 rounded-full hover:bg-secondary transition-colors"
+                className="p-2 sm:p-2.5 rounded-full hover:bg-secondary transition-colors"
               >
                 <User className="w-5 h-5 text-foreground" />
               </button>
@@ -102,7 +136,7 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
           ) : (
             <button
               onClick={() => navigate("/auth")}
-              className="p-2.5 rounded-full hover:bg-secondary transition-colors"
+              className="p-2 sm:p-2.5 rounded-full hover:bg-secondary transition-colors"
               aria-label="Entrar"
             >
               <User className="w-5 h-5 text-foreground" />
@@ -111,7 +145,7 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
 
           <button
             onClick={() => setIsCartOpen(true)}
-            className="relative p-2.5 rounded-full hover:bg-secondary transition-colors"
+            className="relative p-2 sm:p-2.5 rounded-full hover:bg-secondary transition-colors"
             aria-label="Abrir carrinho"
           >
             <ShoppingCart className="w-5 h-5 text-foreground" />
@@ -124,73 +158,37 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
 
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2.5 rounded-full hover:bg-secondary transition-colors"
+            className="md:hidden p-2 rounded-full hover:bg-secondary transition-colors"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
 
-      {/* Desktop nav — GoCase style with icon */}
+      {/* Desktop nav */}
       <nav className="hidden md:block border-t border-border/60">
         <div className="container mx-auto flex items-center gap-6 py-2">
-          <a
-            href="#produtos"
-            className="flex items-center gap-1.5 text-sm font-bold text-foreground hover:text-primary transition-colors"
-          >
+          <a href="#produtos" className="flex items-center gap-1.5 text-sm font-bold text-foreground hover:text-primary transition-colors">
             <Gift className="w-4 h-4" />
             Mais Vendidos
           </a>
-          <a
-            href="#produtos"
-            className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Térmicos
-          </a>
-          <a
-            href="#produtos"
-            className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Personalizados
-          </a>
-          <a
-            href="#sobre"
-            className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Sobre
-          </a>
-          <a
-            href="#contato"
-            className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Contato
-          </a>
+          <a href="#produtos" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Térmicos</a>
+          <a href="#produtos" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Personalizados</a>
+          <a href="#sobre" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Sobre</a>
+          <a href="#contato" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Contato</a>
         </div>
       </nav>
 
       {mobileMenuOpen && (
         <nav className="md:hidden border-t border-border bg-background px-5 py-4 space-y-3.5">
-          <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold text-foreground uppercase">
-            Mais Vendidos
-          </a>
-          <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">
-            Térmicos
-          </a>
-          <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">
-            Personalizados
-          </a>
-          <a href="#sobre" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">
-            Sobre
-          </a>
-          <a href="#contato" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">
-            Contato
-          </a>
+          <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold text-foreground uppercase">Mais Vendidos</a>
+          <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Térmicos</a>
+          <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Personalizados</a>
+          <a href="#sobre" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Sobre</a>
+          <a href="#contato" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Contato</a>
           {!user && (
             <button
-              onClick={() => {
-                navigate("/auth");
-                setMobileMenuOpen(false);
-              }}
+              onClick={() => { navigate("/auth"); setMobileMenuOpen(false); }}
               className="block text-sm font-semibold text-primary"
             >
               Entrar / Cadastrar
