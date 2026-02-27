@@ -10,6 +10,7 @@ interface OrderWithItems {
   subtotal: number;
   discount: number;
   status: string;
+  payment_status: string;
   created_at: string;
 }
 
@@ -102,7 +103,7 @@ export default function AdminFinancial() {
     return manualSales.filter((s) => new Date(s.sale_date) >= cutoff);
   }, [manualSales, period]);
 
-  const totalOnlineRevenue = filteredOrders.filter((o) => o.status !== "cancelled").reduce((s, o) => s + Number(o.total), 0);
+  const totalOnlineRevenue = filteredOrders.filter((o) => o.payment_status === "paid").reduce((s, o) => s + Number(o.total), 0);
   const totalManualRevenue = filteredSales.reduce((s, sale) => s + Number(sale.amount), 0);
   const totalRevenue = totalOnlineRevenue + totalManualRevenue;
   const totalExpensesVal = filteredExpenses.reduce((s, e) => s + Number(e.amount), 0);

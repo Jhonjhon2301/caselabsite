@@ -44,13 +44,15 @@ serve(async (req) => {
 
     // Create order in DB
     const subtotal = items.reduce((s: number, i: any) => s + i.price * i.quantity, 0);
+    const shippingCost = shipping.cost || 0;
+    const total = subtotal + shippingCost;
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .insert({
         user_id: userId || "00000000-0000-0000-0000-000000000000",
         subtotal,
-        total: subtotal,
+        total,
         discount: 0,
         status: "pending",
         payment_status: "pending",
@@ -65,6 +67,11 @@ serve(async (req) => {
         shipping_neighborhood: shipping.neighborhood,
         shipping_city: shipping.city,
         shipping_state: shipping.state,
+        shipping_carrier: shipping.carrier || null,
+        shipping_service: shipping.service || null,
+        shipping_estimated_days: shipping.estimated_days || null,
+        shipping_original_cost: shipping.original_cost || 0,
+        shipping_cost: shippingCost,
       })
       .select("id")
       .single();

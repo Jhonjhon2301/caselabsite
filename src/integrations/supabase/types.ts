@@ -276,11 +276,16 @@ export type Database = {
           notes: string | null
           payment_status: string
           shipping_address: string | null
+          shipping_carrier: string | null
           shipping_cep: string | null
           shipping_city: string | null
           shipping_complement: string | null
+          shipping_cost: number | null
+          shipping_estimated_days: number | null
           shipping_neighborhood: string | null
           shipping_number: string | null
+          shipping_original_cost: number | null
+          shipping_service: string | null
           shipping_state: string | null
           status: string
           stripe_session_id: string | null
@@ -301,11 +306,16 @@ export type Database = {
           notes?: string | null
           payment_status?: string
           shipping_address?: string | null
+          shipping_carrier?: string | null
           shipping_cep?: string | null
           shipping_city?: string | null
           shipping_complement?: string | null
+          shipping_cost?: number | null
+          shipping_estimated_days?: number | null
           shipping_neighborhood?: string | null
           shipping_number?: string | null
+          shipping_original_cost?: number | null
+          shipping_service?: string | null
           shipping_state?: string | null
           status?: string
           stripe_session_id?: string | null
@@ -326,11 +336,16 @@ export type Database = {
           notes?: string | null
           payment_status?: string
           shipping_address?: string | null
+          shipping_carrier?: string | null
           shipping_cep?: string | null
           shipping_city?: string | null
           shipping_complement?: string | null
+          shipping_cost?: number | null
+          shipping_estimated_days?: number | null
           shipping_neighborhood?: string | null
           shipping_number?: string | null
+          shipping_original_cost?: number | null
+          shipping_service?: string | null
           shipping_state?: string | null
           status?: string
           stripe_session_id?: string | null

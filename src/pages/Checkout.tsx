@@ -1,13 +1,24 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "@/contexts/CartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, CreditCard, Loader2, QrCode, ShieldCheck, Truck, Trash2, Minus, Plus, Tag } from "lucide-react";
+import { ArrowLeft, CreditCard, Loader2, QrCode, ShieldCheck, Truck, Trash2, Minus, Plus, Tag, Package } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
 type PaymentMethod = "card" | "pix";
+
+interface ShippingInfo {
+  shipping_cost: number;
+  shipping_original_cost: number;
+  shipping_carrier: string;
+  shipping_service: string;
+  shipping_estimated_days: number;
+  is_free_shipping: boolean;
+  free_shipping_message: string;
+  uf: string;
+}
 
 export default function Checkout() {
   const { items, totalPrice, clearCart, updateQuantity, removeFromCart } = useCart();
@@ -20,6 +31,8 @@ export default function Checkout() {
   const [couponApplied, setCouponApplied] = useState(false);
   const [applyingCoupon, setApplyingCoupon] = useState(false);
   const [paymentConfig, setPaymentConfig] = useState({ active_gateway: "mercadopago", pix_enabled: true, card_enabled: true });
+  const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
+  const [calculatingShipping, setCalculatingShipping] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: user?.email || "",
@@ -54,10 +67,18 @@ export default function Checkout() {
       });
   }, []);
 
+  // Recalculate shipping when subtotal changes (e.g. quantity change)
+  useEffect(() => {
+    if (shippingInfo && form.cep.replace(/\D/g, "").length === 8) {
+      calculateShipping(form.cep);
+    }
+  }, [totalPrice]);
+
   if (items.length === 0) return null;
 
   const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
-  const finalTotal = Math.max(0, totalPrice - couponDiscount);
+  const shippingCost = shippingInfo?.shipping_cost ?? 0;
+  const finalTotal = Math.max(0, totalPrice - couponDiscount + shippingCost);
 
   const formatCPF = (v: string) => {
     const d = v.replace(/\D/g, "").slice(0, 11);
@@ -80,6 +101,26 @@ export default function Checkout() {
     return `${d.slice(0, 5)}-${d.slice(5)}`;
   };
 
+  const calculateShipping = async (cep: string) => {
+    const digits = cep.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    setCalculatingShipping(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("calculate-shipping", {
+        body: { cep: digits, subtotal: totalPrice },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      setShippingInfo(data as ShippingInfo);
+    } catch (err: any) {
+      console.error("Shipping error:", err);
+      setShippingInfo(null);
+      toast.error("Não foi possível calcular o frete. Tente novamente.");
+    } finally {
+      setCalculatingShipping(false);
+    }
+  };
+
   const fetchAddress = async (cep: string) => {
     const digits = cep.replace(/\D/g, "");
     if (digits.length !== 8) return;
@@ -96,6 +137,8 @@ export default function Checkout() {
         }));
       }
     } catch {}
+    // Also calculate shipping
+    calculateShipping(cep);
   };
 
   const applyCoupon = async () => {
@@ -109,39 +152,16 @@ export default function Checkout() {
         .eq("is_active", true)
         .single();
 
-      if (!data) {
-        toast.error("Cupom inválido ou expirado");
-        return;
-      }
+      if (!data) { toast.error("Cupom inválido ou expirado"); return; }
+      if (data.min_order_value && totalPrice < data.min_order_value) { toast.error(`Pedido mínimo de ${fmt(data.min_order_value)} para este cupom`); return; }
+      if (data.max_uses && data.current_uses >= data.max_uses) { toast.error("Cupom esgotado"); return; }
+      if (data.expires_at && new Date(data.expires_at) < new Date()) { toast.error("Cupom expirado"); return; }
 
-      if (data.min_order_value && totalPrice < data.min_order_value) {
-        toast.error(`Pedido mínimo de ${fmt(data.min_order_value)} para este cupom`);
-        return;
-      }
-
-      if (data.max_uses && data.current_uses >= data.max_uses) {
-        toast.error("Cupom esgotado");
-        return;
-      }
-
-      if (data.expires_at && new Date(data.expires_at) < new Date()) {
-        toast.error("Cupom expirado");
-        return;
-      }
-
-      const discount =
-        data.discount_type === "percentage"
-          ? (totalPrice * data.discount_value) / 100
-          : data.discount_value;
-
+      const discount = data.discount_type === "percentage" ? (totalPrice * data.discount_value) / 100 : data.discount_value;
       setCouponDiscount(discount);
       setCouponApplied(true);
       toast.success(`Cupom aplicado! Desconto de ${fmt(discount)}`);
-    } catch {
-      toast.error("Erro ao aplicar cupom");
-    } finally {
-      setApplyingCoupon(false);
-    }
+    } catch { toast.error("Erro ao aplicar cupom"); } finally { setApplyingCoupon(false); }
   };
 
   const validate = () => {
@@ -182,12 +202,21 @@ export default function Checkout() {
       neighborhood: form.neighborhood.trim(),
       city: form.city.trim(),
       state: form.state.trim(),
+      cost: shippingCost,
+      original_cost: shippingInfo?.shipping_original_cost ?? 0,
+      carrier: shippingInfo?.shipping_carrier ?? "",
+      service: shippingInfo?.shipping_service ?? "",
+      estimated_days: shippingInfo?.shipping_estimated_days ?? 0,
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    if (!shippingInfo) {
+      toast.error("Aguarde o cálculo do frete");
+      return;
+    }
     setLoading(true);
     try {
       const functionName = paymentMethod === "pix" ? "create-pix-checkout" : "create-checkout";
@@ -216,10 +245,7 @@ export default function Checkout() {
       {/* Header */}
       <div className="bg-background border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <button
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-4 h-4" /> Voltar
           </button>
           <img src={logo} alt="Case Lab" className="h-8 w-8 rounded-full object-cover" />
@@ -231,7 +257,7 @@ export default function Checkout() {
       <div className="bg-background border-b border-border">
         <div className="container mx-auto px-4 py-2.5 flex items-center justify-center gap-6 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-primary" /> Compra Segura</span>
-          <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5 text-primary" /> Frete Grátis +R$299</span>
+          <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5 text-primary" /> Frete Grátis p/ DF +R$180</span>
           <span className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5 text-primary" /> Pagamento Seguro</span>
         </div>
       </div>
@@ -322,6 +348,42 @@ export default function Checkout() {
                   {errors.state && <p className="text-xs text-destructive mt-1">{errors.state}</p>}
                 </div>
               </div>
+
+              {/* Shipping result */}
+              {calculatingShipping && (
+                <div className="mt-4 p-4 bg-muted/50 rounded-xl flex items-center gap-3">
+                  <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                  <span className="text-sm text-muted-foreground">Calculando frete...</span>
+                </div>
+              )}
+              {shippingInfo && !calculatingShipping && (
+                <div className="mt-4 p-4 bg-muted/50 rounded-xl space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-semibold">{shippingInfo.shipping_carrier} — {shippingInfo.shipping_service}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Entrega em até {shippingInfo.shipping_estimated_days} dias úteis
+                    </span>
+                    <span className="font-bold">
+                      {shippingInfo.is_free_shipping ? (
+                        <span className="text-primary">Grátis</span>
+                      ) : (
+                        fmt(shippingInfo.shipping_cost)
+                      )}
+                    </span>
+                  </div>
+                  {shippingInfo.is_free_shipping && shippingInfo.shipping_original_cost > 0 && (
+                    <p className="text-xs text-muted-foreground line-through">
+                      Valor original: {fmt(shippingInfo.shipping_original_cost)}
+                    </p>
+                  )}
+                  <p className={`text-xs font-semibold mt-1 ${shippingInfo.is_free_shipping ? "text-primary" : "text-accent-foreground"}`}>
+                    {shippingInfo.free_shipping_message}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Payment Method */}
@@ -366,37 +428,15 @@ export default function Checkout() {
               <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
                 {items.map(({ product, quantity }) => (
                   <div key={product.id} className="flex gap-3">
-                    <img
-                      src={product.images?.[0] || "/placeholder.svg"}
-                      alt={product.name}
-                      className="w-14 h-14 rounded-lg object-cover border border-border"
-                    />
+                    <img src={product.images?.[0] || "/placeholder.svg"} alt={product.name} className="w-14 h-14 rounded-lg object-cover border border-border" />
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-semibold truncate">{product.name}</h4>
                       <p className="text-xs text-muted-foreground">{fmt(product.price)}</p>
                       <div className="flex items-center gap-1 mt-1">
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(product.id, quantity - 1)}
-                          className="p-0.5 hover:bg-muted rounded border border-border"
-                        >
-                          <Minus className="w-3 h-3" />
-                        </button>
+                        <button type="button" onClick={() => updateQuantity(product.id, quantity - 1)} className="p-0.5 hover:bg-muted rounded border border-border"><Minus className="w-3 h-3" /></button>
                         <span className="text-xs font-bold w-5 text-center">{quantity}</span>
-                        <button
-                          type="button"
-                          onClick={() => updateQuantity(product.id, quantity + 1)}
-                          className="p-0.5 hover:bg-muted rounded border border-border"
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeFromCart(product.id)}
-                          className="ml-auto p-0.5 text-destructive hover:bg-destructive/10 rounded"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
+                        <button type="button" onClick={() => updateQuantity(product.id, quantity + 1)} className="p-0.5 hover:bg-muted rounded border border-border"><Plus className="w-3 h-3" /></button>
+                        <button type="button" onClick={() => removeFromCart(product.id)} className="ml-auto p-0.5 text-destructive hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3" /></button>
                       </div>
                     </div>
                   </div>
@@ -405,9 +445,7 @@ export default function Checkout() {
 
               {/* Coupon */}
               <div className="border-t border-border pt-3 mb-3">
-                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">
-                  Cupom de desconto
-                </label>
+                <label className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Cupom de desconto</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -447,10 +485,25 @@ export default function Checkout() {
                 )}
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Frete</span>
-                  <span className="text-primary font-semibold">
-                    {totalPrice >= 299.9 ? "Grátis" : "A calcular"}
+                  <span className="font-semibold">
+                    {calculatingShipping ? (
+                      <Loader2 className="w-3 h-3 animate-spin inline" />
+                    ) : shippingInfo ? (
+                      shippingInfo.is_free_shipping ? (
+                        <span className="text-primary">Grátis</span>
+                      ) : (
+                        fmt(shippingInfo.shipping_cost)
+                      )
+                    ) : (
+                      <span className="text-muted-foreground">Informe o CEP</span>
+                    )}
                   </span>
                 </div>
+                {shippingInfo && !shippingInfo.is_free_shipping && (
+                  <p className="text-[10px] text-muted-foreground">
+                    {shippingInfo.free_shipping_message}
+                  </p>
+                )}
                 <div className="flex justify-between text-lg font-black pt-2 border-t border-border">
                   <span>Total</span>
                   <span className="text-primary">{fmt(finalTotal)}</span>
@@ -459,7 +512,7 @@ export default function Checkout() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !shippingInfo}
                 className="w-full mt-5 gradient-brand text-primary-foreground py-4 rounded-xl font-bold text-sm tracking-wider hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {loading ? (
@@ -473,7 +526,7 @@ export default function Checkout() {
               </button>
 
               <p className="text-[10px] text-muted-foreground text-center mt-2.5">
-                {paymentMethod === "pix" ? "Pagamento via Pix pela Cakto 🔒" : "Pagamento seguro via Stripe 🔒"}
+                {paymentMethod === "pix" ? "Pagamento via Pix pela Cakto 🔒" : "Pagamento seguro 🔒"}
               </p>
             </div>
           </div>
