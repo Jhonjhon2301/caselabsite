@@ -225,17 +225,17 @@ export default function AdminProducts() {
   };
 
   return (
-    <div className="p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8">
         <div>
-          <h1 className="font-heading text-2xl font-bold">Produtos</h1>
-          <p className="text-sm text-muted-foreground">{products.length} produto(s) cadastrado(s)</p>
+          <h1 className="font-heading text-xl sm:text-2xl font-bold">Produtos</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">{products.length} produto(s) cadastrado(s)</p>
         </div>
-        <button onClick={openCreate} className="btn-primary"><Plus className="w-4 h-4" /> Novo Produto</button>
+        <button onClick={openCreate} className="btn-primary w-full sm:w-auto justify-center"><Plus className="w-4 h-4" /> Novo Produto</button>
       </div>
 
       {showForm && (
-        <div className="bg-card border border-border rounded-xl p-6 mb-8">
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6 mb-6 sm:mb-8">
           <h2 className="font-heading font-bold text-lg mb-4">{editing ? "Editar Produto" : "Novo Produto"}</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -438,9 +438,9 @@ export default function AdminProducts() {
           {products.map((p) => {
             const pVariants = (p.variants as ProductVariant[]) ?? [];
             return (
-              <div key={p.id} className="bg-card border border-border rounded-xl p-4 flex items-center gap-4">
-                <div className="w-16 h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
-                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" /> : <Package className="w-full h-full p-3 text-muted-foreground" />}
+              <div key={p.id} className="bg-card border border-border rounded-xl p-3 sm:p-4 flex items-start sm:items-center gap-3 sm:gap-4">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden bg-muted flex-shrink-0">
+                  {p.images?.[0] ? <img src={p.images[0]} alt={p.name} className="w-full h-full object-cover" /> : <Package className="w-full h-full p-2 sm:p-3 text-muted-foreground" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm truncate">{p.name}</h3>
