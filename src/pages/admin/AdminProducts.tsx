@@ -26,6 +26,9 @@ interface Product {
   text_left: number | null;
   text_rotation: number | null;
   discount_percent: number;
+  meta_title: string | null;
+  meta_description: string | null;
+  purchase_cost: number;
 }
 
 interface Category {
@@ -43,6 +46,7 @@ export default function AdminProducts() {
     name: "", description: "", price: "", category_id: "",
     is_active: true, is_customizable: false,
     text_top: "42", text_left: "50", text_rotation: "0", discount_percent: "0",
+    meta_title: "", meta_description: "", purchase_cost: "0",
   });
   const [uploading, setUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -65,7 +69,7 @@ export default function AdminProducts() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50", text_rotation: "0", discount_percent: "0" });
+    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50", text_rotation: "0", discount_percent: "0", meta_title: "", meta_description: "", purchase_cost: "0" });
     setImageUrls([]);
     setVariants([]);
     setShowForm(true);
@@ -77,6 +81,7 @@ export default function AdminProducts() {
       name: p.name, description: p.description ?? "", price: String(p.price),
       category_id: p.category_id ?? "", is_active: p.is_active, is_customizable: p.is_customizable,
       text_top: String(p.text_top ?? 42), text_left: String(p.text_left ?? 50), text_rotation: String(p.text_rotation ?? 0), discount_percent: String(p.discount_percent ?? 0),
+      meta_title: (p as any).meta_title ?? "", meta_description: (p as any).meta_description ?? "", purchase_cost: String((p as any).purchase_cost ?? 0),
     });
     setImageUrls(p.images ?? []);
     setVariants((p.variants as ProductVariant[]) ?? []);
@@ -201,6 +206,9 @@ export default function AdminProducts() {
       text_left: form.is_customizable ? parseFloat(form.text_left) || 50 : null,
       text_rotation: form.is_customizable ? parseFloat(form.text_rotation) || 0 : null,
       discount_percent: parseFloat(form.discount_percent) || 0,
+      meta_title: form.meta_title.trim() || null,
+      meta_description: form.meta_description.trim() || null,
+      purchase_cost: parseFloat(form.purchase_cost) || 0,
     };
 
     if (editing) {
@@ -261,6 +269,28 @@ export default function AdminProducts() {
             <div>
               <label className="block text-sm font-medium mb-1">Descrição</label>
               <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none min-h-[80px]" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Custo de Compra (R$)</label>
+              <input type="number" step="0.01" min="0" value={form.purchase_cost} onChange={(e) => setForm({ ...form, purchase_cost: e.target.value })} className="w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" placeholder="0.00" />
+            </div>
+
+            {/* SEO Fields */}
+            <div className="border border-border rounded-xl p-4 bg-muted/30">
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">🔍 SEO (Otimização para Buscadores)</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">Meta Title (título nos resultados do Google)</label>
+                  <input type="text" maxLength={60} value={form.meta_title} onChange={(e) => setForm({ ...form, meta_title: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" placeholder={form.name || "Título do produto"} />
+                  <p className="text-[10px] text-muted-foreground mt-1">{form.meta_title.length}/60 caracteres</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">Meta Description (descrição nos resultados do Google)</label>
+                  <textarea maxLength={160} value={form.meta_description} onChange={(e) => setForm({ ...form, meta_description: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none min-h-[60px]" placeholder="Descrição otimizada para SEO..." />
+                  <p className="text-[10px] text-muted-foreground mt-1">{form.meta_description.length}/160 caracteres</p>
+                </div>
+              </div>
             </div>
 
             <div>
