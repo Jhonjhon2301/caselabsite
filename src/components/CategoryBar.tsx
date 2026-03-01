@@ -6,7 +6,7 @@ interface CategoryBarProps {
 
 export default function CategoryBar({ active, onChange, categories }: CategoryBarProps) {
   return (
-    <div className="sticky top-[57px] sm:top-[65px] md:top-[105px] z-30 bg-background border-b border-border">
+    <div className="sticky top-[53px] sm:top-[61px] md:top-[97px] z-30 bg-background/95 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-3 sm:px-4">
         <div className="flex gap-1 overflow-x-auto py-2.5 sm:py-3 scrollbar-none -mx-3 px-3 sm:mx-0 sm:px-0">
           {categories.map((cat) => (

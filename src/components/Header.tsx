@@ -31,7 +31,7 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
         scrolled ? "bg-background/95 backdrop-blur-xl shadow-sm" : "bg-background"
       } border-b border-border`}
     >
-      <div className="container mx-auto px-3 sm:px-4 py-2.5 sm:py-3 flex items-center gap-2 sm:gap-4">
+      <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-2.5 md:py-3 flex items-center gap-2 sm:gap-3 md:gap-4">
         {/* Logo */}
         <a href="/" className="flex items-center gap-2 shrink-0 group">
           <img src={logo} alt="Case Lab" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover" />
