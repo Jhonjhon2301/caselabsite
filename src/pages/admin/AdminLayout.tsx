@@ -5,11 +5,12 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign,
   Users, ImageIcon, FileText, Warehouse, CreditCard, Bell, StickyNote,
-  Palette, Shield, Menu, X, Receipt
+  Palette, Shield, Menu, X, Receipt, LayoutDashboard
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
 const ICON_MAP: Record<string, React.ElementType> = {
+  dashboard: LayoutDashboard,
   products: Package,
   stock: Warehouse,
   orders: ShoppingCart,
@@ -29,6 +30,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 };
 
 const LABEL_MAP: Record<string, string> = {
+  dashboard: "Dashboard",
   products: "Produtos",
   stock: "Estoque",
   orders: "Pedidos",
