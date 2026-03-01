@@ -39,7 +39,7 @@ export default function Footer() {
         </button>
 
         <div className="container mx-auto px-4 pt-12 sm:pt-14 pb-6 sm:pb-8">
-          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-10 lg:gap-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 lg:gap-16">
             <div>
               <div className="flex items-center gap-2.5 mb-4 sm:mb-5">
                 <img src={logo} alt="Case Lab" className="w-10 h-10 sm:w-11 sm:h-11 rounded-full object-cover ring-2 ring-primary/30" />
