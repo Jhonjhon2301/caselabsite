@@ -27,6 +27,7 @@ import AdminStock from "./pages/admin/AdminStock";
 import AdminPayments from "./pages/admin/AdminPayments";
 import AdminReminders from "./pages/admin/AdminReminders";
 import AdminNotes from "./pages/admin/AdminNotes";
+import AdminFiscalNotes from "./pages/admin/AdminFiscalNotes";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
                 <Route path="payments" element={<AdminPayments />} />
                 <Route path="reminders" element={<AdminReminders />} />
                 <Route path="notes" element={<AdminNotes />} />
+                <Route path="fiscal" element={<AdminFiscalNotes />} />
                 <Route path="designer" element={<AdminDesigner />} />
                 <Route path="roles" element={<AdminRoles />} />
               </Route>
