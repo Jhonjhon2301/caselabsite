@@ -17,6 +17,18 @@ interface Order {
   customer_email: string | null;
   customer_phone: string | null;
   customer_cpf: string | null;
+  tracking_code: string | null;
+  tracking_url: string | null;
+  shipping_address: string | null;
+  shipping_number: string | null;
+  shipping_complement: string | null;
+  shipping_neighborhood: string | null;
+  shipping_city: string | null;
+  shipping_state: string | null;
+  shipping_cep: string | null;
+  shipping_cost: number | null;
+  shipping_carrier: string | null;
+  shipping_service: string | null;
   profiles?: { full_name: string | null; email: string | null; phone: string | null } | null;
 }
 
@@ -159,6 +171,36 @@ export default function AdminOrders() {
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         )}
+                      </div>
+                    </div>
+
+                    {/* Shipping address */}
+                    {order.shipping_address && (
+                      <div className="text-sm">
+                        <p className="text-muted-foreground mb-1">Endereço de entrega</p>
+                        <p>{order.shipping_address}, {order.shipping_number}{order.shipping_complement ? ` - ${order.shipping_complement}` : ""}</p>
+                        <p>{order.shipping_neighborhood} — {order.shipping_city}/{order.shipping_state} — CEP: {order.shipping_cep}</p>
+                        {order.shipping_service && <p className="text-xs text-muted-foreground mt-1">Frete: {order.shipping_carrier} {order.shipping_service} — R$ {Number(order.shipping_cost || 0).toFixed(2)}</p>}
+                      </div>
+                    )}
+
+                    {/* Tracking code */}
+                    <div className="text-sm">
+                      <p className="text-muted-foreground mb-1">Código de Rastreio</p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Ex: BR123456789BR"
+                          defaultValue={order.tracking_code || ""}
+                          onBlur={async (e) => {
+                            const code = e.target.value.trim();
+                            const url = code ? `https://rastreamento.correios.com.br/app/index.php?objeto=${code}` : null;
+                            await supabase.from("orders").update({ tracking_code: code || null, tracking_url: url }).eq("id", order.id);
+                            setOrders(prev => prev.map(o => o.id === order.id ? { ...o, tracking_code: code || null, tracking_url: url } : o));
+                            if (code) toast.success("Código de rastreio salvo!");
+                          }}
+                          className="flex-1 px-3 py-2 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
+                        />
                       </div>
                     </div>
 
