@@ -13,6 +13,10 @@ import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCanceled from "./pages/PaymentCanceled";
 import NotFound from "./pages/NotFound";
 import ProductPage from "./pages/ProductPage";
+import MyOrders from "./pages/MyOrders";
+import Referral from "./pages/Referral";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -31,6 +35,8 @@ import AdminReminders from "./pages/admin/AdminReminders";
 import AdminNotes from "./pages/admin/AdminNotes";
 import AdminFiscalNotes from "./pages/admin/AdminFiscalNotes";
 import AdminCustomers from "./pages/admin/AdminCustomers";
+import AdminBlog from "./pages/admin/AdminBlog";
+import AdminReviews from "./pages/admin/AdminReviews";
 
 const queryClient = new QueryClient();
 
@@ -62,6 +68,10 @@ const App = () => (
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/payment-success" element={<PaymentSuccess />} />
               <Route path="/payment-canceled" element={<PaymentCanceled />} />
+              <Route path="/meus-pedidos" element={<MyOrders />} />
+              <Route path="/indicar" element={<Referral />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
@@ -81,6 +91,8 @@ const App = () => (
                 <Route path="designer" element={<AdminDesigner />} />
                 <Route path="roles" element={<AdminRoles />} />
                 <Route path="customers" element={<AdminCustomers />} />
+                <Route path="blog" element={<AdminBlog />} />
+                <Route path="reviews" element={<AdminReviews />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

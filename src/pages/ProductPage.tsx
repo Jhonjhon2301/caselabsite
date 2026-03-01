@@ -11,6 +11,7 @@ import CartDrawer from "@/components/CartDrawer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import SEOHead from "@/components/SEOHead";
 import { trackViewContent } from "@/lib/tracking";
+import ProductReviews from "@/components/ProductReviews";
 
 const FONT_OPTIONS = [
   { label: "Clássica", family: "'Montserrat', sans-serif", weight: "700" },
@@ -468,6 +469,9 @@ export default function ProductPage() {
                 </div>
               </div>
             </div>
+
+            {/* Reviews Section */}
+            <ProductReviews productId={product.id} />
           </div>
         </div>
       </main>

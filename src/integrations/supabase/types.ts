@@ -98,6 +98,60 @@ export type Database = {
         }
         Relationships: []
       }
+      blog_posts: {
+        Row: {
+          author_name: string | null
+          content: string
+          cover_image: string | null
+          created_at: string
+          created_by: string
+          excerpt: string | null
+          id: string
+          is_published: boolean
+          meta_description: string | null
+          meta_title: string | null
+          published_at: string | null
+          slug: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          content?: string
+          cover_image?: string | null
+          created_at?: string
+          created_by: string
+          excerpt?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          content?: string
+          cover_image?: string | null
+          created_at?: string
+          created_by?: string
+          excerpt?: string | null
+          id?: string
+          is_published?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          published_at?: string | null
+          slug?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string
@@ -572,6 +626,8 @@ export type Database = {
           stripe_session_id: string | null
           subtotal: number
           total: number
+          tracking_code: string | null
+          tracking_url: string | null
           updated_at: string
           user_id: string
         }
@@ -602,6 +658,8 @@ export type Database = {
           stripe_session_id?: string | null
           subtotal?: number
           total?: number
+          tracking_code?: string | null
+          tracking_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -632,6 +690,8 @@ export type Database = {
           stripe_session_id?: string | null
           subtotal?: number
           total?: number
+          tracking_code?: string | null
+          tracking_url?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -641,6 +701,53 @@ export type Database = {
             columns: ["coupon_id"]
             isOneToOne: false
             referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          customer_name: string | null
+          id: string
+          is_approved: boolean
+          photos: string[] | null
+          product_id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          is_approved?: boolean
+          photos?: string[] | null
+          product_id: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          customer_name?: string | null
+          id?: string
+          is_approved?: boolean
+          photos?: string[] | null
+          product_id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -757,6 +864,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      referrals: {
+        Row: {
+          converted_at: string | null
+          created_at: string
+          id: string
+          referral_code: string
+          referred_coupon_id: string | null
+          referred_email: string | null
+          referred_user_id: string | null
+          referrer_coupon_id: string | null
+          referrer_user_id: string
+          status: string
+        }
+        Insert: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code: string
+          referred_coupon_id?: string | null
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_coupon_id?: string | null
+          referrer_user_id: string
+          status?: string
+        }
+        Update: {
+          converted_at?: string | null
+          created_at?: string
+          id?: string
+          referral_code?: string
+          referred_coupon_id?: string | null
+          referred_email?: string | null
+          referred_user_id?: string | null
+          referrer_coupon_id?: string | null
+          referrer_user_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_coupon_id_fkey"
+            columns: ["referred_coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_coupon_id_fkey"
+            columns: ["referrer_coupon_id"]
+            isOneToOne: false
+            referencedRelation: "coupons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reminders: {
         Row: {
