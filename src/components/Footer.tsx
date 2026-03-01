@@ -61,6 +61,11 @@ export default function Footer() {
                 A Case Lab transforma sua identidade em um produto único e exclusivo. Trabalhamos com personalização de alta qualidade para empresas e pessoas.
               </p>
               <p className="text-[10px] sm:text-xs text-background/25 mt-3 sm:mt-4 font-mono">CNPJ: 64.964.419/0001-46</p>
+              <div className="flex flex-wrap gap-3 mt-3 sm:mt-4">
+                <a href="/blog" className="text-xs text-background/50 hover:text-primary transition-colors">Blog</a>
+                <a href="/meus-pedidos" className="text-xs text-background/50 hover:text-primary transition-colors">Meus Pedidos</a>
+                <a href="/indicar" className="text-xs text-background/50 hover:text-primary transition-colors">Indicar Amigo</a>
+              </div>
             </div>
 
             <div>

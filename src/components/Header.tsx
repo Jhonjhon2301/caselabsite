@@ -109,22 +109,28 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
                     <p className="px-4 py-2 text-xs text-muted-foreground truncate border-b border-border mb-1">
                       {user.email}
                     </p>
+                    <button
+                      onClick={() => { navigate("/meus-pedidos"); setUserMenuOpen(false); }}
+                      className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted flex items-center gap-2.5 transition-colors"
+                    >
+                      <ShoppingCart className="w-4 h-4" /> Meus Pedidos
+                    </button>
+                    <button
+                      onClick={() => { navigate("/indicar"); setUserMenuOpen(false); }}
+                      className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted flex items-center gap-2.5 transition-colors"
+                    >
+                      <Gift className="w-4 h-4" /> Indicar Amigo
+                    </button>
                     {isAdmin && (
                       <button
-                        onClick={() => {
-                          navigate("/admin");
-                          setUserMenuOpen(false);
-                        }}
+                        onClick={() => { navigate("/admin"); setUserMenuOpen(false); }}
                         className="w-full px-4 py-2.5 text-sm text-left hover:bg-muted flex items-center gap-2.5 transition-colors"
                       >
                         <Shield className="w-4 h-4" /> Painel Admin
                       </button>
                     )}
                     <button
-                      onClick={() => {
-                        signOut();
-                        setUserMenuOpen(false);
-                      }}
+                      onClick={() => { signOut(); setUserMenuOpen(false); }}
                       className="w-full px-4 py-2.5 text-sm text-left hover:bg-destructive/10 flex items-center gap-2.5 text-destructive transition-colors"
                     >
                       <LogOut className="w-4 h-4" /> Sair
@@ -174,6 +180,7 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
           </a>
           <a href="#produtos" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Térmicos</a>
           <a href="#produtos" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Personalizados</a>
+          <a href="/blog" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Blog</a>
           <a href="#sobre" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Sobre</a>
           <a href="#contato" className="text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors">Contato</a>
         </div>
@@ -184,6 +191,7 @@ export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
           <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm font-bold text-foreground uppercase">Mais Vendidos</a>
           <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Térmicos</a>
           <a href="#produtos" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Personalizados</a>
+          <a href="/blog" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Blog</a>
           <a href="#sobre" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Sobre</a>
           <a href="#contato" onClick={() => setMobileMenuOpen(false)} className="block text-sm text-muted-foreground">Contato</a>
           {!user && (
