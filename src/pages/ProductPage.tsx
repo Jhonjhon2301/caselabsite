@@ -9,6 +9,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CartDrawer from "@/components/CartDrawer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
+import SEOHead from "@/components/SEOHead";
+import { trackViewContent } from "@/lib/tracking";
 
 const FONT_OPTIONS = [
   { label: "Clássica", family: "'Montserrat', sans-serif", weight: "700" },
@@ -62,6 +64,13 @@ export default function ProductPage() {
       });
   }, [id]);
 
+  // Track view - must be before early returns
+  useEffect(() => {
+    if (product) {
+      trackViewContent({ id: product.id, name: product.name, price: product.price, category: product.category_name || undefined });
+    }
+  }, [product]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -88,16 +97,30 @@ export default function ProductPage() {
   const originalPrice = hasDiscount ? currentPrice / (1 - discountPercent / 100) : currentPrice;
   const isCustomizable = product.is_customizable;
 
-  // If variant has its own image, show that; otherwise show gallery image
   const displayImage = selectedVariant?.image || images[activeImageIdx];
 
-  // Text position from DB (defaults: top 42%, left 50%)
   const textTop = product.text_top ?? 42;
   const textLeft = product.text_left ?? 50;
   const textRotation = product.text_rotation ?? 0;
 
   return (
     <div className="min-h-screen bg-background">
+      {product && (
+        <SEOHead
+          title={product.name}
+          description={product.description || `${product.name} — Garrafa personalizada Case Lab`}
+          image={product.images?.[0]}
+          type="product"
+          product={{
+            name: product.name,
+            price: product.price,
+            description: product.description || undefined,
+            image: product.images?.[0],
+            availability: product.stock_quantity > 0 ? "in stock" : "out of stock",
+            category: product.category_name || undefined,
+          }}
+        />
+      )}
       <TopBar />
       <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
