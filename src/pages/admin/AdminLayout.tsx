@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign,
   Users, ImageIcon, FileText, Warehouse, CreditCard, Bell, StickyNote,
-  Palette, Shield, Menu, X, Receipt, LayoutDashboard
+  Palette, Shield, Menu, X, Receipt, LayoutDashboard, Star, BookOpen
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
@@ -27,6 +27,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   roles: Shield,
   fiscal: Receipt,
   customers: Users,
+  blog: BookOpen,
+  reviews: Star,
 };
 
 const LABEL_MAP: Record<string, string> = {
@@ -47,6 +49,8 @@ const LABEL_MAP: Record<string, string> = {
   roles: "Cargos",
   fiscal: "Notas Fiscais",
   customers: "Clientes",
+  blog: "Blog",
+  reviews: "Avaliações",
 };
 
 export default function AdminLayout() {
