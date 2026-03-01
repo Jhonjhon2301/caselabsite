@@ -28,6 +28,7 @@ import AdminPayments from "./pages/admin/AdminPayments";
 import AdminReminders from "./pages/admin/AdminReminders";
 import AdminNotes from "./pages/admin/AdminNotes";
 import AdminFiscalNotes from "./pages/admin/AdminFiscalNotes";
+import AdminCustomers from "./pages/admin/AdminCustomers";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ const App = () => (
                 <Route path="fiscal" element={<AdminFiscalNotes />} />
                 <Route path="designer" element={<AdminDesigner />} />
                 <Route path="roles" element={<AdminRoles />} />
+                <Route path="customers" element={<AdminCustomers />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

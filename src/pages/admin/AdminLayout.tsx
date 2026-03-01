@@ -25,6 +25,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   designer: Palette,
   roles: Shield,
   fiscal: Receipt,
+  customers: Users,
 };
 
 const LABEL_MAP: Record<string, string> = {
@@ -43,6 +44,7 @@ const LABEL_MAP: Record<string, string> = {
   designer: "Designer Drive",
   roles: "Cargos",
   fiscal: "Notas Fiscais",
+  customers: "Clientes",
 };
 
 export default function AdminLayout() {
