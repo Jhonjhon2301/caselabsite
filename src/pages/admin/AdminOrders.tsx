@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ShoppingCart, ChevronDown, ChevronUp, FileText, Receipt } from "lucide-react";
+import { ShoppingCart, ChevronDown, ChevronUp, FileText, Receipt, MessageCircle, ExternalLink } from "lucide-react";
 import { generateReceiptPdf, generateQuotePdf } from "@/lib/pdf-utils";
 
 interface Order {
@@ -41,6 +41,7 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<Record<string, OrderItem[]>>({});
+  const [whatsappUrls, setWhatsappUrls] = useState<Record<string, string>>({});
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -71,8 +72,22 @@ export default function AdminOrders() {
     if (error) { toast.error("Erro ao atualizar status"); return; }
     toast.success("Status atualizado!");
     setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
-  };
 
+    // Trigger post-purchase automation
+    if (["confirmed", "processing", "shipped", "delivered"].includes(status)) {
+      try {
+        const { data } = await supabase.functions.invoke("order-status-webhook", {
+          body: { order_id: orderId, new_status: status },
+        });
+        if (data?.whatsapp_url) {
+          setWhatsappUrls(prev => ({ ...prev, [orderId]: data.whatsapp_url }));
+          toast.success("Mensagem de WhatsApp gerada! Clique no ícone para enviar.", { duration: 5000 });
+        }
+      } catch (err) {
+        console.error("Automation error:", err);
+      }
+    }
+  };
   const getStatusInfo = (status: string) => STATUS_OPTIONS.find((s) => s.value === status) ?? STATUS_OPTIONS[0];
 
   return (
@@ -132,6 +147,18 @@ export default function AdminOrders() {
                         >
                           {STATUS_OPTIONS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                         </select>
+                        {whatsappUrls[order.id] && (
+                          <a
+                            href={whatsappUrls[order.id]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors mt-2"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                            Enviar WhatsApp
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
                       </div>
                     </div>
 

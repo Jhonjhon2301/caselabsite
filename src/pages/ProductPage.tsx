@@ -107,14 +107,14 @@ export default function ProductPage() {
     <div className="min-h-screen bg-background">
       {product && (
         <SEOHead
-          title={product.name}
-          description={product.description || `${product.name} — Garrafa personalizada Case Lab`}
+          title={(product as any).meta_title || product.name}
+          description={(product as any).meta_description || product.description || `${product.name} — Garrafa personalizada Case Lab`}
           image={product.images?.[0]}
           type="product"
           product={{
             name: product.name,
             price: product.price,
-            description: product.description || undefined,
+            description: (product as any).meta_description || product.description || undefined,
             image: product.images?.[0],
             availability: product.stock_quantity > 0 ? "in stock" : "out of stock",
             category: product.category_name || undefined,
