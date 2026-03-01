@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.focus-nfe]
 verify_jwt = false
+
+[functions.auto-emit-nfe]
+verify_jwt = false
