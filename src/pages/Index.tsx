@@ -8,12 +8,17 @@ import ProductGrid from "@/components/ProductGrid";
 import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
+import SEOHead from "@/components/SEOHead";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title="Garrafas Personalizadas"
+        description="Garrafas térmicas personalizadas com seu nome. Qualidade premium, design exclusivo. Entrega para todo o Brasil."
+      />
       <TopBar />
       <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
       <main>

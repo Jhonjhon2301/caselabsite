@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { trackPurchase } from "@/lib/tracking";
 
 export default function PaymentSuccess() {
   const navigate = useNavigate();
@@ -11,6 +12,27 @@ export default function PaymentSuccess() {
 
   useEffect(() => {
     if (!orderId) return;
+
+    // Track purchase event
+    const trackOrder = async () => {
+      const { data: order } = await supabase
+        .from("orders")
+        .select("total")
+        .eq("id", orderId)
+        .single();
+      const { data: orderItems } = await supabase
+        .from("order_items")
+        .select("product_id, product_name, unit_price, quantity")
+        .eq("order_id", orderId);
+      if (order && orderItems) {
+        trackPurchase(
+          orderId,
+          Number(order.total),
+          orderItems.map(i => ({ id: i.product_id || "", name: i.product_name, price: Number(i.unit_price), quantity: i.quantity }))
+        );
+      }
+    };
+    trackOrder();
 
     const emitNfe = async () => {
       setNfeStatus("emitting");

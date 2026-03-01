@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      abandoned_carts: {
+        Row: {
+          coupon_code: string | null
+          created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          id: string
+          items: Json
+          last_recovery_at: string | null
+          recovered_at: string | null
+          recovery_attempts: number
+          recovery_status: string
+          session_id: string | null
+          total: number
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          coupon_code?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          items?: Json
+          last_recovery_at?: string | null
+          recovered_at?: string | null
+          recovery_attempts?: number
+          recovery_status?: string
+          session_id?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          coupon_code?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          id?: string
+          items?: Json
+          last_recovery_at?: string | null
+          recovered_at?: string | null
+          recovery_attempts?: number
+          recovery_status?: string
+          session_id?: string | null
+          total?: number
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       admin_notes: {
         Row: {
           color: string | null
@@ -401,6 +455,50 @@ export type Database = {
         }
         Relationships: []
       }
+      order_automations: {
+        Row: {
+          automation_type: string
+          created_at: string
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          order_id: string
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          automation_type: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id: string
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          automation_type?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          order_id?: string
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_automations_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -560,6 +658,8 @@ export type Database = {
           is_active: boolean
           is_customizable: boolean
           measurements: string | null
+          meta_description: string | null
+          meta_title: string | null
           name: string
           price: number
           purchase_cost: number
@@ -582,6 +682,8 @@ export type Database = {
           is_active?: boolean
           is_customizable?: boolean
           measurements?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           name: string
           price?: number
           purchase_cost?: number
@@ -604,6 +706,8 @@ export type Database = {
           is_active?: boolean
           is_customizable?: boolean
           measurements?: string | null
+          meta_description?: string | null
+          meta_title?: string | null
           name?: string
           price?: number
           purchase_cost?: number

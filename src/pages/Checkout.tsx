@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, CreditCard, Loader2, QrCode, ShieldCheck, Truck, Trash2, Minus, Plus, Tag, Package } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
+import SEOHead from "@/components/SEOHead";
+import { trackInitiateCheckout } from "@/lib/tracking";
 
 type PaymentMethod = "card" | "pix";
 
@@ -50,6 +52,12 @@ export default function Checkout() {
 
   useEffect(() => {
     if (items.length === 0) navigate("/");
+    else {
+      trackInitiateCheckout(
+        items.map(i => ({ id: i.product.id, name: i.product.name, price: i.product.price, quantity: i.quantity })),
+        totalPrice
+      );
+    }
   }, [items.length, navigate]);
 
   useEffect(() => {
@@ -242,6 +250,7 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-muted/30">
+      <SEOHead title="Finalizar Compra" description="Complete seu pedido na Case Lab." />
       {/* Header */}
       <div className="bg-background border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
