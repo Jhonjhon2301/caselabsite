@@ -243,6 +243,89 @@ export type Database = {
         }
         Relationships: []
       }
+      fiscal_notes: {
+        Row: {
+          access_key: string | null
+          cancel_xml_url: string | null
+          created_at: string
+          created_by: string
+          customer_cpf: string | null
+          customer_email: string | null
+          customer_name: string | null
+          error_message: string | null
+          focus_id: string | null
+          focus_ref: string | null
+          id: string
+          items: Json
+          notes: string | null
+          number: string | null
+          order_id: string | null
+          pdf_url: string | null
+          series: string | null
+          status: string
+          total: number
+          type: string
+          updated_at: string
+          xml_url: string | null
+        }
+        Insert: {
+          access_key?: string | null
+          cancel_xml_url?: string | null
+          created_at?: string
+          created_by: string
+          customer_cpf?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          error_message?: string | null
+          focus_id?: string | null
+          focus_ref?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          number?: string | null
+          order_id?: string | null
+          pdf_url?: string | null
+          series?: string | null
+          status?: string
+          total?: number
+          type?: string
+          updated_at?: string
+          xml_url?: string | null
+        }
+        Update: {
+          access_key?: string | null
+          cancel_xml_url?: string | null
+          created_at?: string
+          created_by?: string
+          customer_cpf?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          error_message?: string | null
+          focus_id?: string | null
+          focus_ref?: string | null
+          id?: string
+          items?: Json
+          notes?: string | null
+          number?: string | null
+          order_id?: string | null
+          pdf_url?: string | null
+          series?: string | null
+          status?: string
+          total?: number
+          type?: string
+          updated_at?: string
+          xml_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_notes_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fixed_expenses: {
         Row: {
           amount: number
