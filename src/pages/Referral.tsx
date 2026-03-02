@@ -9,6 +9,18 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SEOHead from "@/components/SEOHead";
 
+interface ReferralConfig {
+  discount_percent: number;
+  referrer_message: string;
+  referred_message: string;
+}
+
+const defaultCfg: ReferralConfig = {
+  discount_percent: 10,
+  referrer_message: "Cupom de {percent}% para sua próxima compra",
+  referred_message: "Ele ganha {percent}% na primeira compra",
+};
+
 export default function Referral() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -16,6 +28,21 @@ export default function Referral() {
   const [referrals, setReferrals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [cfg, setCfg] = useState<ReferralConfig>(defaultCfg);
+
+  useEffect(() => {
+    supabase
+      .from("site_settings")
+      .select("value")
+      .eq("key", "referral_program")
+      .single()
+      .then(({ data }) => {
+        if (data?.value) {
+          const v = data.value as unknown as Partial<ReferralConfig>;
+          setCfg((prev) => ({ ...prev, ...v }));
+        }
+      });
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -24,7 +51,6 @@ export default function Referral() {
   useEffect(() => {
     if (!user) return;
     const init = async () => {
-      // Check if user has a referral code
       const { data: existing } = await supabase
         .from("referrals")
         .select("*")
@@ -35,7 +61,6 @@ export default function Referral() {
         setReferralCode(existing[0].referral_code);
         setReferrals(existing);
       } else {
-        // Generate unique code
         const code = `CASELAB${user.id.slice(0, 6).toUpperCase()}`;
         const { error } = await supabase.from("referrals").insert({
           referrer_user_id: user.id,
@@ -51,6 +76,7 @@ export default function Referral() {
 
   const referralUrl = `${window.location.origin}/?ref=${referralCode}`;
   const convertedCount = referrals.filter(r => r.status === "converted").length;
+  const pct = cfg.discount_percent;
 
   const copyLink = () => {
     navigator.clipboard.writeText(referralUrl);
@@ -75,15 +101,15 @@ export default function Referral() {
             <Gift className="w-8 h-8 text-primary" />
           </div>
           <h1 className="font-heading font-bold text-2xl mb-2">Programa de Indicação</h1>
-          <p className="text-muted-foreground text-sm">Indique amigos e ambos ganham 10% de desconto!</p>
+          <p className="text-muted-foreground text-sm">Indique amigos e ambos ganham {pct}% de desconto!</p>
         </div>
 
         {/* How it works */}
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
             { step: "1", title: "Compartilhe", desc: "Envie seu link para amigos" },
-            { step: "2", title: "Amigo compra", desc: "Ele ganha 10% na primeira compra" },
-            { step: "3", title: "Você ganha", desc: "Cupom de 10% para sua próxima compra" },
+            { step: "2", title: "Amigo compra", desc: `Ele ganha ${pct}% na primeira compra` },
+            { step: "3", title: "Você ganha", desc: `Cupom de ${pct}% para sua próxima compra` },
           ].map((s) => (
             <div key={s.step} className="text-center">
               <div className="w-10 h-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center mx-auto mb-2 text-sm font-bold">
@@ -132,7 +158,7 @@ export default function Referral() {
             {/* Share buttons */}
             <div className="flex gap-3">
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`🎁 Use meu link e ganhe 10% de desconto na Case Lab! ${referralUrl}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(`🎁 Use meu link e ganhe ${pct}% de desconto na Case Lab! ${referralUrl}`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 bg-green-500 text-white py-3 rounded-xl text-sm font-bold text-center hover:bg-green-600 transition-colors"

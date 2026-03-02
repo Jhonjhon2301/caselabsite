@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, ImageIcon, Trash2, Plus, GripVertical } from "lucide-react";
+import { Save, Upload, ImageIcon, Trash2, Plus, GripVertical, Gift, Mail } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
 interface BannerConfig {
@@ -257,6 +257,147 @@ export default function AdminBanner() {
           <Label>Texto da faixa preta (marquee)</Label>
           <Input value={config.marquee_text} onChange={(e) => update("marquee_text", e.target.value)} placeholder="Texto que roda na faixa preta..." />
           <p className="text-xs text-muted-foreground">Use " • " para separar os itens.</p>
+        </div>
+      </div>
+
+      {/* ===== POPUP DE LEAD ===== */}
+      <PopupSettings />
+
+      {/* ===== PROGRAMA DE INDICAÇÃO ===== */}
+      <ReferralSettings />
+    </div>
+  );
+}
+
+/* ===== Popup Lead Config ===== */
+function PopupSettings() {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const [cfg, setCfg] = useState({
+    enabled: true,
+    delay_seconds: 15,
+    title: "Ganhe 10% OFF",
+    subtitle: "na sua primeira compra!",
+    coupon_code: "BEMVINDO10",
+    discount_label: "10%",
+    button_text: "Quero meu cupom de 10%",
+  });
+
+  useEffect(() => {
+    supabase.from("site_settings").select("value").eq("key", "lead_popup").single()
+      .then(({ data }) => {
+        if (data?.value) setCfg((prev) => ({ ...prev, ...(data.value as any) }));
+      });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("site_settings").upsert(
+      { key: "lead_popup", value: cfg as unknown as Json, updated_at: new Date().toISOString() },
+      { onConflict: "key" }
+    );
+    if (error) toast({ title: "Erro ao salvar", variant: "destructive" });
+    else toast({ title: "Popup atualizado!" });
+    setSaving(false);
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Mail className="w-5 h-5 text-primary" />
+          <h2 className="font-heading text-lg font-bold">Popup de Captação (Lead)</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Switch checked={cfg.enabled} onCheckedChange={(v) => setCfg({ ...cfg, enabled: v })} />
+            <span className="text-xs text-muted-foreground">{cfg.enabled ? "Ativo" : "Desativado"}</span>
+          </div>
+          <Button size="sm" onClick={save} disabled={saving}>
+            <Save className="w-4 h-4 mr-2" /> {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Título</Label>
+          <Input value={cfg.title} onChange={(e) => setCfg({ ...cfg, title: e.target.value })} />
+        </div>
+        <div className="space-y-2">
+          <Label>Subtítulo</Label>
+          <Input value={cfg.subtitle} onChange={(e) => setCfg({ ...cfg, subtitle: e.target.value })} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <Label>Código do Cupom</Label>
+          <Input value={cfg.coupon_code} onChange={(e) => setCfg({ ...cfg, coupon_code: e.target.value.toUpperCase() })} />
+          <p className="text-[10px] text-muted-foreground">Deve existir na aba Cupons</p>
+        </div>
+        <div className="space-y-2">
+          <Label>Texto do Botão</Label>
+          <Input value={cfg.button_text} onChange={(e) => setCfg({ ...cfg, button_text: e.target.value })} />
+        </div>
+        <div className="space-y-2">
+          <Label>Atraso (segundos)</Label>
+          <Input type="number" min="1" value={cfg.delay_seconds} onChange={(e) => setCfg({ ...cfg, delay_seconds: parseInt(e.target.value) || 15 })} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ===== Referral Program Config ===== */
+function ReferralSettings() {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const [cfg, setCfg] = useState({
+    discount_percent: 10,
+  });
+
+  useEffect(() => {
+    supabase.from("site_settings").select("value").eq("key", "referral_program").single()
+      .then(({ data }) => {
+        if (data?.value) setCfg((prev) => ({ ...prev, ...(data.value as any) }));
+      });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("site_settings").upsert(
+      { key: "referral_program", value: cfg as unknown as Json, updated_at: new Date().toISOString() },
+      { onConflict: "key" }
+    );
+    if (error) toast({ title: "Erro ao salvar", variant: "destructive" });
+    else toast({ title: "Indicação atualizada!" });
+    setSaving(false);
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Gift className="w-5 h-5 text-primary" />
+          <h2 className="font-heading text-lg font-bold">Programa de Indicação</h2>
+        </div>
+        <Button size="sm" onClick={save} disabled={saving}>
+          <Save className="w-4 h-4 mr-2" /> {saving ? "Salvando..." : "Salvar"}
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Desconto para indicador e indicado (%)</Label>
+          <Input
+            type="number"
+            min="1"
+            max="100"
+            value={cfg.discount_percent}
+            onChange={(e) => setCfg({ ...cfg, discount_percent: parseInt(e.target.value) || 10 })}
+          />
+          <p className="text-[10px] text-muted-foreground">Percentual de desconto que ambos recebem</p>
         </div>
       </div>
     </div>
