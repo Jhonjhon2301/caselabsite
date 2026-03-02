@@ -48,6 +48,10 @@ import AdminDRE from "./pages/admin/AdminDRE";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminLeads from "./pages/admin/AdminLeads";
 import About from "./pages/About";
+import ResetPassword from "./pages/ResetPassword";
+import Profile from "./pages/Profile";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 import LeadCapturePopup from "./components/LeadCapturePopup";
 
 const queryClient = new QueryClient();
@@ -90,6 +94,10 @@ const App = () => (
               <Route path="/brindes-corporativos-personalizados" element={<SEOBrindesCorporativos />} />
               <Route path="/garrafa-termica-com-logo" element={<SEOGarrafaTermica />} />
               <Route path="/sobre" element={<About />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/perfil" element={<Profile />} />
+              <Route path="/termos" element={<Terms />} />
+              <Route path="/privacidade" element={<Privacy />} />
               <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
