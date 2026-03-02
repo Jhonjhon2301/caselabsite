@@ -18,6 +18,7 @@ interface Position {
 }
 
 const ALL_PERMISSIONS = [
+  { key: "dashboard", label: "Dashboard" },
   { key: "products", label: "Produtos" },
   { key: "stock", label: "Estoque" },
   { key: "orders", label: "Pedidos" },
@@ -32,6 +33,17 @@ const ALL_PERMISSIONS = [
   { key: "team", label: "Equipe" },
   { key: "designer", label: "Designer Drive" },
   { key: "roles", label: "Cargos" },
+  { key: "fiscal", label: "Notas Fiscais" },
+  { key: "customers", label: "Clientes" },
+  { key: "blog", label: "Blog" },
+  { key: "reviews", label: "Avaliações" },
+  { key: "bi", label: "BI Avançado" },
+  { key: "production", label: "Produção" },
+  { key: "b2b", label: "B2B" },
+  { key: "dre", label: "DRE" },
+  { key: "audit", label: "Auditoria" },
+  { key: "leads", label: "Leads" },
+  { key: "docs", label: "Documentação" },
 ];
 
 export default function AdminRoles() {
