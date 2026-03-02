@@ -6,11 +6,11 @@ import logo from "@/assets/logo.jpeg";
 import { useState, useEffect } from "react";
 
 interface HeaderProps {
-  searchQuery: string;
-  onSearchChange: (q: string) => void;
+  searchQuery?: string;
+  onSearchChange?: (q: string) => void;
 }
 
-export default function Header({ searchQuery, onSearchChange }: HeaderProps) {
+export default function Header({ searchQuery = "", onSearchChange = () => {} }: HeaderProps) {
   const { totalItems, setIsCartOpen } = useCart();
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();

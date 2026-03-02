@@ -17,6 +17,10 @@ import MyOrders from "./pages/MyOrders";
 import Referral from "./pages/Referral";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import B2B from "./pages/B2B";
+import SEOGarrafaAcademia from "./pages/SEOGarrafaAcademia";
+import SEOBrindesCorporativos from "./pages/SEOBrindesCorporativos";
+import SEOGarrafaTermica from "./pages/SEOGarrafaTermica";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -37,6 +41,9 @@ import AdminFiscalNotes from "./pages/admin/AdminFiscalNotes";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminReviews from "./pages/admin/AdminReviews";
+import AdminBI from "./pages/admin/AdminBI";
+import AdminProduction from "./pages/admin/AdminProduction";
+import AdminB2B from "./pages/admin/AdminB2B";
 
 const queryClient = new QueryClient();
 
@@ -72,6 +79,10 @@ const App = () => (
               <Route path="/indicar" element={<Referral />} />
               <Route path="/blog" element={<Blog />} />
               <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/b2b" element={<B2B />} />
+              <Route path="/garrafa-personalizada-academia" element={<SEOGarrafaAcademia />} />
+              <Route path="/brindes-corporativos-personalizados" element={<SEOBrindesCorporativos />} />
+              <Route path="/garrafa-termica-com-logo" element={<SEOGarrafaTermica />} />
               <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
@@ -93,6 +104,9 @@ const App = () => (
                 <Route path="customers" element={<AdminCustomers />} />
                 <Route path="blog" element={<AdminBlog />} />
                 <Route path="reviews" element={<AdminReviews />} />
+                <Route path="bi" element={<AdminBI />} />
+                <Route path="production" element={<AdminProduction />} />
+                <Route path="b2b" element={<AdminB2B />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

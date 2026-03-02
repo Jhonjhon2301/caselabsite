@@ -98,6 +98,113 @@ export type Database = {
         }
         Relationships: []
       }
+      b2b_customers: {
+        Row: {
+          cnpj: string | null
+          company_name: string
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          created_at: string
+          discount_percent: number
+          id: string
+          is_approved: boolean
+          min_order_quantity: number
+          notes: string | null
+          pricing_tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cnpj?: string | null
+          company_name: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          is_approved?: boolean
+          min_order_quantity?: number
+          notes?: string | null
+          pricing_tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cnpj?: string | null
+          company_name?: string
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          is_approved?: boolean
+          min_order_quantity?: number
+          notes?: string | null
+          pricing_tier?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      b2b_quotes: {
+        Row: {
+          admin_notes: string | null
+          approved_at: string | null
+          b2b_customer_id: string
+          created_at: string
+          discount: number
+          id: string
+          items: Json
+          notes: string | null
+          status: string
+          subtotal: number
+          total: number
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          b2b_customer_id: string
+          created_at?: string
+          discount?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          approved_at?: string | null
+          b2b_customer_id?: string
+          created_at?: string
+          discount?: number
+          id?: string
+          items?: Json
+          notes?: string | null
+          status?: string
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "b2b_quotes_b2b_customer_id_fkey"
+            columns: ["b2b_customer_id"]
+            isOneToOne: false
+            referencedRelation: "b2b_customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           author_name: string | null
@@ -752,6 +859,71 @@ export type Database = {
           },
         ]
       }
+      production_queue: {
+        Row: {
+          art_approved_at: string | null
+          created_at: string
+          customer_name: string | null
+          designer_id: string | null
+          designer_name: string | null
+          id: string
+          notes: string | null
+          order_id: string
+          priority: number
+          product_name: string
+          production_completed_at: string | null
+          production_started_at: string | null
+          quantity: number
+          shipped_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          art_approved_at?: string | null
+          created_at?: string
+          customer_name?: string | null
+          designer_id?: string | null
+          designer_name?: string | null
+          id?: string
+          notes?: string | null
+          order_id: string
+          priority?: number
+          product_name: string
+          production_completed_at?: string | null
+          production_started_at?: string | null
+          quantity?: number
+          shipped_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          art_approved_at?: string | null
+          created_at?: string
+          customer_name?: string | null
+          designer_id?: string | null
+          designer_name?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string
+          priority?: number
+          product_name?: string
+          production_completed_at?: string | null
+          production_started_at?: string | null
+          quantity?: number
+          shipped_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "production_queue_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category_id: string | null
@@ -1000,6 +1172,30 @@ export type Database = {
           position?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      volume_discounts: {
+        Row: {
+          created_at: string
+          discount_percent: number
+          id: string
+          max_quantity: number | null
+          min_quantity: number
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          max_quantity?: number | null
+          min_quantity: number
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number
+          id?: string
+          max_quantity?: number | null
+          min_quantity?: number
         }
         Relationships: []
       }
