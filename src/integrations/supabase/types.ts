@@ -616,6 +616,54 @@ export type Database = {
         }
         Relationships: []
       }
+      internal_stock: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          location: string | null
+          min_quantity: number
+          name: string
+          notes: string | null
+          quantity: number
+          supplier: string | null
+          unit_cost: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          min_quantity?: number
+          name: string
+          notes?: string | null
+          quantity?: number
+          supplier?: string | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          min_quantity?: number
+          name?: string
+          notes?: string | null
+          quantity?: number
+          supplier?: string | null
+          unit_cost?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lead_captures: {
         Row: {
           converted_at: string | null

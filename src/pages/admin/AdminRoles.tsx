@@ -21,6 +21,7 @@ const ALL_PERMISSIONS = [
   { key: "dashboard", label: "Dashboard" },
   { key: "products", label: "Produtos" },
   { key: "stock", label: "Estoque" },
+  { key: "internal_stock", label: "Estoque Interno" },
   { key: "orders", label: "Pedidos" },
   { key: "financial", label: "Financeiro" },
   { key: "coupons", label: "Cupons" },
