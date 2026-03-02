@@ -47,6 +47,7 @@ import AdminB2B from "./pages/admin/AdminB2B";
 import AdminDRE from "./pages/admin/AdminDRE";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminLeads from "./pages/admin/AdminLeads";
+import AdminDocs from "./pages/admin/AdminDocs";
 import About from "./pages/About";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
@@ -127,6 +128,7 @@ const App = () => (
                 <Route path="dre" element={<AdminDRE />} />
                 <Route path="audit" element={<AdminAuditLog />} />
                 <Route path="leads" element={<AdminLeads />} />
+                <Route path="docs" element={<AdminDocs />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
