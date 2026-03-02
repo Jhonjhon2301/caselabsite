@@ -68,6 +68,42 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          user_email?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       admin_notes: {
         Row: {
           color: string | null
@@ -577,6 +613,42 @@ export type Database = {
           is_active?: boolean
           recurrence?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      lead_captures: {
+        Row: {
+          converted_at: string | null
+          coupon_code: string | null
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          page_url: string | null
+          phone: string | null
+          source: string | null
+        }
+        Insert: {
+          converted_at?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+          page_url?: string | null
+          phone?: string | null
+          source?: string | null
+        }
+        Update: {
+          converted_at?: string | null
+          coupon_code?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+          page_url?: string | null
+          phone?: string | null
+          source?: string | null
         }
         Relationships: []
       }

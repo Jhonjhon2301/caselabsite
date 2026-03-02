@@ -12,6 +12,9 @@ import WhatsAppFloat from "@/components/WhatsAppFloat";
 import SEOHead from "@/components/SEOHead";
 import { trackViewContent } from "@/lib/tracking";
 import ProductReviews from "@/components/ProductReviews";
+import { lazy, Suspense } from "react";
+
+const ProductSimulator3D = lazy(() => import("@/components/ProductSimulator3D"));
 
 const FONT_OPTIONS = [
   { label: "Clássica", family: "'Montserrat', sans-serif", weight: "700" },
@@ -436,6 +439,22 @@ export default function ProductPage() {
                       <span className="text-sm font-bold text-muted-foreground">A</span>
                     </div>
                   </div>
+
+                  {/* 3D Simulator */}
+                  {customName.trim() && (
+                    <div className="mt-4">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">🎮 Visualização 3D</p>
+                      <Suspense fallback={<div className="aspect-square rounded-xl bg-muted animate-pulse" />}>
+                        <ProductSimulator3D
+                          customName={customName}
+                          textColor={textColor}
+                          fontSize={fontSize}
+                          fontFamily={selectedFont.family}
+                          bottleColor={selectedVariant?.hex || "#333333"}
+                        />
+                      </Suspense>
+                    </div>
+                  )}
                 </div>
               )}
 

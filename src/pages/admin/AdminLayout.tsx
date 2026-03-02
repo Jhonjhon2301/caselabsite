@@ -6,7 +6,7 @@ import {
   Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign,
   Users, ImageIcon, FileText, Warehouse, CreditCard, Bell, StickyNote,
   Palette, Shield, Menu, X, Receipt, LayoutDashboard, Star, BookOpen,
-  BarChart3, Factory, Building2
+  BarChart3, Factory, Building2, FileBarChart, ShieldAlert, Mail
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
@@ -33,6 +33,9 @@ const ICON_MAP: Record<string, React.ElementType> = {
   bi: BarChart3,
   production: Factory,
   b2b: Building2,
+  dre: FileBarChart,
+  audit: ShieldAlert,
+  leads: Mail,
 };
 
 const LABEL_MAP: Record<string, string> = {
@@ -58,6 +61,9 @@ const LABEL_MAP: Record<string, string> = {
   bi: "BI Avançado",
   production: "Produção",
   b2b: "B2B",
+  dre: "DRE",
+  audit: "Auditoria",
+  leads: "Leads",
 };
 
 export default function AdminLayout() {
