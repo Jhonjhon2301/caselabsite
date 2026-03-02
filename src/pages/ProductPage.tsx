@@ -305,6 +305,14 @@ export default function ProductPage() {
                 </p>
               )}
 
+              {/* Production / Delivery time */}
+              {((product as any).production_days ?? 0) > 0 && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2 w-fit">
+                  <Truck className="w-3.5 h-3.5 text-primary" />
+                  <span>Prazo de produção: <strong className="text-foreground">{(product as any).production_days} dias úteis</strong> + prazo do frete</span>
+                </div>
+              )}
+
               {/* ===== COLOR VARIANTS ===== */}
               {variants.length > 0 && (
                 <div className="border border-border rounded-xl p-4 bg-card">

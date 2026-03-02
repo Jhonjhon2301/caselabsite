@@ -60,6 +60,23 @@ export default function Checkout() {
         items.map(i => ({ id: i.product.id, name: i.product.name, price: i.product.price, quantity: i.quantity })),
         totalPrice
       );
+      // Auto-fill from profile
+      supabase
+        .from("profiles")
+        .select("full_name, email, phone, cpf")
+        .eq("user_id", user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (profile) {
+            setForm(prev => ({
+              ...prev,
+              name: profile.full_name || prev.name,
+              email: profile.email || user.email || prev.email,
+              phone: profile.phone || prev.phone,
+              cpf: profile.cpf || prev.cpf,
+            }));
+          }
+        });
     }
   }, [items.length, navigate, user]);
 
