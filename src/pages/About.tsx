@@ -13,7 +13,7 @@ const TRUST_ITEMS = [
   { icon: Award, title: "Qualidade Premium", desc: "Materiais de alta durabilidade e acabamento impecável" },
   { icon: Users, title: "+500 Empresas Atendidas", desc: "Brindes corporativos para grandes marcas" },
   { icon: Heart, title: "Feito com Carinho", desc: "Cada produto é personalizado à mão com atenção aos detalhes" },
-  { icon: Truck, title: "Entrega para Todo Brasil", desc: "Frete grátis acima de R$299,90" },
+  { icon: Truck, title: "Entrega para Todo Brasil", desc: "Frete grátis a partir de R$150 (DF) e R$180 (demais estados)" },
   { icon: Star, title: "4.9 ⭐ de Avaliação", desc: "Milhares de clientes satisfeitos" },
 ];
 
