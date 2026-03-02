@@ -52,13 +52,16 @@ export default function Checkout() {
 
   useEffect(() => {
     if (items.length === 0) navigate("/");
-    else {
+    else if (!user) {
+      toast.error("Faça login para finalizar a compra");
+      navigate("/auth");
+    } else {
       trackInitiateCheckout(
         items.map(i => ({ id: i.product.id, name: i.product.name, price: i.product.price, quantity: i.quantity })),
         totalPrice
       );
     }
-  }, [items.length, navigate]);
+  }, [items.length, navigate, user]);
 
   useEffect(() => {
     supabase

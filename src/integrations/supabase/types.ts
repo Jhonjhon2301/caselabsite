@@ -1013,9 +1013,11 @@ export type Database = {
           meta_title: string | null
           name: string
           price: number
+          production_days: number | null
           purchase_cost: number
           stock_quantity: number
           text_left: number | null
+          text_orientation: string | null
           text_rotation: number | null
           text_top: number | null
           updated_at: string
@@ -1037,9 +1039,11 @@ export type Database = {
           meta_title?: string | null
           name: string
           price?: number
+          production_days?: number | null
           purchase_cost?: number
           stock_quantity?: number
           text_left?: number | null
+          text_orientation?: string | null
           text_rotation?: number | null
           text_top?: number | null
           updated_at?: string
@@ -1061,9 +1065,11 @@ export type Database = {
           meta_title?: string | null
           name?: string
           price?: number
+          production_days?: number | null
           purchase_cost?: number
           stock_quantity?: number
           text_left?: number | null
+          text_orientation?: string | null
           text_rotation?: number | null
           text_top?: number | null
           updated_at?: string
@@ -1081,6 +1087,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          cpf: string | null
           created_at: string
           email: string | null
           full_name: string | null
@@ -1090,6 +1097,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          cpf?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null
@@ -1099,6 +1107,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          cpf?: string | null
           created_at?: string
           email?: string | null
           full_name?: string | null

@@ -45,8 +45,10 @@ export default function AdminProducts() {
   const [form, setForm] = useState({
     name: "", description: "", price: "", category_id: "",
     is_active: true, is_customizable: false,
-    text_top: "42", text_left: "50", text_rotation: "0", discount_percent: "0",
+    text_top: "42", text_left: "50", text_rotation: "0", text_orientation: "horizontal",
+    discount_percent: "0",
     meta_title: "", meta_description: "", purchase_cost: "0",
+    production_days: "3",
   });
   const [uploading, setUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -69,7 +71,7 @@ export default function AdminProducts() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50", text_rotation: "0", discount_percent: "0", meta_title: "", meta_description: "", purchase_cost: "0" });
+    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50", text_rotation: "0", text_orientation: "horizontal", discount_percent: "0", meta_title: "", meta_description: "", purchase_cost: "0", production_days: "3" });
     setImageUrls([]);
     setVariants([]);
     setShowForm(true);
@@ -80,8 +82,12 @@ export default function AdminProducts() {
     setForm({
       name: p.name, description: p.description ?? "", price: String(p.price),
       category_id: p.category_id ?? "", is_active: p.is_active, is_customizable: p.is_customizable,
-      text_top: String(p.text_top ?? 42), text_left: String(p.text_left ?? 50), text_rotation: String(p.text_rotation ?? 0), discount_percent: String(p.discount_percent ?? 0),
-      meta_title: (p as any).meta_title ?? "", meta_description: (p as any).meta_description ?? "", purchase_cost: String((p as any).purchase_cost ?? 0),
+      text_top: String(p.text_top ?? 42), text_left: String(p.text_left ?? 50), text_rotation: String(p.text_rotation ?? 0),
+      text_orientation: (p as any).text_orientation ?? "horizontal",
+      discount_percent: String(p.discount_percent ?? 0),
+      meta_title: (p as any).meta_title ?? "", meta_description: (p as any).meta_description ?? "",
+      purchase_cost: String((p as any).purchase_cost ?? 0),
+      production_days: String((p as any).production_days ?? 3),
     });
     setImageUrls(p.images ?? []);
     setVariants((p.variants as ProductVariant[]) ?? []);
@@ -205,10 +211,12 @@ export default function AdminProducts() {
       text_top: form.is_customizable ? parseFloat(form.text_top) || 42 : null,
       text_left: form.is_customizable ? parseFloat(form.text_left) || 50 : null,
       text_rotation: form.is_customizable ? parseFloat(form.text_rotation) || 0 : null,
+      text_orientation: form.is_customizable ? form.text_orientation : "horizontal",
       discount_percent: parseFloat(form.discount_percent) || 0,
       meta_title: form.meta_title.trim() || null,
       meta_description: form.meta_description.trim() || null,
       purchase_cost: parseFloat(form.purchase_cost) || 0,
+      production_days: parseInt(form.production_days) || 3,
     };
 
     if (editing) {
@@ -322,6 +330,36 @@ export default function AdminProducts() {
                 <p className="text-xs text-muted-foreground mb-3">
                   Defina onde o nome personalizado aparece sobre a imagem (em %). Ex: Top 42%, Left 50% = centro da garrafa.
                 </p>
+
+                {/* Orientation toggle */}
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-muted-foreground mb-2">Orientação do texto</label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, text_orientation: "horizontal", text_rotation: "0" })}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all ${
+                        form.text_orientation === "horizontal"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:border-muted-foreground"
+                      }`}
+                    >
+                      ➡️ Horizontal
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, text_orientation: "vertical", text_rotation: "90" })}
+                      className={`flex items-center gap-2 px-4 py-2.5 rounded-lg border-2 text-sm font-semibold transition-all ${
+                        form.text_orientation === "vertical"
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:border-muted-foreground"
+                      }`}
+                    >
+                      ⬇️ Vertical
+                    </button>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-muted-foreground mb-1">Posição vertical (Top %)</label>
@@ -354,6 +392,19 @@ export default function AdminProducts() {
                 </div>
               </div>
             )}
+
+            {/* Production days */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Dias úteis para produção</label>
+              <input
+                type="number" min="0" max="60"
+                value={form.production_days}
+                onChange={(e) => setForm({ ...form, production_days: e.target.value })}
+                className="w-full max-w-xs px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
+                placeholder="3"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Tempo de produção antes do envio. Será somado ao prazo da transportadora.</p>
+            </div>
 
             {/* Images */}
             <div>
