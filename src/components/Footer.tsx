@@ -62,6 +62,7 @@ export default function Footer() {
               </p>
               <p className="text-[10px] sm:text-xs text-background/25 mt-3 sm:mt-4 font-mono">CNPJ: 64.964.419/0001-46</p>
               <div className="flex flex-wrap gap-3 mt-3 sm:mt-4">
+                <a href="/sobre" className="text-xs text-background/50 hover:text-primary transition-colors">Sobre Nós</a>
                 <a href="/blog" className="text-xs text-background/50 hover:text-primary transition-colors">Blog</a>
                 <a href="/meus-pedidos" className="text-xs text-background/50 hover:text-primary transition-colors">Meus Pedidos</a>
                 <a href="/indicar" className="text-xs text-background/50 hover:text-primary transition-colors">Indicar Amigo</a>

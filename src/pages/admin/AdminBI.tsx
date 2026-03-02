@@ -316,6 +316,40 @@ export default function AdminBI() {
           </table>
         </div>
       </div>
+
+      {/* Stale stock - products with no sales in 60 days */}
+      <div className="bg-card border border-border rounded-xl p-4 sm:p-5">
+        <h3 className="font-heading font-semibold text-sm mb-4 flex items-center gap-2">
+          <ArrowDownRight className="w-4 h-4 text-red-500" /> Estoque Parado (sem vendas há 60+ dias)
+        </h3>
+        {(() => {
+          const cutoff = new Date();
+          cutoff.setDate(cutoff.getDate() - 60);
+          const soldProductIds = new Set(
+            orderItems
+              .filter(i => {
+                const order = paidOrders.find(o => o.id === i.order_id);
+                return order && new Date(order.created_at) >= cutoff;
+              })
+              .map(i => i.product_id)
+          );
+          const stale = products.filter(p => p.is_active && p.stock_quantity > 0 && !soldProductIds.has(p.id));
+          if (stale.length === 0) return <p className="text-sm text-muted-foreground text-center py-4">Nenhum produto parado 🎉</p>;
+          return (
+            <div className="space-y-2">
+              {stale.map(p => (
+                <div key={p.id} className="flex items-center justify-between py-2 px-3 rounded-lg bg-red-50 dark:bg-red-900/10">
+                  <div>
+                    <p className="text-sm font-medium">{p.name}</p>
+                    <p className="text-xs text-muted-foreground">Estoque: {p.stock_quantity} un</p>
+                  </div>
+                  <span className="text-xs font-bold text-red-600 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">Parado</span>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </div>
     </div>
   );
 }

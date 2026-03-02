@@ -44,6 +44,11 @@ import AdminReviews from "./pages/admin/AdminReviews";
 import AdminBI from "./pages/admin/AdminBI";
 import AdminProduction from "./pages/admin/AdminProduction";
 import AdminB2B from "./pages/admin/AdminB2B";
+import AdminDRE from "./pages/admin/AdminDRE";
+import AdminAuditLog from "./pages/admin/AdminAuditLog";
+import AdminLeads from "./pages/admin/AdminLeads";
+import About from "./pages/About";
+import LeadCapturePopup from "./components/LeadCapturePopup";
 
 const queryClient = new QueryClient();
 
@@ -67,6 +72,7 @@ const App = () => (
           <TrackingInitializer />
           <Toaster />
           <Sonner />
+          <LeadCapturePopup />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
@@ -83,6 +89,7 @@ const App = () => (
               <Route path="/garrafa-personalizada-academia" element={<SEOGarrafaAcademia />} />
               <Route path="/brindes-corporativos-personalizados" element={<SEOBrindesCorporativos />} />
               <Route path="/garrafa-termica-com-logo" element={<SEOGarrafaTermica />} />
+              <Route path="/sobre" element={<About />} />
               <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
                 <Route index element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="dashboard" element={<AdminDashboard />} />
@@ -107,6 +114,9 @@ const App = () => (
                 <Route path="bi" element={<AdminBI />} />
                 <Route path="production" element={<AdminProduction />} />
                 <Route path="b2b" element={<AdminB2B />} />
+                <Route path="dre" element={<AdminDRE />} />
+                <Route path="audit" element={<AdminAuditLog />} />
+                <Route path="leads" element={<AdminLeads />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
