@@ -247,16 +247,50 @@ export default function Checkout() {
     }
     setLoading(true);
     try {
-      const functionName = paymentMethod === "pix" ? "create-pix-checkout" : "create-checkout";
-      const { data, error } = await supabase.functions.invoke(functionName, { body: buildBody() });
-      if (error) throw error;
-      if (data?.url) {
-        window.open(data.url, "_blank");
+      if (paymentMethod === "pix") {
+        // PIX manual: envia pedido via WhatsApp
+        const itemsList = items.map(i => `• ${i.quantity}x ${i.product.name} — ${fmt(i.product.price)}`).join("\n");
+        const message = [
+          "🛒 *Novo Pedido via PIX — Case Lab*",
+          "",
+          `👤 *Cliente:* ${form.name.trim()}`,
+          `📧 ${form.email.trim()}`,
+          `📱 ${form.phone.trim()}`,
+          `📋 CPF: ${form.cpf.trim()}`,
+          "",
+          "📦 *Itens:*",
+          itemsList,
+          "",
+          `💰 Subtotal: ${fmt(totalPrice)}`,
+          couponDiscount > 0 ? `🏷️ Desconto: -${fmt(couponDiscount)}` : "",
+          `🚚 Frete (${shippingInfo.shipping_carrier} ${shippingInfo.shipping_service}): ${shippingInfo.is_free_shipping ? "Grátis" : fmt(shippingCost)}`,
+          `✅ *Total: ${fmt(finalTotal)}*`,
+          "",
+          "📍 *Endereço:*",
+          `${form.address.trim()}, ${form.number.trim()}${form.complement.trim() ? ` - ${form.complement.trim()}` : ""}`,
+          `${form.neighborhood.trim()}, ${form.city.trim()} - ${form.state.trim()}`,
+          `CEP: ${form.cep.trim()}`,
+          "",
+          `⏰ Entrega estimada: ${shippingInfo.shipping_estimated_days} dias úteis`,
+        ].filter(Boolean).join("\n");
+
+        const whatsappUrl = `https://wa.me/5561992629861?text=${encodeURIComponent(message)}`;
+        window.open(whatsappUrl, "_blank");
         clearCart();
-        toast.success("Redirecionando para pagamento em nova aba...");
+        toast.success("Pedido enviado via WhatsApp! Aguarde a confirmação do PIX.");
         navigate("/");
       } else {
-        throw new Error("URL de pagamento não retornada");
+        // Cartão: Stripe checkout
+        const { data, error } = await supabase.functions.invoke("create-checkout", { body: buildBody() });
+        if (error) throw error;
+        if (data?.url) {
+          window.open(data.url, "_blank");
+          clearCart();
+          toast.success("Redirecionando para pagamento em nova aba...");
+          navigate("/");
+        } else {
+          throw new Error("URL de pagamento não retornada");
+        }
       }
     } catch (err: any) {
       toast.error(err.message || "Erro ao processar pagamento");
@@ -555,7 +589,7 @@ export default function Checkout() {
               </button>
 
               <p className="text-[10px] text-muted-foreground text-center mt-2.5">
-                {paymentMethod === "pix" ? "Pagamento via Pix pela Cakto 🔒" : "Pagamento seguro 🔒"}
+                {paymentMethod === "pix" ? "Pedido via WhatsApp + PIX manual 🔒" : "Pagamento seguro 🔒"}
               </p>
             </div>
           </div>
