@@ -66,7 +66,7 @@ serve(async (req) => {
     } catch {}
 
     const isDF = uf === "DF";
-    const freeThreshold = isDF ? 180 : 200;
+    const freeThreshold = isDF ? 150 : 180;
     const isFreeShipping = subtotal >= freeThreshold;
     const missingForFree = Math.max(0, freeThreshold - subtotal);
 
