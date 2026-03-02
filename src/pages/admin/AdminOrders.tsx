@@ -59,7 +59,7 @@ export default function AdminOrders() {
     setLoading(true);
     const { data } = await supabase
       .from("orders")
-      .select("*, profiles!orders_user_id_fkey(full_name, email, phone)")
+      .select("*")
       .order("created_at", { ascending: false });
     setOrders((data as any[]) ?? []);
     setLoading(false);
