@@ -65,6 +65,12 @@ export default function Footer() {
                 <a href="/blog" className="text-xs text-background/50 hover:text-primary transition-colors">Blog</a>
                 <a href="/meus-pedidos" className="text-xs text-background/50 hover:text-primary transition-colors">Meus Pedidos</a>
                 <a href="/indicar" className="text-xs text-background/50 hover:text-primary transition-colors">Indicar Amigo</a>
+                <a href="/b2b" className="text-xs text-background/50 hover:text-primary transition-colors">Atacado B2B</a>
+              </div>
+              <div className="flex flex-wrap gap-3 mt-2">
+                <a href="/garrafa-personalizada-academia" className="text-[10px] text-background/30 hover:text-primary transition-colors">Garrafa para Academia</a>
+                <a href="/brindes-corporativos-personalizados" className="text-[10px] text-background/30 hover:text-primary transition-colors">Brindes Corporativos</a>
+                <a href="/garrafa-termica-com-logo" className="text-[10px] text-background/30 hover:text-primary transition-colors">Garrafa Térmica com Logo</a>
               </div>
             </div>
 
