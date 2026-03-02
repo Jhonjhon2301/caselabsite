@@ -85,9 +85,10 @@ export default function AdminOrders() {
     toast.success("Status atualizado!");
     setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
 
-    // Trigger post-purchase automation
+    // Trigger post-purchase automation (WhatsApp + Email)
     if (["confirmed", "processing", "shipped", "delivered"].includes(status)) {
       try {
+        // WhatsApp automation
         const { data } = await supabase.functions.invoke("order-status-webhook", {
           body: { order_id: orderId, new_status: status },
         });
@@ -95,6 +96,15 @@ export default function AdminOrders() {
           setWhatsappUrls(prev => ({ ...prev, [orderId]: data.whatsapp_url }));
           toast.success("Mensagem de WhatsApp gerada! Clique no ícone para enviar.", { duration: 5000 });
         }
+
+        // Email transacional
+        supabase.functions.invoke("send-order-email", {
+          body: { order_id: orderId, status },
+        }).then(({ data: emailData, error: emailErr }) => {
+          if (emailErr) console.error("Email error:", emailErr);
+          else if (emailData?.success) toast.success("E-mail de atualização enviado ao cliente!");
+          else console.warn("Email not sent:", emailData);
+        });
       } catch (err) {
         console.error("Automation error:", err);
       }
