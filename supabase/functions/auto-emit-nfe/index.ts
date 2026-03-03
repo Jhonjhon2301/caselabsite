@@ -6,7 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const FOCUS_BASE_URL = "https://homologacao.focusnfe.com.br";
+// Produção ativa com certificado válido até 03/03/2027
+const FOCUS_BASE_URL = "https://api.focusnfe.com.br";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
