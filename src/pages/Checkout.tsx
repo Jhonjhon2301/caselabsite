@@ -248,10 +248,52 @@ export default function Checkout() {
     setLoading(true);
     try {
       if (paymentMethod === "pix") {
-        // PIX manual: envia pedido via WhatsApp
+        // PIX manual: cria pedido no banco e envia via WhatsApp
+        // 1. Criar pedido no banco
+        const { data: order, error: orderErr } = await supabase.from("orders").insert({
+          user_id: user!.id,
+          customer_name: form.name.trim(),
+          customer_email: form.email.trim(),
+          customer_phone: form.phone.trim(),
+          customer_cpf: form.cpf.trim(),
+          subtotal: totalPrice,
+          discount: couponDiscount,
+          shipping_cost: shippingCost,
+          shipping_original_cost: shippingInfo.shipping_original_cost,
+          shipping_carrier: shippingInfo.shipping_carrier,
+          shipping_service: shippingInfo.shipping_service,
+          shipping_estimated_days: shippingInfo.shipping_estimated_days,
+          shipping_cep: form.cep.replace(/\D/g, ""),
+          shipping_address: form.address.trim(),
+          shipping_number: form.number.trim(),
+          shipping_complement: form.complement.trim(),
+          shipping_neighborhood: form.neighborhood.trim(),
+          shipping_city: form.city.trim(),
+          shipping_state: form.state.trim(),
+          total: finalTotal,
+          status: "pending",
+          payment_status: "pending",
+          notes: "Pagamento via PIX (WhatsApp)",
+        }).select().single();
+
+        if (orderErr || !order) throw new Error("Erro ao criar pedido");
+
+        // 2. Criar itens do pedido
+        await supabase.from("order_items").insert(
+          items.map(i => ({
+            order_id: order.id,
+            product_id: i.product.id,
+            product_name: i.product.name,
+            quantity: i.quantity,
+            unit_price: i.product.price,
+          }))
+        );
+
+        // 3. Enviar mensagem WhatsApp
         const itemsList = items.map(i => `• ${i.quantity}x ${i.product.name} — ${fmt(i.product.price)}`).join("\n");
         const message = [
           "🛒 *Novo Pedido via PIX — Case Lab*",
+          `📋 Pedido: #${order.id.slice(0, 8)}`,
           "",
           `👤 *Cliente:* ${form.name.trim()}`,
           `📧 ${form.email.trim()}`,
@@ -277,8 +319,8 @@ export default function Checkout() {
         const whatsappUrl = `https://wa.me/5561992629861?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, "_blank");
         clearCart();
-        toast.success("Pedido enviado via WhatsApp! Aguarde a confirmação do PIX.");
-        navigate("/");
+        toast.success("Pedido criado! Finalize o pagamento via PIX no WhatsApp.");
+        navigate("/meus-pedidos");
       } else {
         // Cartão: Stripe checkout
         const { data, error } = await supabase.functions.invoke("create-checkout", { body: buildBody() });

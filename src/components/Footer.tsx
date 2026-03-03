@@ -117,7 +117,7 @@ export default function Footer() {
           </div>
 
           <div className="mt-8 sm:mt-10 pt-5 sm:pt-6 border-t border-background/10 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-3 text-[10px] sm:text-xs text-background/25">
-            <span>© 2025 Case Lab Personalizados. Todos os direitos reservados.</span>
+            <span>© {new Date().getFullYear()} Case Lab Personalizados. Todos os direitos reservados.</span>
             <span>Feito com ♥ em Brasília</span>
           </div>
         </div>
