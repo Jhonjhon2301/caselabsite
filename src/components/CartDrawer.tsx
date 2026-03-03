@@ -58,11 +58,14 @@ export default function CartDrawer() {
               </div>
             </div>
           ) : (
-            items.map(({ product, quantity }) => (
-              <div key={product.id} className="flex gap-3 bg-secondary/60 rounded-xl p-3 border border-border/50">
+            items.map(({ product, quantity, customName }, idx) => (
+              <div key={`${product.id}-${idx}`} className="flex gap-3 bg-secondary/60 rounded-xl p-3 border border-border/50">
                 <img src={product.images?.[0] || "/placeholder.svg"} alt={product.name} className="w-16 h-20 object-cover rounded-lg" />
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-sm truncate">{product.name}</h3>
+                  {customName && (
+                    <p className="text-[10px] text-primary font-medium mt-0.5">✏️ Nome: {customName}</p>
+                  )}
                   <p className="text-sm font-bold text-primary mt-0.5">{fmt(product.price)}</p>
                   <div className="flex items-center gap-1.5 mt-2">
                     <button onClick={() => updateQuantity(product.id, quantity - 1)} className="p-1.5 hover:bg-muted rounded-lg border border-border transition-colors">

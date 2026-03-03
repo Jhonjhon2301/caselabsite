@@ -12,28 +12,6 @@ import WhatsAppFloat from "@/components/WhatsAppFloat";
 import SEOHead from "@/components/SEOHead";
 import { trackViewContent } from "@/lib/tracking";
 import ProductReviews from "@/components/ProductReviews";
-import { lazy, Suspense } from "react";
-
-const ProductSimulator3D = lazy(() => import("@/components/ProductSimulator3D"));
-
-const FONT_OPTIONS = [
-  { label: "Clássica", family: "'Montserrat', sans-serif", weight: "700" },
-  { label: "Elegante", family: "'Georgia', serif", weight: "400" },
-  { label: "Moderna", family: "'Inter', sans-serif", weight: "600" },
-  { label: "Cursiva", family: "'Segoe Script', 'Brush Script MT', cursive", weight: "400" },
-  { label: "Forte", family: "'Impact', 'Arial Black', sans-serif", weight: "700" },
-  { label: "Light", family: "'Montserrat', sans-serif", weight: "300" },
-];
-
-const TEXT_COLORS = [
-  { label: "Branco", hex: "#FFFFFF" },
-  { label: "Preto", hex: "#000000" },
-  { label: "Dourado", hex: "#D4AF37" },
-  { label: "Prata", hex: "#C0C0C0" },
-  { label: "Rosa", hex: "#FF69B4" },
-  { label: "Vermelho", hex: "#FF0000" },
-  { label: "Azul", hex: "#1E90FF" },
-];
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
@@ -47,9 +25,6 @@ export default function ProductPage() {
 
   // Personalization state
   const [customName, setCustomName] = useState("");
-  const [textColor, setTextColor] = useState("#FFFFFF");
-  const [fontSize, setFontSize] = useState(24);
-  const [selectedFont, setSelectedFont] = useState(FONT_OPTIONS[0]);
 
   useEffect(() => {
     if (!id) return;
@@ -102,10 +77,6 @@ export default function ProductPage() {
   const isCustomizable = product.is_customizable;
 
   const displayImage = selectedVariant?.image || images[activeImageIdx];
-
-  const textTop = product.text_top ?? 42;
-  const textLeft = product.text_left ?? 50;
-  const textRotation = product.text_rotation ?? 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -197,32 +168,6 @@ export default function ProductPage() {
                     className="w-full h-full object-cover transition-all duration-300"
                     draggable={false}
                   />
-
-                  {/* Text overlay — CSS positioned using DB coordinates */}
-                  {isCustomizable && customName.trim() && (
-                    <div
-                      className="absolute pointer-events-none"
-                      style={{
-                        top: `${textTop}%`,
-                        left: `${textLeft}%`,
-                        transform: `translate(-50%, -50%) rotate(${textRotation}deg)`,
-                      }}
-                    >
-                      <span
-                        className="text-center leading-tight select-none whitespace-nowrap"
-                        style={{
-                          fontFamily: selectedFont.family,
-                          fontWeight: selectedFont.weight,
-                          fontSize: `${fontSize}px`,
-                          color: textColor,
-                          textShadow: "0 2px 8px rgba(0,0,0,0.5), 0 1px 3px rgba(0,0,0,0.3)",
-                          letterSpacing: "0.02em",
-                        }}
-                      >
-                        {customName}
-                      </span>
-                    </div>
-                  )}
 
                   {/* Badges */}
                   {isCustomizable && (
@@ -351,124 +296,31 @@ export default function ProductPage() {
               {/* ===== PERSONALIZATION SECTION ===== */}
               {isCustomizable && (
                 <div className="border border-primary/30 rounded-xl p-4 bg-primary/5">
-                  <div className="flex items-center gap-2 mb-4">
+                  <div className="flex items-center gap-2 mb-3">
                     <Type className="w-4 h-4 text-primary" />
                     <h3 className="text-sm font-bold text-foreground">Personalize sua garrafa</h3>
                   </div>
 
-                  {/* Name input */}
-                  <div className="mb-4">
+                  <div>
                     <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                      Digite seu nome ou texto
+                      Nome ou texto para personalização
                     </label>
                     <input
                       type="text"
                       value={customName}
-                      onChange={(e) => setCustomName(e.target.value.slice(0, 20))}
+                      onChange={(e) => setCustomName(e.target.value.slice(0, 30))}
                       placeholder="Ex: Marcelo"
-                      maxLength={20}
+                      maxLength={30}
                       className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                     />
-                    <p className="text-[10px] text-muted-foreground mt-1">{customName.length}/20 caracteres</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">{customName.length}/30 caracteres • Este nome será gravado na sua garrafa</p>
                   </div>
-
-                  {/* Font picker */}
-                  <div className="mb-4">
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                      Escolha a fonte
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {FONT_OPTIONS.map((font) => (
-                        <button
-                          key={font.label}
-                          onClick={() => setSelectedFont(font)}
-                          className={`rounded-lg border-2 px-3 py-2.5 text-center transition-all ${
-                            selectedFont.label === font.label
-                              ? "border-primary bg-primary/10 shadow-sm"
-                              : "border-border hover:border-muted-foreground/40 bg-background"
-                          }`}
-                        >
-                          <span
-                            className="text-sm text-foreground block leading-tight"
-                            style={{ fontFamily: font.family, fontWeight: font.weight }}
-                          >
-                            {customName.trim() || "Abc"}
-                          </span>
-                          <span className="text-[9px] text-muted-foreground mt-0.5 block">{font.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Text color picker */}
-                  <div className="mb-4">
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5 flex items-center gap-1.5">
-                      <Palette className="w-3.5 h-3.5" />
-                      Cor do texto
-                    </label>
-                    <div className="flex gap-2 flex-wrap">
-                      {TEXT_COLORS.map((c) => (
-                        <button
-                          key={c.hex}
-                          onClick={() => setTextColor(c.hex)}
-                          title={c.label}
-                          className={`w-8 h-8 rounded-full border-2 transition-all relative ${
-                            textColor === c.hex
-                              ? "border-primary scale-110 shadow-md"
-                              : "border-border hover:border-muted-foreground"
-                          }`}
-                          style={{ backgroundColor: c.hex }}
-                        >
-                          {textColor === c.hex && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-2.5 h-2.5 rounded-full border-2 border-primary bg-primary" />
-                            </div>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Font size slider */}
-                  <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                      Tamanho do texto
-                    </label>
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] text-muted-foreground">A</span>
-                      <input
-                        type="range"
-                        min={14}
-                        max={42}
-                        value={fontSize}
-                        onChange={(e) => setFontSize(Number(e.target.value))}
-                        className="flex-1 accent-primary h-1.5"
-                      />
-                      <span className="text-sm font-bold text-muted-foreground">A</span>
-                    </div>
-                  </div>
-
-                  {/* 3D Simulator */}
-                  {customName.trim() && (
-                    <div className="mt-4">
-                      <p className="text-xs font-semibold text-muted-foreground mb-2 flex items-center gap-1.5">🎮 Visualização 3D</p>
-                      <Suspense fallback={<div className="aspect-square rounded-xl bg-muted animate-pulse" />}>
-                        <ProductSimulator3D
-                          customName={customName}
-                          textColor={textColor}
-                          fontSize={fontSize}
-                          fontFamily={selectedFont.family}
-                          bottleColor={selectedVariant?.hex || "#333333"}
-                        />
-                      </Suspense>
-                    </div>
-                  )}
                 </div>
               )}
 
               {/* CTA */}
               <button
-                onClick={() => addToCart(product)}
+                onClick={() => addToCart(product, customName || undefined)}
                 disabled={product.stock_quantity <= 0}
                 className="w-full bg-primary text-primary-foreground py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all disabled:opacity-40 shadow-lg mt-2"
               >
