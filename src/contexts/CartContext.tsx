@@ -6,11 +6,12 @@ import { trackAddToCart } from "@/lib/tracking";
 export interface CartItem {
   product: Product;
   quantity: number;
+  customName?: string;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, customName?: string) => void;
   removeFromCart: (productId: string) => void;
   updateQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
@@ -92,12 +93,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
   }, [items, saveAbandonedCart]);
 
-  const addToCart = useCallback((product: Product) => {
+  const addToCart = useCallback((product: Product, customName?: string) => {
     setItems((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
+      // If customizable with a name, always add as new line item
+      if (customName?.trim()) {
+        return [...prev, { product, quantity: 1, customName: customName.trim() }];
+      }
+      const existing = prev.find((i) => i.product.id === product.id && !i.customName);
       if (existing) {
         return prev.map((i) =>
-          i.product.id === product.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.product.id === product.id && !i.customName ? { ...i, quantity: i.quantity + 1 } : i
         );
       }
       return [...prev, { product, quantity: 1 }];

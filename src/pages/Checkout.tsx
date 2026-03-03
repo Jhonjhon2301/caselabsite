@@ -211,7 +211,7 @@ export default function Checkout() {
   const buildBody = () => ({
     items: items.map((i) => ({
       product_id: i.product.id,
-      name: i.product.name,
+      name: i.product.name + (i.customName ? ` (Nome: ${i.customName})` : ""),
       price: i.product.price,
       quantity: i.quantity,
       image: i.product.images?.[0] || null,
@@ -273,7 +273,10 @@ export default function Checkout() {
           total: finalTotal,
           status: "pending",
           payment_status: "pending",
-          notes: "Pagamento via PIX (WhatsApp)",
+          notes: [
+            "Pagamento via PIX (WhatsApp)",
+            ...items.filter(i => i.customName).map(i => `Personalização "${i.product.name}": ${i.customName}`),
+          ].join(" | "),
         }).select().single();
 
         if (orderErr || !order) throw new Error("Erro ao criar pedido");
@@ -283,14 +286,14 @@ export default function Checkout() {
           items.map(i => ({
             order_id: order.id,
             product_id: i.product.id,
-            product_name: i.product.name,
+            product_name: i.product.name + (i.customName ? ` (Nome: ${i.customName})` : ""),
             quantity: i.quantity,
             unit_price: i.product.price,
           }))
         );
 
         // 3. Enviar mensagem WhatsApp
-        const itemsList = items.map(i => `• ${i.quantity}x ${i.product.name} — ${fmt(i.product.price)}`).join("\n");
+        const itemsList = items.map(i => `• ${i.quantity}x ${i.product.name}${i.customName ? ` ✏️ Nome: ${i.customName}` : ""} — ${fmt(i.product.price)}`).join("\n");
         const message = [
           "🛒 *Novo Pedido via PIX — Case Lab*",
           `📋 Pedido: #${order.id.slice(0, 8)}`,
@@ -531,11 +534,12 @@ export default function Checkout() {
 
               {/* Items */}
               <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
-                {items.map(({ product, quantity }) => (
-                  <div key={product.id} className="flex gap-3">
+                {items.map(({ product, quantity, customName }, idx) => (
+                  <div key={`${product.id}-${idx}`} className="flex gap-3">
                     <img src={product.images?.[0] || "/placeholder.svg"} alt={product.name} className="w-14 h-14 rounded-lg object-cover border border-border" />
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-semibold truncate">{product.name}</h4>
+                      {customName && <p className="text-[10px] text-primary">✏️ Nome: {customName}</p>}
                       <p className="text-xs text-muted-foreground">{fmt(product.price)}</p>
                       <div className="flex items-center gap-1 mt-1">
                         <button type="button" onClick={() => updateQuantity(product.id, quantity - 1)} className="p-0.5 hover:bg-muted rounded border border-border"><Minus className="w-3 h-3" /></button>
