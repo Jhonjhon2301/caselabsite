@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Package, ChevronDown, ChevronUp, ArrowLeft, Truck, Clock, CheckCircle2, XCircle, Paintbrush, ShoppingBag, MapPin, CreditCard, Copy, ExternalLink } from "lucide-react";
+import { Package, ChevronDown, ChevronUp, ArrowLeft, Truck, Clock, CheckCircle2, XCircle, Paintbrush, ShoppingBag, MapPin, CreditCard, Copy, ExternalLink, Loader2 } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -37,6 +37,27 @@ export default function MyOrders() {
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [orderItems, setOrderItems] = useState<Record<string, any[]>>({});
   const [searchQuery, setSearchQuery] = useState("");
+  const [retryingPayment, setRetryingPayment] = useState<string | null>(null);
+
+  const handleRetryPayment = async (orderId: string) => {
+    setRetryingPayment(orderId);
+    try {
+      const { data, error } = await supabase.functions.invoke("retry-payment", {
+        body: { order_id: orderId },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.open(data.url, "_blank");
+        toast({ title: "Redirecionando", description: "Uma nova aba foi aberta para pagamento." });
+      } else {
+        throw new Error("URL de pagamento não retornada");
+      }
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message || "Não foi possível gerar link de pagamento", variant: "destructive" });
+    } finally {
+      setRetryingPayment(null);
+    }
+  };
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth");
@@ -226,6 +247,19 @@ export default function MyOrders() {
                           <span className={`text-sm font-medium ${paymentInfo.color}`}>{paymentInfo.label}</span>
                           {order.customer_cpf && <span className="text-xs text-muted-foreground">CPF: {order.customer_cpf}</span>}
                         </div>
+                        {order.payment_status === "pending" && order.status !== "cancelled" && order.status !== "canceled" && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleRetryPayment(order.id); }}
+                            disabled={retryingPayment === order.id}
+                            className="mt-3 w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl text-sm font-bold hover:brightness-110 transition-all disabled:opacity-50"
+                          >
+                            {retryingPayment === order.id ? (
+                              <><Loader2 className="w-4 h-4 animate-spin" /> Gerando link...</>
+                            ) : (
+                              <><CreditCard className="w-4 h-4" /> Pagar agora</>
+                            )}
+                          </button>
+                        )}
                       </div>
 
                       {/* Items */}
