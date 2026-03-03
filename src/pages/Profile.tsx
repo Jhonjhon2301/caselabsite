@@ -3,8 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, User, MapPin, Save } from "lucide-react";
-import logo from "@/assets/logo.jpeg";
+import { Loader2, User, MapPin, Save } from "lucide-react";
+import TopBar from "@/components/TopBar";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import SEOHead from "@/components/SEOHead";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -12,6 +15,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [form, setForm] = useState({
     full_name: "", phone: "", cpf: "", birth_date: "", gender: "", instagram: "",
     address_cep: "", address_street: "", address_number: "", address_complement: "",
@@ -113,18 +117,16 @@ export default function Profile() {
   const inputClass = "w-full px-4 py-3 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none";
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <div className="bg-background border-b border-border">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <button onClick={() => navigate("/")} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Voltar
-          </button>
-          <img src={logo} alt="Case Lab" className="h-8 w-8 rounded-full object-cover" />
-          <h1 className="font-heading font-bold text-lg">Meu Perfil</h1>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background">
+      <SEOHead title="Meu Perfil" description="Gerencie seus dados pessoais na Case Lab" />
+      <TopBar />
+      <Header searchQuery={searchQuery} onSearchChange={setSearchQuery} />
 
-      <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <main className="container mx-auto px-4 py-8 max-w-2xl">
+        <h1 className="font-heading font-bold text-2xl mb-6 flex items-center gap-2">
+          <User className="w-6 h-6 text-primary" /> Meu Perfil
+        </h1>
+
         <form onSubmit={handleSave} className="space-y-6">
           {/* Dados Pessoais */}
           <div className="bg-card border border-border rounded-2xl p-6">
@@ -218,12 +220,13 @@ export default function Profile() {
           <button
             type="submit"
             disabled={saving}
-            className="w-full gradient-brand text-primary-foreground py-3 rounded-xl font-semibold text-sm tracking-wider hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+            className="w-full bg-primary text-primary-foreground py-3 rounded-xl font-semibold text-sm tracking-wider hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4" /> SALVAR ALTERAÇÕES</>}
           </button>
         </form>
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }
