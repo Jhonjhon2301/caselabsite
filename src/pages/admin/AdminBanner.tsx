@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, ImageIcon, Trash2, Plus, GripVertical, Gift, Mail } from "lucide-react";
+import { Save, Upload, ImageIcon, Trash2, Plus, GripVertical, Gift, Mail, Megaphone } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
 interface BannerConfig {
@@ -13,6 +13,8 @@ interface BannerConfig {
   banner_image_url: string;
   marquee_text: string;
   countdown_end: string;
+  countdown_mode: "fixed" | "auto_reset";
+  countdown_auto_hours: number;
   promo_title: string;
   promo_subtitle: string;
   cta_text: string;
@@ -26,6 +28,8 @@ const defaultConfig: BannerConfig = {
   banner_image_url: "",
   marquee_text: "MELHORES OFERTAS DO ANO • GARRAFAS PERSONALIZADAS • FRETE GRÁTIS ACIMA DE R$299",
   countdown_end: "",
+  countdown_mode: "auto_reset",
+  countdown_auto_hours: 6,
   promo_title: "PISCOU, PERDEU",
   promo_subtitle: "Garrafas com desconto + MIMO!",
   cta_text: "COMPRAR AGORA",
@@ -242,14 +246,43 @@ export default function AdminBanner() {
         </div>
 
         {/* Countdown */}
-        <div className="space-y-2">
-          <Label>Data/hora fim do countdown</Label>
-          <Input
-            type="datetime-local"
-            value={config.countdown_end ? config.countdown_end.slice(0, 16) : ""}
-            onChange={(e) => update("countdown_end", e.target.value ? new Date(e.target.value).toISOString() : "")}
-          />
-          <p className="text-xs text-muted-foreground">Deixe vazio para usar um countdown automático de 6 horas.</p>
+        <div className="bg-card border border-border rounded-xl p-5 space-y-4">
+          <Label className="text-base font-bold">Cronômetro (Countdown)</Label>
+          
+          <div className="flex items-center gap-3">
+            <span className={`text-xs font-bold ${config.countdown_mode === "auto_reset" ? "text-primary" : "text-muted-foreground"}`}>Reinicia a cada visita</span>
+            <Switch
+              checked={config.countdown_mode === "fixed"}
+              onCheckedChange={(checked) => update("countdown_mode", checked ? "fixed" : "auto_reset")}
+            />
+            <span className={`text-xs font-bold ${config.countdown_mode === "fixed" ? "text-primary" : "text-muted-foreground"}`}>Data fixa</span>
+          </div>
+
+          {config.countdown_mode === "fixed" ? (
+            <div className="space-y-2">
+              <Label>Data/hora fim do countdown</Label>
+              <Input
+                type="datetime-local"
+                value={config.countdown_end ? config.countdown_end.slice(0, 16) : ""}
+                onChange={(e) => update("countdown_end", e.target.value ? new Date(e.target.value).toISOString() : "")}
+              />
+              <p className="text-xs text-muted-foreground">Quando chegar nessa data, o timer zera.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>Duração do countdown (horas)</Label>
+              <Input
+                type="number"
+                min={1}
+                max={72}
+                value={config.countdown_auto_hours || 6}
+                onChange={(e) => update("countdown_auto_hours", Math.max(1, Math.min(72, parseInt(e.target.value) || 6)))}
+              />
+              <p className="text-xs text-muted-foreground">
+                O timer reinicia com essa duração quando expira. Cada visitante tem seu próprio timer salvo no navegador.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Marquee text */}
@@ -260,11 +293,79 @@ export default function AdminBanner() {
         </div>
       </div>
 
+      {/* ===== FAIXA PROMOCIONAL (PromoBanner) ===== */}
+      <PromoBannerSettings />
+
       {/* ===== POPUP DE LEAD ===== */}
       <PopupSettings />
 
       {/* ===== PROGRAMA DE INDICAÇÃO ===== */}
       <ReferralSettings />
+    </div>
+  );
+}
+
+/* ===== PromoBanner Config ===== */
+function PromoBannerSettings() {
+  const { toast } = useToast();
+  const [saving, setSaving] = useState(false);
+  const [cfg, setCfg] = useState({
+    promo_text: "🎟️ CUPONS EXTRA 🎟️",
+    promo_link_text: "Frete Grátis a partir de R$299,90*",
+    promo_link_url: "#produtos",
+    is_visible: true,
+  });
+
+  useEffect(() => {
+    supabase.from("site_settings").select("value").eq("key", "promo_banner").single()
+      .then(({ data }) => {
+        if (data?.value) setCfg((prev) => ({ ...prev, ...(data.value as any) }));
+      });
+  }, []);
+
+  const save = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("site_settings").upsert(
+      { key: "promo_banner", value: cfg as unknown as Json, updated_at: new Date().toISOString() },
+      { onConflict: "key" }
+    );
+    if (error) toast({ title: "Erro ao salvar", variant: "destructive" });
+    else toast({ title: "Faixa promocional atualizada!" });
+    setSaving(false);
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Megaphone className="w-5 h-5 text-primary" />
+          <h2 className="font-heading text-lg font-bold">Faixa Promocional (Laranja)</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Switch checked={cfg.is_visible} onCheckedChange={(v) => setCfg({ ...cfg, is_visible: v })} />
+            <span className="text-xs text-muted-foreground">{cfg.is_visible ? "Visível" : "Oculta"}</span>
+          </div>
+          <Button size="sm" onClick={save} disabled={saving}>
+            <Save className="w-4 h-4 mr-2" /> {saving ? "Salvando..." : "Salvar"}
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Texto principal</Label>
+          <Input value={cfg.promo_text} onChange={(e) => setCfg({ ...cfg, promo_text: e.target.value })} placeholder="🎟️ CUPONS EXTRA 🎟️" />
+        </div>
+        <div className="space-y-2">
+          <Label>Texto do link</Label>
+          <Input value={cfg.promo_link_text} onChange={(e) => setCfg({ ...cfg, promo_link_text: e.target.value })} placeholder="Frete Grátis..." />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label>URL do link</Label>
+        <Input value={cfg.promo_link_url} onChange={(e) => setCfg({ ...cfg, promo_link_url: e.target.value })} placeholder="#produtos" />
+      </div>
     </div>
   );
 }
