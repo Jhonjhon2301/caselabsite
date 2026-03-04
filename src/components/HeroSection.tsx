@@ -17,6 +17,8 @@ interface BannerConfig {
   banner_image_url: string;
   marquee_text: string;
   countdown_end: string;
+  countdown_mode: "fixed" | "auto_reset";
+  countdown_auto_hours: number;
   promo_title: string;
   promo_subtitle: string;
   cta_text: string;
@@ -29,7 +31,9 @@ const defaults: BannerConfig = {
   banner_mode: "interactive",
   banner_image_url: "",
   marquee_text: "MELHORES OFERTAS DO ANO • GARRAFAS PERSONALIZADAS • FRETE GRÁTIS ACIMA DE R$299",
-  countdown_end: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+  countdown_end: "",
+  countdown_mode: "auto_reset",
+  countdown_auto_hours: 6,
   promo_title: "PISCOU, PERDEU",
   promo_subtitle: "Garrafas com desconto + MIMO!",
   cta_text: "VER MODELOS",
@@ -79,6 +83,28 @@ export default function HeroSection() {
       });
   }, []);
 
+  // Compute effective countdown target
+  const getCountdownTarget = (): string => {
+    if (cfg.countdown_mode === "fixed" && cfg.countdown_end) {
+      return cfg.countdown_end;
+    }
+    // auto_reset: use localStorage to persist a session-based countdown
+    const storageKey = "caselab_countdown_target";
+    const hours = cfg.countdown_auto_hours || 6;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      const storedEnd = new Date(stored).getTime();
+      if (!isNaN(storedEnd) && storedEnd > Date.now()) {
+        return stored;
+      }
+    }
+    const newEnd = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString();
+    localStorage.setItem(storageKey, newEnd);
+    return newEnd;
+  };
+
+  const countdownTarget = getCountdownTarget();
+
   const bottleImages = cfg.interactive_images.length >= 3 ? cfg.interactive_images : defaultBottleImages;
 
   const bottleGroups: string[][] = [];
@@ -97,7 +123,7 @@ export default function HeroSection() {
     return () => clearInterval(id);
   }, [cfg.banner_mode, cfg.slide_interval, bottleGroups.length]);
 
-  const countdown = useCountdown(cfg.countdown_end);
+  const countdown = useCountdown(countdownTarget);
   const pad = (n: number) => String(n).padStart(2, "0");
 
   const isFixed = cfg.banner_mode === "fixed" && cfg.banner_image_url;

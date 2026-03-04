@@ -35,7 +35,7 @@ export default function PromoBanner() {
   if (!cfg.is_visible) return null;
 
   return (
-    <div className="bg-[hsl(220,60%,25%)] text-white py-2.5 sm:py-3 text-center">
+    <div className="gradient-brand py-2.5 sm:py-3 text-center">
       <div className="container mx-auto px-3 sm:px-4 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-3">
         <span className="text-xs sm:text-sm font-bold">{cfg.promo_text}</span>
         <a
