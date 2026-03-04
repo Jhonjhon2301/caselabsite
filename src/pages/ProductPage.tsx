@@ -275,7 +275,7 @@ export default function ProductPage() {
 
               {/* Description */}
               {product.description && (
-                <p className="text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+                <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: product.description.replace(/\*\*(.*?)\*\*/g, '<strong class="text-foreground font-semibold">$1</strong>') }} />
               )}
 
               {/* Measurements */}

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, X, Package, Loader2, Image, Move } from "lucide-react";
+import { logAudit } from "@/lib/audit";
 
 interface ProductVariant {
   name: string;
@@ -222,10 +223,12 @@ export default function AdminProducts() {
     if (editing) {
       const { error } = await supabase.from("products").update(payload as any).eq("id", editing.id);
       if (error) { toast.error("Erro ao atualizar"); return; }
+      await logAudit("update_product", "product", editing.id, { name: payload.name, price: payload.price });
       toast.success("Produto atualizado!");
     } else {
-      const { error } = await supabase.from("products").insert(payload as any);
+      const { data, error } = await supabase.from("products").insert(payload as any).select().single();
       if (error) { toast.error("Erro ao criar"); return; }
+      await logAudit("create_product", "product", (data as any)?.id, { name: payload.name, price: payload.price });
       toast.success("Produto criado!");
     }
     setShowForm(false);
@@ -234,8 +237,10 @@ export default function AdminProducts() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir este produto?")) return;
+    const p = products.find(pr => pr.id === id);
     const { error } = await supabase.from("products").delete().eq("id", id);
     if (error) { toast.error("Erro ao excluir"); return; }
+    await logAudit("delete_product", "product", id, { name: p?.name });
     toast.success("Produto excluído!");
     fetchData();
   };
