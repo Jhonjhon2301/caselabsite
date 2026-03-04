@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ShoppingCart, ChevronDown, ChevronUp, FileText, Receipt, MessageCircle, ExternalLink } from "lucide-react";
+import { ShoppingCart, ChevronDown, ChevronUp, FileText, Receipt, MessageCircle, ExternalLink, Trash2 } from "lucide-react";
 import { generateReceiptPdf, generateQuotePdf } from "@/lib/pdf-utils";
+import { logAudit } from "@/lib/audit";
 
 interface Order {
   id: string;
@@ -84,6 +85,7 @@ export default function AdminOrders() {
     if (error) { toast.error("Erro ao atualizar status"); return; }
     toast.success("Status atualizado!");
     setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status } : o)));
+    await logAudit("update_order_status", "order", orderId, { new_status: status });
 
     // Trigger post-purchase automation (WhatsApp + Email)
     if (["confirmed", "processing", "shipped", "delivered"].includes(status)) {
@@ -249,6 +251,19 @@ export default function AdminOrders() {
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-secondary transition-colors"
                       >
                         <Receipt className="w-3.5 h-3.5" /> Recibo
+                      </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm("Tem certeza que deseja EXCLUIR este pedido? Esta ação não pode ser desfeita.")) return;
+                          const { error } = await supabase.from("orders").delete().eq("id", order.id);
+                          if (error) { toast.error("Erro ao excluir pedido"); return; }
+                          await logAudit("delete_order", "order", order.id, { customer: order.customer_name, total: order.total });
+                          toast.success("Pedido excluído!");
+                          setOrders(prev => prev.filter(o => o.id !== order.id));
+                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs border border-destructive/30 text-destructive rounded-lg hover:bg-destructive/10 transition-colors"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" /> Excluir
                       </button>
                     </div>
                   </div>
