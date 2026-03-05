@@ -49,6 +49,7 @@ import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminLeads from "./pages/admin/AdminLeads";
 import AdminDocs from "./pages/admin/AdminDocs";
 import AdminInternalStock from "./pages/admin/AdminInternalStock";
+import AdminProposals from "./pages/admin/AdminProposals";
 import About from "./pages/About";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
@@ -131,6 +132,7 @@ const App = () => (
                 <Route path="leads" element={<AdminLeads />} />
                 <Route path="docs" element={<AdminDocs />} />
                 <Route path="internal_stock" element={<AdminInternalStock />} />
+                <Route path="proposals" element={<AdminProposals />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

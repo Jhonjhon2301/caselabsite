@@ -161,13 +161,76 @@ function generateReceiptHtml(data: {
 </body></html>`;
 }
 
+function generateProposalHtml(data: { title: string; recipient: string; content: string }) {
+  // Parse content into structured sections
+  const lines = data.content.split("\n").filter(l => l.trim());
+  let bodyHtml = "";
+  
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Numbered section headers like "1. Objetivo"
+    if (/^\d+\.\s/.test(trimmed)) {
+      bodyHtml += `<h2 style="margin:28px 0 12px;font-size:16px;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:6px;">${escapeHtml(trimmed)}</h2>`;
+    }
+    // Section dividers
+    else if (/^⸻/.test(trimmed) || /^---/.test(trimmed) || /^===/.test(trimmed)) {
+      // skip dividers, we use section headers
+    }
+    // Bullet points
+    else if (/^[•\-–]\s/.test(trimmed)) {
+      bodyHtml += `<p style="margin:4px 0 4px 20px;font-size:13px;line-height:1.7;">● ${escapeHtml(trimmed.replace(/^[•\-–]\s*/, ""))}</p>`;
+    }
+    // Bold-like lines (all caps or short standalone lines)
+    else if (trimmed === trimmed.toUpperCase() && trimmed.length > 3 && trimmed.length < 80 && !/^\d/.test(trimmed)) {
+      bodyHtml += `<h3 style="margin:20px 0 8px;font-size:14px;font-weight:bold;color:#1a1a2e;">${escapeHtml(trimmed)}</h3>`;
+    }
+    // Key: Value lines
+    else if (/^(Ou seja|Valor|Percentual|O repasse):/.test(trimmed) || /^R\$/.test(trimmed)) {
+      bodyHtml += `<p style="margin:4px 0;font-size:13px;line-height:1.7;font-weight:600;color:#1a1a2e;">${escapeHtml(trimmed)}</p>`;
+    }
+    // Regular paragraph
+    else {
+      bodyHtml += `<p style="margin:6px 0;font-size:13px;line-height:1.7;color:#333;">${escapeHtml(trimmed)}</p>`;
+    }
+  }
+
+  return `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><style>
+  body{font-family:'Helvetica','Arial',sans-serif;margin:0;padding:40px;color:#222;font-size:14px;}
+  @media print { body { padding: 20px; } }
+</style></head><body>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;border-bottom:3px solid #1a1a2e;padding-bottom:20px;">
+    <div>
+      <h1 style="margin:0;font-size:26px;color:#1a1a2e;letter-spacing:1px;">${escapeHtml(data.title)}</h1>
+      ${data.recipient ? `<p style="margin:8px 0 0;color:#555;font-size:14px;">Destinatário: <strong>${escapeHtml(data.recipient)}</strong></p>` : ""}
+      <p style="margin:4px 0 0;color:#888;font-size:12px;">Proponente: Case Lab</p>
+    </div>
+    <div style="text-align:right;">
+      <p style="margin:0;font-size:13px;color:#888;">Data: ${today()}</p>
+    </div>
+  </div>
+
+  <div style="margin-bottom:32px;">
+    ${bodyHtml}
+  </div>
+
+  <div style="margin-top:40px;padding:20px;border:1px solid #ddd;border-radius:8px;background:#f8f9fa;">
+    <p style="margin:0 0 4px;font-size:13px;"><strong>Atenciosamente,</strong></p>
+    <p style="margin:2px 0;font-size:14px;font-weight:bold;color:#1a1a2e;">Case Lab</p>
+    <p style="margin:2px 0;font-size:12px;color:#555;">📞 (61) 99262-9861 · ✉ personalized.caselab@gmail.com</p>
+    <p style="margin:2px 0;font-size:12px;color:#555;">📸 @caselaboficial_ · CNPJ: 64.964.419/0001-46</p>
+  </div>
+</body></html>`;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { type, items, customer, orderId } = await req.json();
+    const body = await req.json();
+    const { type, items, customer, orderId, title, recipient, content } = body;
 
     if (type === "quote") {
       // Generate quote from cart items (no auth required)
@@ -212,7 +275,15 @@ serve(async (req) => {
       });
     }
 
-    throw new Error("Tipo inválido. Use 'quote' ou 'receipt'.");
+    if (type === "proposal") {
+      if (!content) throw new Error("Conteúdo da proposta não fornecido");
+      const html = generateProposalHtml({ title: title || "PROPOSTA", recipient: recipient || "", content });
+      return new Response(JSON.stringify({ html }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    throw new Error("Tipo inválido. Use 'quote', 'receipt' ou 'proposal'.");
   } catch (error: any) {
     console.error("PDF generation error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
