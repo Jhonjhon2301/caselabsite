@@ -70,6 +70,7 @@ function useCountdown(target: string) {
 export default function HeroSection() {
   const [cfg, setCfg] = useState<BannerConfig>(defaults);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     supabase
@@ -82,6 +83,7 @@ export default function HeroSection() {
           const v = data.value as unknown as Partial<BannerConfig>;
           setCfg((prev) => ({ ...prev, ...v }));
         }
+        setIsLoaded(true);
       });
   }, []);
 
