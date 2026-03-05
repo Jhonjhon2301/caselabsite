@@ -70,6 +70,7 @@ function useCountdown(target: string) {
 export default function HeroSection() {
   const [cfg, setCfg] = useState<BannerConfig>(defaults);
   const [activeSlide, setActiveSlide] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     supabase
@@ -82,6 +83,7 @@ export default function HeroSection() {
           const v = data.value as unknown as Partial<BannerConfig>;
           setCfg((prev) => ({ ...prev, ...v }));
         }
+        setIsLoaded(true);
       });
   }, []);
 
@@ -130,6 +132,14 @@ export default function HeroSection() {
 
   const isFixed = cfg.banner_mode === "fixed" && cfg.banner_image_url;
   const safeSlide = activeSlide % (bottleGroups.length || 1);
+
+  if (!isLoaded) {
+    return (
+      <section className="relative overflow-hidden">
+        <div className="h-[300px] sm:h-[400px] md:h-[500px] bg-muted animate-pulse" />
+      </section>
+    );
+  }
 
   return (
     <section className="relative overflow-hidden">
