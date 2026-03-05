@@ -19,6 +19,7 @@ interface BannerConfig {
   countdown_end: string;
   countdown_mode: "fixed" | "auto_reset";
   countdown_auto_hours: number;
+  countdown_visible: boolean;
   promo_title: string;
   promo_subtitle: string;
   cta_text: string;
@@ -34,6 +35,7 @@ const defaults: BannerConfig = {
   countdown_end: "",
   countdown_mode: "auto_reset",
   countdown_auto_hours: 6,
+  countdown_visible: true,
   promo_title: "PISCOU, PERDEU",
   promo_subtitle: "Garrafas com desconto + MIMO!",
   cta_text: "VER MODELOS",
@@ -134,23 +136,25 @@ export default function HeroSection() {
       {isFixed ? (
         <a href={cfg.cta_link} className="block relative">
           <img src={cfg.banner_image_url} alt="Banner" className="w-full h-auto object-cover" />
-          <div className="absolute bottom-4 left-4 md:bottom-6 md:left-12 flex flex-col items-start gap-3">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {[
-                { val: pad(countdown.h), label: "H" },
-                { val: pad(countdown.m), label: "M" },
-                { val: pad(countdown.s), label: "S" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-1">
-                  {i > 0 && <span className="text-lg sm:text-xl font-black text-white">:</span>}
-                  <div className="bg-background/95 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 text-center min-w-[44px] sm:min-w-[52px] shadow-lg">
-                    <span className="block text-lg sm:text-xl font-black text-primary leading-none">{item.val}</span>
-                    <span className="block text-[7px] sm:text-[8px] font-bold text-muted-foreground uppercase">{item.label}</span>
+          {cfg.countdown_visible && (
+            <div className="absolute bottom-4 left-4 md:bottom-6 md:left-12 flex flex-col items-start gap-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {[
+                  { val: pad(countdown.h), label: "H" },
+                  { val: pad(countdown.m), label: "M" },
+                  { val: pad(countdown.s), label: "S" },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-1">
+                    {i > 0 && <span className="text-lg sm:text-xl font-black text-white">:</span>}
+                    <div className="bg-background/95 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 text-center min-w-[44px] sm:min-w-[52px] shadow-lg">
+                      <span className="block text-lg sm:text-xl font-black text-primary leading-none">{item.val}</span>
+                      <span className="block text-[7px] sm:text-[8px] font-bold text-muted-foreground uppercase">{item.label}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </a>
       ) : (
         <div className="relative overflow-hidden">
@@ -171,21 +175,23 @@ export default function HeroSection() {
                 <p className="text-white/85 font-semibold text-sm sm:text-base md:text-lg mb-4 sm:mb-6 max-w-md mx-auto lg:mx-0">
                   {cfg.promo_subtitle}
                 </p>
-                <div className="flex items-center gap-1.5 sm:gap-2 justify-center lg:justify-start mb-4 sm:mb-6">
-                  {[
-                    { val: pad(countdown.h), label: "Horas" },
-                    { val: pad(countdown.m), label: "Min" },
-                    { val: pad(countdown.s), label: "Seg" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-1.5 sm:gap-2">
-                      {i > 0 && <span className="text-xl sm:text-2xl font-black text-white/60">:</span>}
-                      <div className="bg-white rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-center min-w-[56px] sm:min-w-[68px] shadow-xl">
-                        <span className="block text-xl sm:text-2xl md:text-3xl font-black text-primary leading-none">{item.val}</span>
-                        <span className="block text-[8px] sm:text-[9px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">{item.label}</span>
+                {cfg.countdown_visible && (
+                  <div className="flex items-center gap-1.5 sm:gap-2 justify-center lg:justify-start mb-4 sm:mb-6">
+                    {[
+                      { val: pad(countdown.h), label: "Horas" },
+                      { val: pad(countdown.m), label: "Min" },
+                      { val: pad(countdown.s), label: "Seg" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-1.5 sm:gap-2">
+                        {i > 0 && <span className="text-xl sm:text-2xl font-black text-white/60">:</span>}
+                        <div className="bg-white rounded-lg sm:rounded-xl px-3 sm:px-4 py-1.5 sm:py-2 text-center min-w-[56px] sm:min-w-[68px] shadow-xl">
+                          <span className="block text-xl sm:text-2xl md:text-3xl font-black text-primary leading-none">{item.val}</span>
+                          <span className="block text-[8px] sm:text-[9px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">{item.label}</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
                 <a href={cfg.cta_link} className="inline-flex items-center gap-2 bg-foreground text-background px-6 sm:px-8 py-3 sm:py-3.5 rounded-xl font-bold text-xs sm:text-sm hover:scale-105 transition-transform shadow-2xl">
                   {cfg.cta_text} →
                 </a>
