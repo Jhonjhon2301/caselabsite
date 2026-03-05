@@ -161,65 +161,129 @@ function generateReceiptHtml(data: {
 </body></html>`;
 }
 
-function generateProposalHtml(data: { title: string; recipient: string; content: string }) {
-  // Parse content into structured sections
+function generateProposalHtml(data: { title: string; recipient: string; content: string; logoUrl: string }) {
   const lines = data.content.split("\n").filter(l => l.trim());
   let bodyHtml = "";
-  
+  let inBulletList = false;
+
   for (const line of lines) {
     const trimmed = line.trim();
-    // Numbered section headers like "1. Objetivo"
-    if (/^\d+\.\s/.test(trimmed)) {
-      bodyHtml += `<h2 style="margin:28px 0 12px;font-size:16px;color:#1a1a2e;border-bottom:2px solid #1a1a2e;padding-bottom:6px;">${escapeHtml(trimmed)}</h2>`;
+
+    const isBullet = /^[•\-–]\s/.test(trimmed);
+
+    if (!isBullet && inBulletList) {
+      bodyHtml += `</ul>`;
+      inBulletList = false;
     }
-    // Section dividers
-    else if (/^⸻/.test(trimmed) || /^---/.test(trimmed) || /^===/.test(trimmed)) {
-      // skip dividers, we use section headers
+
+    // Numbered section headers
+    if (/^\d+\.\s/.test(trimmed)) {
+      bodyHtml += `<div style="margin:32px 0 14px;border-left:4px solid #1a1a2e;padding-left:14px;">
+        <h2 style="margin:0;font-size:15px;color:#1a1a2e;text-transform:uppercase;letter-spacing:0.5px;">${escapeHtml(trimmed)}</h2>
+      </div>`;
+    }
+    // Dividers
+    else if (/^[⸻\-=]{3,}/.test(trimmed)) {
+      // skip
     }
     // Bullet points
-    else if (/^[•\-–]\s/.test(trimmed)) {
-      bodyHtml += `<p style="margin:4px 0 4px 20px;font-size:13px;line-height:1.7;">● ${escapeHtml(trimmed.replace(/^[•\-–]\s*/, ""))}</p>`;
+    else if (isBullet) {
+      if (!inBulletList) {
+        bodyHtml += `<ul style="margin:8px 0;padding-left:24px;list-style:none;">`;
+        inBulletList = true;
+      }
+      bodyHtml += `<li style="margin:5px 0;font-size:13px;line-height:1.8;color:#333;position:relative;padding-left:16px;">
+        <span style="position:absolute;left:0;color:#1a1a2e;font-weight:bold;">•</span>
+        ${escapeHtml(trimmed.replace(/^[•\-–]\s*/, ""))}
+      </li>`;
     }
-    // Bold-like lines (all caps or short standalone lines)
+    // All-caps headings
     else if (trimmed === trimmed.toUpperCase() && trimmed.length > 3 && trimmed.length < 80 && !/^\d/.test(trimmed)) {
-      bodyHtml += `<h3 style="margin:20px 0 8px;font-size:14px;font-weight:bold;color:#1a1a2e;">${escapeHtml(trimmed)}</h3>`;
+      bodyHtml += `<h3 style="margin:22px 0 10px;font-size:13px;font-weight:700;color:#1a1a2e;text-transform:uppercase;letter-spacing:1px;">${escapeHtml(trimmed)}</h3>`;
     }
-    // Key: Value lines
+    // Highlighted value lines (R$, percentages, key info)
     else if (/^(Ou seja|Valor|Percentual|O repasse):/.test(trimmed) || /^R\$/.test(trimmed)) {
-      bodyHtml += `<p style="margin:4px 0;font-size:13px;line-height:1.7;font-weight:600;color:#1a1a2e;">${escapeHtml(trimmed)}</p>`;
+      bodyHtml += `<div style="margin:8px 0;padding:10px 16px;background:#f0f4ff;border-left:3px solid #1a1a2e;border-radius:0 6px 6px 0;">
+        <p style="margin:0;font-size:13px;font-weight:700;color:#1a1a2e;">${escapeHtml(trimmed)}</p>
+      </div>`;
     }
     // Regular paragraph
     else {
-      bodyHtml += `<p style="margin:6px 0;font-size:13px;line-height:1.7;color:#333;">${escapeHtml(trimmed)}</p>`;
+      bodyHtml += `<p style="margin:6px 0;font-size:13px;line-height:1.8;color:#444;">${escapeHtml(trimmed)}</p>`;
     }
   }
 
+  if (inBulletList) bodyHtml += `</ul>`;
+
   return `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><style>
-  body{font-family:'Helvetica','Arial',sans-serif;margin:0;padding:40px;color:#222;font-size:14px;}
-  @media print { body { padding: 20px; } }
+  @page { margin: 20mm; }
+  body { font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; margin: 0; padding: 0; color: #222; font-size: 14px; background: #fff; }
+  .page { max-width: 720px; margin: 0 auto; padding: 40px; }
+  @media print { .page { padding: 0; max-width: none; } }
 </style></head><body>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;border-bottom:3px solid #1a1a2e;padding-bottom:20px;">
-    <div>
-      <h1 style="margin:0;font-size:26px;color:#1a1a2e;letter-spacing:1px;">${escapeHtml(data.title)}</h1>
-      ${data.recipient ? `<p style="margin:8px 0 0;color:#555;font-size:14px;">Destinatário: <strong>${escapeHtml(data.recipient)}</strong></p>` : ""}
-      <p style="margin:4px 0 0;color:#888;font-size:12px;">Proponente: Case Lab</p>
-    </div>
-    <div style="text-align:right;">
-      <p style="margin:0;font-size:13px;color:#888;">Data: ${today()}</p>
-    </div>
+<div class="page">
+
+  <!-- HEADER -->
+  <table style="width:100%;border-collapse:collapse;margin-bottom:0;">
+    <tr>
+      <td style="width:80px;vertical-align:middle;padding-right:16px;">
+        <img src="${data.logoUrl}" alt="Case Lab" style="width:70px;height:70px;border-radius:12px;object-fit:cover;" />
+      </td>
+      <td style="vertical-align:middle;">
+        <p style="margin:0;font-size:18px;font-weight:800;color:#1a1a2e;letter-spacing:0.5px;">CASE LAB</p>
+        <p style="margin:2px 0 0;font-size:11px;color:#888;letter-spacing:0.3px;">Garrafas Personalizadas</p>
+        <p style="margin:1px 0 0;font-size:10px;color:#aaa;">CNPJ: 64.964.419/0001-46</p>
+      </td>
+      <td style="vertical-align:middle;text-align:right;">
+        <p style="margin:0;font-size:11px;color:#999;">Data de emissão</p>
+        <p style="margin:2px 0 0;font-size:13px;font-weight:600;color:#1a1a2e;">${today()}</p>
+      </td>
+    </tr>
+  </table>
+
+  <div style="height:3px;background:linear-gradient(90deg,#1a1a2e 0%,#3b3b6b 50%,#1a1a2e 100%);margin:16px 0 28px;border-radius:2px;"></div>
+
+  <!-- TITLE -->
+  <div style="text-align:center;margin-bottom:28px;">
+    <h1 style="margin:0;font-size:22px;color:#1a1a2e;letter-spacing:2px;font-weight:800;">${escapeHtml(data.title)}</h1>
+    ${data.recipient ? `<div style="margin-top:12px;display:inline-block;padding:6px 20px;background:#f0f4ff;border-radius:20px;font-size:12px;color:#1a1a2e;">
+      Destinatário: <strong>${escapeHtml(data.recipient)}</strong>
+    </div>` : ""}
   </div>
 
+  <!-- BODY -->
   <div style="margin-bottom:32px;">
     ${bodyHtml}
   </div>
 
-  <div style="margin-top:40px;padding:20px;border:1px solid #ddd;border-radius:8px;background:#f8f9fa;">
-    <p style="margin:0 0 4px;font-size:13px;"><strong>Atenciosamente,</strong></p>
-    <p style="margin:2px 0;font-size:14px;font-weight:bold;color:#1a1a2e;">Case Lab</p>
-    <p style="margin:2px 0;font-size:12px;color:#555;">📞 (61) 99262-9861 · ✉ personalized.caselab@gmail.com</p>
-    <p style="margin:2px 0;font-size:12px;color:#555;">📸 @caselaboficial_ · CNPJ: 64.964.419/0001-46</p>
+  <!-- SIGNATURE -->
+  <div style="margin-top:48px;border-top:2px solid #eee;padding-top:24px;">
+    <table style="width:100%;border-collapse:collapse;">
+      <tr>
+        <td style="vertical-align:top;width:50%;">
+          <p style="margin:0 0 6px;font-size:13px;color:#888;">Atenciosamente,</p>
+          <p style="margin:0;font-size:16px;font-weight:700;color:#1a1a2e;">Case Lab</p>
+          <p style="margin:6px 0 2px;font-size:12px;color:#555;">📞 (61) 99262-9861</p>
+          <p style="margin:2px 0;font-size:12px;color:#555;">✉ personalized.caselab@gmail.com</p>
+        </td>
+        <td style="vertical-align:top;text-align:right;">
+          <p style="margin:0 0 6px;font-size:13px;color:#888;">Redes sociais</p>
+          <p style="margin:0;font-size:12px;color:#555;">📸 @caselaboficial_</p>
+          <div style="margin-top:12px;padding:8px 14px;background:#1a1a2e;color:#fff;border-radius:6px;display:inline-block;font-size:11px;">
+            caselaboficial.com.br
+          </div>
+        </td>
+      </tr>
+    </table>
   </div>
+
+  <!-- FOOTER -->
+  <div style="margin-top:24px;text-align:center;font-size:10px;color:#bbb;border-top:1px solid #eee;padding-top:12px;">
+    <p style="margin:0;">Este documento foi gerado eletronicamente pela Case Lab e não requer assinatura.</p>
+  </div>
+
+</div>
 </body></html>`;
 }
 
@@ -277,7 +341,9 @@ serve(async (req) => {
 
     if (type === "proposal") {
       if (!content) throw new Error("Conteúdo da proposta não fornecido");
-      const html = generateProposalHtml({ title: title || "PROPOSTA", recipient: recipient || "", content });
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const logoUrl = `${supabaseUrl}/storage/v1/object/public/product-images/logo.jpeg`;
+      const html = generateProposalHtml({ title: title || "PROPOSTA", recipient: recipient || "", content, logoUrl });
       return new Response(JSON.stringify({ html }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
