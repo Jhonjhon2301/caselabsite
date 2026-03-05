@@ -18,6 +18,13 @@ export default function AdminProposals() {
       return;
     }
 
+    // abre a aba imediatamente dentro do gesto do clique para evitar bloqueio de popup
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write("<html><body style='font-family:Arial;padding:24px'>Gerando PDF...</body></html>");
+      printWindow.document.close();
+    }
+
     setGenerating(true);
     try {
       const { data, error } = await supabase.functions.invoke("generate-pdf", {
@@ -31,26 +38,22 @@ export default function AdminProposals() {
 
       if (error) throw error;
 
-      // Open HTML in new tab
-      const printWindow = window.open("", "_blank");
-      if (!printWindow) {
-        const blob = new Blob([data.html], { type: "text/html" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `${title || "Proposta"}.html`;
-        a.click();
-        URL.revokeObjectURL(url);
-      } else {
+      if (printWindow) {
+        printWindow.document.open();
         printWindow.document.write(data.html);
         printWindow.document.close();
         printWindow.document.title = title || "Proposta";
         printWindow.onload = () => printWindow.print();
+      } else {
+        toast.error("Seu navegador bloqueou o popup. Permita popups para gerar o PDF.");
       }
 
       toast.success("Proposta gerada com sucesso!");
-    } catch {
-      toast.error("Erro ao gerar proposta");
+    } catch (err: any) {
+      if (printWindow && !printWindow.closed) {
+        printWindow.close();
+      }
+      toast.error(err?.message ? `Erro ao gerar proposta: ${err.message}` : "Erro ao gerar proposta");
     } finally {
       setGenerating(false);
     }
