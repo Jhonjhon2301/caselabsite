@@ -35,6 +35,7 @@ const defaults: BannerConfig = {
   countdown_end: "",
   countdown_mode: "auto_reset",
   countdown_auto_hours: 6,
+  countdown_visible: true,
   promo_title: "PISCOU, PERDEU",
   promo_subtitle: "Garrafas com desconto + MIMO!",
   cta_text: "VER MODELOS",
