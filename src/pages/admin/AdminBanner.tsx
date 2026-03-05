@@ -249,8 +249,13 @@ export default function AdminBanner() {
 
         {/* Countdown */}
         <div className="bg-card border border-border rounded-xl p-5 space-y-4">
-          <Label className="text-base font-bold">Cronômetro (Countdown)</Label>
-          
+          <div className="flex items-center justify-between">
+            <Label className="text-base font-bold">Cronômetro (Countdown)</Label>
+            <div className="flex items-center gap-2">
+              <Switch checked={config.countdown_visible !== false} onCheckedChange={(v) => update("countdown_visible", v)} />
+              <span className="text-xs text-muted-foreground">{config.countdown_visible !== false ? "Visível" : "Oculto"}</span>
+            </div>
+          </div>
           <div className="flex items-center gap-3">
             <span className={`text-xs font-bold ${config.countdown_mode === "auto_reset" ? "text-primary" : "text-muted-foreground"}`}>Reinicia a cada visita</span>
             <Switch
