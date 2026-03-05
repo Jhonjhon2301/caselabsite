@@ -38,6 +38,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   audit: ShieldAlert,
   leads: Mail,
   docs: FileCode,
+  proposals: FileText,
 };
 
 const LABEL_MAP: Record<string, string> = {
