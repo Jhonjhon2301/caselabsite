@@ -276,7 +276,6 @@ serve(async (req) => {
     }
 
     if (type === "proposal") {
-      const { title, recipient, content } = await req.json().catch(() => ({ title, recipient, content }));
       if (!content) throw new Error("Conteúdo da proposta não fornecido");
       const html = generateProposalHtml({ title: title || "PROPOSTA", recipient: recipient || "", content });
       return new Response(JSON.stringify({ html }), {
