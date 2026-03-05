@@ -3,7 +3,7 @@ import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import HeroSection from "@/components/HeroSection";
 import PromoBanner from "@/components/PromoBanner";
-import CategoryIcons from "@/components/CategoryIcons";
+import ModelSelector from "@/components/ModelSelector";
 import ProductGrid from "@/components/ProductGrid";
 import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
@@ -12,6 +12,7 @@ import SEOHead from "@/components/SEOHead";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-background">
@@ -24,8 +25,8 @@ const Index = () => {
       <main>
         <HeroSection />
         <PromoBanner />
-        <CategoryIcons />
-        <ProductGrid searchQuery={searchQuery} />
+        <ModelSelector selectedModelId={selectedModelId} onSelectModel={setSelectedModelId} />
+        <ProductGrid searchQuery={searchQuery} selectedModelId={selectedModelId} />
       </main>
       <Footer />
       <CartDrawer />
