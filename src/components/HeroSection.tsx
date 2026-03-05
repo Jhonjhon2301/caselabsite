@@ -136,23 +136,25 @@ export default function HeroSection() {
       {isFixed ? (
         <a href={cfg.cta_link} className="block relative">
           <img src={cfg.banner_image_url} alt="Banner" className="w-full h-auto object-cover" />
-          <div className="absolute bottom-4 left-4 md:bottom-6 md:left-12 flex flex-col items-start gap-3">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {[
-                { val: pad(countdown.h), label: "H" },
-                { val: pad(countdown.m), label: "M" },
-                { val: pad(countdown.s), label: "S" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-1">
-                  {i > 0 && <span className="text-lg sm:text-xl font-black text-white">:</span>}
-                  <div className="bg-background/95 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 text-center min-w-[44px] sm:min-w-[52px] shadow-lg">
-                    <span className="block text-lg sm:text-xl font-black text-primary leading-none">{item.val}</span>
-                    <span className="block text-[7px] sm:text-[8px] font-bold text-muted-foreground uppercase">{item.label}</span>
+          {cfg.countdown_visible && (
+            <div className="absolute bottom-4 left-4 md:bottom-6 md:left-12 flex flex-col items-start gap-3">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {[
+                  { val: pad(countdown.h), label: "H" },
+                  { val: pad(countdown.m), label: "M" },
+                  { val: pad(countdown.s), label: "S" },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-1">
+                    {i > 0 && <span className="text-lg sm:text-xl font-black text-white">:</span>}
+                    <div className="bg-background/95 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 sm:py-1.5 text-center min-w-[44px] sm:min-w-[52px] shadow-lg">
+                      <span className="block text-lg sm:text-xl font-black text-primary leading-none">{item.val}</span>
+                      <span className="block text-[7px] sm:text-[8px] font-bold text-muted-foreground uppercase">{item.label}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </a>
       ) : (
         <div className="relative overflow-hidden">
