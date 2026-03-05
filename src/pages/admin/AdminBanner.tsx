@@ -15,6 +15,7 @@ interface BannerConfig {
   countdown_end: string;
   countdown_mode: "fixed" | "auto_reset";
   countdown_auto_hours: number;
+  countdown_visible: boolean;
   promo_title: string;
   promo_subtitle: string;
   cta_text: string;
