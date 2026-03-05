@@ -341,7 +341,9 @@ serve(async (req) => {
 
     if (type === "proposal") {
       if (!content) throw new Error("Conteúdo da proposta não fornecido");
-      const html = generateProposalHtml({ title: title || "PROPOSTA", recipient: recipient || "", content });
+      const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+      const logoUrl = `${supabaseUrl}/storage/v1/object/public/product-images/logo.jpeg`;
+      const html = generateProposalHtml({ title: title || "PROPOSTA", recipient: recipient || "", content, logoUrl });
       return new Response(JSON.stringify({ html }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
