@@ -212,7 +212,16 @@ serve(async (req) => {
       });
     }
 
-    throw new Error("Tipo inválido. Use 'quote' ou 'receipt'.");
+    if (type === "proposal") {
+      const { title, recipient, content } = await req.json().catch(() => ({ title, recipient, content }));
+      if (!content) throw new Error("Conteúdo da proposta não fornecido");
+      const html = generateProposalHtml({ title: title || "PROPOSTA", recipient: recipient || "", content });
+      return new Response(JSON.stringify({ html }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    throw new Error("Tipo inválido. Use 'quote', 'receipt' ou 'proposal'.");
   } catch (error: any) {
     console.error("PDF generation error:", error);
     return new Response(JSON.stringify({ error: error.message }), {

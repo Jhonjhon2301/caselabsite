@@ -69,6 +69,7 @@ const LABEL_MAP: Record<string, string> = {
   audit: "Auditoria",
   leads: "Leads",
   docs: "Documentação",
+  proposals: "Propostas",
 };
 
 export default function AdminLayout() {
