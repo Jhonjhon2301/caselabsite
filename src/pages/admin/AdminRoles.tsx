@@ -45,6 +45,7 @@ const ALL_PERMISSIONS = [
   { key: "audit", label: "Auditoria" },
   { key: "leads", label: "Leads" },
   { key: "docs", label: "Documentação" },
+  { key: "proposals", label: "Propostas" },
 ];
 
 export default function AdminRoles() {
