@@ -63,7 +63,21 @@ export default function AdminOrders() {
       .from("orders")
       .select("*")
       .order("created_at", { ascending: false });
-    setOrders((data as any[]) ?? []);
+    
+    // Fetch profiles for all orders
+    const orders = (data as any[]) ?? [];
+    const userIds = [...new Set(orders.map(o => o.user_id).filter(Boolean))];
+    if (userIds.length > 0) {
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, email, phone, cpf, birth_date, gender, instagram, address_cep, address_street, address_number, address_complement, address_neighborhood, address_city, address_state")
+        .in("user_id", userIds);
+      
+      const profileMap = new Map((profilesData || []).map(p => [p.user_id, p]));
+      orders.forEach(o => { o.profiles = profileMap.get(o.user_id) || null; });
+    }
+    
+    setOrders(orders);
     setLoading(false);
   };
 
