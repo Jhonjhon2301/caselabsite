@@ -107,6 +107,8 @@ export default function Checkout() {
   const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
   const shippingCost = shippingInfo?.shipping_cost ?? 0;
   const maxProductionDays = Math.max(0, ...items.map(i => (i.product as any).production_days ?? 0));
+  const SPECIAL_PRODUCT_IDS = ["3e7d10ac-d090-414b-96eb-cc14e92f8dcd", "1b1a4a0d-c306-4a45-b303-4d843948b193"];
+  const hasSpecialProduct = items.some(i => SPECIAL_PRODUCT_IDS.includes(i.product.id));
   const finalTotal = Math.max(0, totalPrice - couponDiscount + shippingCost);
 
   const formatCPF = (v: string) => {
