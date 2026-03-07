@@ -138,6 +138,7 @@ const App = () => (
                 <Route path="docs" element={<AdminDocs />} />
                 <Route path="internal_stock" element={<AdminInternalStock />} />
                 <Route path="proposals" element={<AdminProposals />} />
+                <Route path="shared-cart" element={<AdminSharedCart />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
