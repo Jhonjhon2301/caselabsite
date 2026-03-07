@@ -329,7 +329,11 @@ export default function Checkout() {
         ].filter(Boolean).join("\n");
 
         const whatsappUrl = `https://wa.me/5561992629861?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, "_blank");
+        const whatsappWindow = window.open(whatsappUrl, "_blank", "noopener,noreferrer");
+        if (!whatsappWindow) {
+          window.location.href = whatsappUrl;
+          return;
+        }
         clearCart();
         toast.success("Pedido criado! Finalize o pagamento via PIX no WhatsApp.");
         navigate("/meus-pedidos");
@@ -338,9 +342,13 @@ export default function Checkout() {
         const { data, error } = await supabase.functions.invoke("create-checkout", { body: buildBody() });
         if (error) throw error;
         if (data?.url) {
-          window.open(data.url, "_blank");
+          const checkoutWindow = window.open(data.url, "_blank", "noopener,noreferrer");
+          if (!checkoutWindow) {
+            window.location.href = data.url;
+            return;
+          }
           clearCart();
-          toast.success("Redirecionando para pagamento em nova aba...");
+          toast.success("Redirecionando para pagamento...");
           navigate("/");
         } else {
           throw new Error("URL de pagamento não retornada");
