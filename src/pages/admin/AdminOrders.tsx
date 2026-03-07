@@ -9,6 +9,7 @@ interface Order {
   id: string;
   user_id: string;
   status: string;
+  payment_status: string;
   subtotal: number;
   discount: number;
   total: number;
@@ -140,6 +141,9 @@ export default function AdminOrders() {
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono text-xs text-muted-foreground">#{order.id.slice(0, 8)}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${status.color}`}>{status.label}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${order.payment_status === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                        {order.payment_status === "paid" ? "💰 Pago" : "⏳ Pgto Pendente"}
+                      </span>
                     </div>
                     <p className="text-sm font-medium">{profile?.full_name || profile?.email || "Cliente"}</p>
                     <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("pt-BR")} — R$ {Number(order.total).toFixed(2)}</p>
@@ -183,6 +187,34 @@ export default function AdminOrders() {
                             <ExternalLink className="w-3 h-3" />
                           </a>
                         )}
+
+                        <p className="text-muted-foreground mb-1 mt-3">Pagamento</p>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={order.payment_status}
+                            onChange={async (e) => {
+                              const newStatus = e.target.value;
+                              const { error } = await supabase.from("orders").update({ 
+                                payment_status: newStatus,
+                                ...(newStatus === "paid" ? { status: order.status === "pending" ? "confirmed" : order.status } : {})
+                              }).eq("id", order.id);
+                              if (error) { toast.error("Erro ao atualizar pagamento"); return; }
+                              toast.success(newStatus === "paid" ? "Pedido marcado como pago!" : "Status de pagamento atualizado!");
+                              setOrders(prev => prev.map(o => o.id === order.id ? { 
+                                ...o, 
+                                payment_status: newStatus,
+                                ...(newStatus === "paid" && o.status === "pending" ? { status: "confirmed" } : {})
+                              } : o));
+                              await logAudit("update_payment_status", "order", order.id, { new_payment_status: newStatus });
+                            }}
+                            className="px-3 py-2 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
+                          >
+                            <option value="pending">Pendente</option>
+                            <option value="paid">Pago</option>
+                            <option value="failed">Falhou</option>
+                            <option value="refunded">Reembolsado</option>
+                          </select>
+                        </div>
                       </div>
                     </div>
 

@@ -5,14 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Save, CreditCard, QrCode, Wallet, Truck } from "lucide-react";
+import { Save, CreditCard, QrCode, Truck } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
 interface PaymentConfig {
-  active_gateway: "mercadopago" | "stripe" | "infinitepay";
-  stripe_enabled: boolean;
-  mercadopago_enabled: boolean;
-  infinitepay_enabled: boolean;
+  active_gateway: "stripe";
   pix_enabled: boolean;
   card_enabled: boolean;
 }
@@ -23,10 +20,7 @@ interface ShippingConfig {
 }
 
 const defaultConfig: PaymentConfig = {
-  active_gateway: "mercadopago",
-  stripe_enabled: false,
-  mercadopago_enabled: true,
-  infinitepay_enabled: false,
+  active_gateway: "stripe",
   pix_enabled: true,
   card_enabled: true,
 };
@@ -35,12 +29,6 @@ const defaultShipping: ShippingConfig = {
   margin_type: "fixed",
   margin_value: 0,
 };
-
-const gateways = [
-  { id: "mercadopago" as const, label: "Mercado Pago", icon: Wallet, description: "Pix, cartão de crédito e débito" },
-  { id: "stripe" as const, label: "Stripe", icon: CreditCard, description: "Cartão, Apple Pay, Google Pay" },
-  { id: "infinitepay" as const, label: "InfinitePay", icon: QrCode, description: "Pix e cartão" },
-];
 
 export default function AdminPayments() {
   const [config, setConfig] = useState<PaymentConfig>(defaultConfig);
@@ -98,37 +86,21 @@ export default function AdminPayments() {
       </div>
 
       <div className="space-y-6">
-        {/* Active Gateway */}
-        <div className="space-y-3">
-          <Label className="text-base font-bold">Gateway Ativo</Label>
-          <p className="text-sm text-muted-foreground">Selecione o gateway principal para processar pagamentos</p>
-          <div className="grid gap-3">
-            {gateways.map((gw) => {
-              const Icon = gw.icon;
-              const isActive = config.active_gateway === gw.id;
-              return (
-                <button
-                  key={gw.id}
-                  type="button"
-                  onClick={() => setConfig((prev) => ({ ...prev, active_gateway: gw.id }))}
-                  className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
-                    isActive ? "border-primary bg-primary/5 shadow-md" : "border-border hover:border-muted-foreground/30"
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                    <Icon className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-bold text-sm ${isActive ? "text-primary" : "text-foreground"}`}>{gw.label}</p>
-                    <p className="text-xs text-muted-foreground">{gw.description}</p>
-                  </div>
-                  {isActive && (
-                    <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">ATIVO</span>
-                  )}
-                </button>
-              );
-            })}
+        {/* Gateway Info */}
+        <div className="bg-card border border-border rounded-xl p-5 space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary text-primary-foreground">
+              <CreditCard className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-bold text-sm">Stripe</p>
+              <p className="text-xs text-muted-foreground">Cartão de crédito/débito via Stripe</p>
+            </div>
+            <span className="ml-auto bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">ATIVO</span>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Pagamento por <strong>Pix</strong> é feito manualmente via WhatsApp. Após o cliente pagar, marque o pedido como "Pago" na tela de Pedidos.
+          </p>
         </div>
 
         {/* Payment Methods */}
