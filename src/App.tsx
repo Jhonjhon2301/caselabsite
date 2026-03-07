@@ -51,6 +51,8 @@ import AdminNewsletter from "./pages/admin/AdminNewsletter";
 import AdminDocs from "./pages/admin/AdminDocs";
 import AdminInternalStock from "./pages/admin/AdminInternalStock";
 import AdminProposals from "./pages/admin/AdminProposals";
+import AdminSharedCart from "./pages/admin/AdminSharedCart";
+import SharedCart from "./pages/SharedCart";
 import About from "./pages/About";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
