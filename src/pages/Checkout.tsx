@@ -643,6 +643,12 @@ export default function Checkout() {
                 {loading ? "PROCESSANDO..." : paymentMethod === "pix" ? "PAGAR COM PIX" : "PAGAR COM CARTÃO"}
               </button>
 
+              {!shippingInfo && !calculatingShipping && (
+                <p className="text-xs text-destructive text-center mt-1 font-medium">
+                  ⚠️ Informe o CEP para liberar o pagamento
+                </p>
+              )}
+
               <p className="text-[10px] text-muted-foreground text-center mt-2.5">
                 {paymentMethod === "pix" ? "Pedido via WhatsApp + PIX manual 🔒" : "Pagamento seguro 🔒"}
               </p>
