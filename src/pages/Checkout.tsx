@@ -240,9 +240,18 @@ export default function Checkout() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+      toast.error("Preencha todos os campos obrigatórios");
+      // Scroll to first error
+      const firstErrorKey = Object.keys(errors)[0];
+      if (firstErrorKey) {
+        const el = document.querySelector(`[name="${firstErrorKey}"]`);
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
     if (!shippingInfo) {
-      toast.error("Aguarde o cálculo do frete");
+      toast.error("Informe seu CEP para calcular o frete");
       return;
     }
     setLoading(true);
