@@ -214,10 +214,10 @@ export default function Checkout() {
   const buildBody = () => ({
     items: items.map((i) => ({
       product_id: i.product.id,
-      name: i.product.name + (i.customName ? ` (Nome: ${i.customName})` : ""),
-      price: i.product.price,
+      name: i.product.name + (i.variant ? ` (${i.variant.name})` : "") + (i.customName ? ` (Nome: ${i.customName})` : ""),
+      price: i.variant?.price ?? i.product.price,
       quantity: i.quantity,
-      image: i.product.images?.[0] || null,
+      image: i.variant?.image || i.product.images?.[0] || null,
     })),
     customer: {
       name: form.name.trim(),
