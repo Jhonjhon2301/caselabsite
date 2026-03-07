@@ -37,6 +37,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   dre: FileBarChart,
   audit: ShieldAlert,
   leads: Mail,
+  newsletter: Megaphone,
   docs: FileCode,
   proposals: FileText,
 };
