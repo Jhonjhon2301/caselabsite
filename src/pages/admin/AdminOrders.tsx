@@ -169,10 +169,14 @@ export default function AdminOrders() {
                   <div className="border-t border-border p-4 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div>
-                        <p className="text-muted-foreground">Cliente</p>
-                        <p className="font-medium">{profile?.full_name || "—"}</p>
-                        <p>{profile?.email || "—"}</p>
-                        <p>{profile?.phone || "—"}</p>
+                        <p className="text-muted-foreground font-semibold mb-1">Cliente</p>
+                        <p className="font-medium">{profile?.full_name || order.customer_name || "—"}</p>
+                        <p>{profile?.email || order.customer_email || "—"}</p>
+                        <p>{profile?.phone || order.customer_phone || "—"}</p>
+                        {(profile?.cpf || order.customer_cpf) && <p className="text-muted-foreground">CPF: {profile?.cpf || order.customer_cpf}</p>}
+                        {profile?.birth_date && <p className="text-muted-foreground">Nasc: {new Date(profile.birth_date + "T12:00:00").toLocaleDateString("pt-BR")}</p>}
+                        {profile?.gender && <p className="text-muted-foreground">Gênero: {profile.gender}</p>}
+                        {profile?.instagram && <p className="text-muted-foreground">IG: {profile.instagram}</p>}
                       </div>
                       <div>
                         <p className="text-muted-foreground">Valores</p>
