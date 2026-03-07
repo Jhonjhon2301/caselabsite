@@ -31,7 +31,7 @@ interface Order {
   shipping_cost: number | null;
   shipping_carrier: string | null;
   shipping_service: string | null;
-  profiles?: { full_name: string | null; email: string | null; phone: string | null } | null;
+  profiles?: { full_name: string | null; email: string | null; phone: string | null; cpf: string | null; birth_date: string | null; gender: string | null; instagram: string | null } | null;
 }
 
 interface OrderItem {
