@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Save, CreditCard, QrCode, Wallet, Truck } from "lucide-react";
+import { Save, CreditCard, QrCode, Truck } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
 interface PaymentConfig {
