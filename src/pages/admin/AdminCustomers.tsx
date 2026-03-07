@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Download, Search, Check, X, ShoppingBag, Instagram, MapPin, Calendar, Phone, Mail, CreditCard } from "lucide-react";
+import { logAudit } from "@/lib/audit";
+import { Users, Download, Search, Check, X, ShoppingBag, Instagram, MapPin, Calendar, Phone, Mail, CreditCard, Pencil, Trash2, Save, Loader2 } from "lucide-react";
 
 interface Profile {
   id: string;
