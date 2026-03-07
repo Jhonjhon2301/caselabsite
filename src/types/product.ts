@@ -23,4 +23,5 @@ export interface Product {
   text_left?: number;
   text_rotation?: number;
   discount_percent?: number; // 0-100, set in admin
+  production_days?: number | null;
 }

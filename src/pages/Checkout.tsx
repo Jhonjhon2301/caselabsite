@@ -489,7 +489,12 @@ export default function Checkout() {
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">
-                      Entrega em até {shippingInfo.shipping_estimated_days} dias úteis
+                      Entrega em até {shippingInfo.shipping_estimated_days + maxProductionDays} dias úteis
+                      {maxProductionDays > 0 && (
+                        <span className="block text-xs text-orange-600 mt-0.5">
+                          (inclui {maxProductionDays} dias úteis de produção)
+                        </span>
+                      )}
                     </span>
                     <span className="font-bold">
                       {shippingInfo.is_free_shipping ? (
