@@ -298,14 +298,14 @@ export default function Checkout() {
           items.map(i => ({
             order_id: order.id,
             product_id: i.product.id,
-            product_name: i.product.name + (i.customName ? ` (Nome: ${i.customName})` : ""),
+            product_name: i.product.name + (i.variant ? ` (${i.variant.name})` : "") + (i.customName ? ` (Nome: ${i.customName})` : ""),
             quantity: i.quantity,
-            unit_price: i.product.price,
+            unit_price: i.variant?.price ?? i.product.price,
           }))
         );
 
         // 3. Enviar mensagem WhatsApp
-        const itemsList = items.map(i => `• ${i.quantity}x ${i.product.name}${i.customName ? ` ✏️ Nome: ${i.customName}` : ""} — ${fmt(i.product.price)}`).join("\n");
+        const itemsList = items.map(i => `• ${i.quantity}x ${i.product.name}${i.variant ? ` 🎨 ${i.variant.name}` : ""}${i.customName ? ` ✏️ Nome: ${i.customName}` : ""} — ${fmt(i.variant?.price ?? i.product.price)}`).join("\n");
         const message = [
           "🛒 *Novo Pedido via PIX — Case Lab*",
           `📋 Pedido: #${order.id.slice(0, 8)}`,
