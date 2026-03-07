@@ -28,6 +28,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
+  const [forcedPaymentMethod, setForcedPaymentMethod] = useState<PaymentMethod | null>(null);
   const [couponCode, setCouponCode] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [couponApplied, setCouponApplied] = useState(false);
@@ -81,6 +82,14 @@ export default function Checkout() {
   }, [items.length, navigate, user]);
 
   useEffect(() => {
+    // Check for shared cart payment method restriction
+    const sharedCartPM = sessionStorage.getItem("shared_cart_payment_method");
+    if (sharedCartPM === "pix" || sharedCartPM === "card") {
+      setForcedPaymentMethod(sharedCartPM);
+      setPaymentMethod(sharedCartPM);
+      sessionStorage.removeItem("shared_cart_payment_method");
+    }
+
     supabase
       .from("site_settings")
       .select("value")
@@ -90,7 +99,9 @@ export default function Checkout() {
         if (data?.value) {
           const v = data.value as any;
           setPaymentConfig((prev) => ({ ...prev, ...v }));
-          if (!v.pix_enabled && v.card_enabled) setPaymentMethod("card");
+          if (!sharedCartPM) {
+            if (!v.pix_enabled && v.card_enabled) setPaymentMethod("card");
+          }
         }
       });
   }, []);
@@ -245,12 +256,6 @@ export default function Checkout() {
     e.preventDefault();
     if (!validate()) {
       toast.error("Preencha todos os campos obrigatórios");
-      // Scroll to first error
-      const firstErrorKey = Object.keys(errors)[0];
-      if (firstErrorKey) {
-        const el = document.querySelector(`[name="${firstErrorKey}"]`);
-        el?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
       return;
     }
     if (!shippingInfo) {
@@ -525,6 +530,7 @@ export default function Checkout() {
                 Forma de Pagamento
               </h2>
               <div className="grid grid-cols-2 gap-4">
+                {(!forcedPaymentMethod || forcedPaymentMethod === "pix") && (
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("pix")}
@@ -536,6 +542,8 @@ export default function Checkout() {
                   <span className={`font-bold text-sm ${paymentMethod === "pix" ? "text-primary" : "text-foreground"}`}>Pix</span>
                   <span className="text-[10px] text-muted-foreground">Pagamento instantâneo</span>
                 </button>
+                )}
+                {(!forcedPaymentMethod || forcedPaymentMethod === "card") && (
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("card")}
@@ -547,6 +555,7 @@ export default function Checkout() {
                   <span className={`font-bold text-sm ${paymentMethod === "card" ? "text-primary" : "text-foreground"}`}>Cartão</span>
                   <span className="text-[10px] text-muted-foreground">Crédito ou débito</span>
                 </button>
+                )}
               </div>
             </div>
           </div>
