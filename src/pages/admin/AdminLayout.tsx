@@ -40,6 +40,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
   newsletter: Megaphone,
   docs: FileCode,
   proposals: FileText,
+  "shared-cart": ShoppingCart,
 };
 
 const LABEL_MAP: Record<string, string> = {
@@ -72,6 +73,7 @@ const LABEL_MAP: Record<string, string> = {
   newsletter: "Newsletter",
   docs: "Documentação",
   proposals: "Propostas",
+  "shared-cart": "Montar Carrinho",
 };
 
 export default function AdminLayout() {

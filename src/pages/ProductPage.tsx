@@ -368,7 +368,7 @@ export default function ProductPage() {
               {/* CTA + Wishlist */}
               <div className="flex gap-3 mt-2">
                 <button
-                  onClick={() => addToCart(product, customName || undefined)}
+                  onClick={() => addToCart(product, customName || undefined, selectedVariant || undefined)}
                   disabled={product.stock_quantity <= 0}
                   className="flex-1 bg-foreground text-background py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-all disabled:opacity-40 shadow-lg"
                 >

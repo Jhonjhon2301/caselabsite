@@ -97,7 +97,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            addToCart(product);
+            addToCart(product, undefined, selectedVariant || undefined);
           }}
           disabled={product.stock_quantity <= 0}
           className="w-full bg-primary text-primary-foreground text-[10px] sm:text-xs font-bold py-2 sm:py-2.5 rounded-lg hover:brightness-110 transition-all disabled:opacity-40 flex items-center justify-center gap-1.5"

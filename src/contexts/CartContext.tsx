@@ -1,19 +1,21 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from "react";
-import type { Product } from "@/types/product";
+import type { Product, ProductVariant } from "@/types/product";
 import { supabase } from "@/integrations/supabase/client";
 import { trackAddToCart } from "@/lib/tracking";
 
 export interface CartItem {
+  id: string; // unique key: productId__variantHex__customName
   product: Product;
   quantity: number;
   customName?: string;
+  variant?: ProductVariant;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (product: Product, customName?: string) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  addToCart: (product: Product, customName?: string, variant?: ProductVariant) => void;
+  removeFromCart: (itemId: string) => void;
+  updateQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -23,7 +25,10 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-// Generate or retrieve a session ID for anonymous cart tracking
+function makeItemId(productId: string, variant?: ProductVariant, customName?: string): string {
+  return `${productId}__${variant?.hex || ""}__${customName?.trim() || ""}`;
+}
+
 function getSessionId(): string {
   let sid = sessionStorage.getItem("cart_session_id");
   if (!sid) {
@@ -38,24 +43,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>();
 
-  // Save abandoned cart to DB (debounced)
   const saveAbandonedCart = useCallback(async (cartItems: CartItem[]) => {
     if (cartItems.length === 0) return;
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return; // Only save for authenticated users (RLS requires it)
+      if (!user) return;
 
       const sessionId = getSessionId();
-      const total = cartItems.reduce((s, i) => s + i.product.price * i.quantity, 0);
+      const total = cartItems.reduce((s, i) => {
+        const price = i.variant?.price ?? i.product.price;
+        return s + price * i.quantity;
+      }, 0);
       const itemsData = cartItems.map(i => ({
         product_id: i.product.id,
         name: i.product.name,
-        price: i.product.price,
+        variant_name: i.variant?.name || null,
+        variant_hex: i.variant?.hex || null,
+        price: i.variant?.price ?? i.product.price,
         quantity: i.quantity,
-        image: i.product.images?.[0] || null,
+        image: i.variant?.image || i.product.images?.[0] || null,
       }));
 
-      // Upsert by session_id for this user
       const { data: existing } = await supabase
         .from("abandoned_carts")
         .select("id")
@@ -84,49 +92,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Debounce save on cart changes
   useEffect(() => {
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(() => {
       saveAbandonedCart(items);
-    }, 5000); // Save after 5s of inactivity
+    }, 5000);
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
   }, [items, saveAbandonedCart]);
 
-  const addToCart = useCallback((product: Product, customName?: string) => {
+  const addToCart = useCallback((product: Product, customName?: string, variant?: ProductVariant) => {
+    const itemId = makeItemId(product.id, variant, customName);
     setItems((prev) => {
-      // If customizable with a name, always add as new line item
-      if (customName?.trim()) {
-        return [...prev, { product, quantity: 1, customName: customName.trim() }];
-      }
-      const existing = prev.find((i) => i.product.id === product.id && !i.customName);
+      // Custom name items with same name+variant merge
+      const existing = prev.find((i) => i.id === itemId);
       if (existing) {
-        return prev.map((i) =>
-          i.product.id === product.id && !i.customName ? { ...i, quantity: i.quantity + 1 } : i
-        );
+        return prev.map((i) => i.id === itemId ? { ...i, quantity: i.quantity + 1 } : i);
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { id: itemId, product, quantity: 1, customName: customName?.trim() || undefined, variant: variant || undefined }];
     });
     setIsCartOpen(true);
-    trackAddToCart({ id: product.id, name: product.name, price: product.price });
+    const price = variant?.price ?? product.price;
+    trackAddToCart({ id: product.id, name: product.name, price });
   }, []);
 
-  const removeFromCart = useCallback((productId: string) => {
-    setItems((prev) => prev.filter((i) => i.product.id !== productId));
+  const removeFromCart = useCallback((itemId: string) => {
+    setItems((prev) => prev.filter((i) => i.id !== itemId));
   }, []);
 
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
+  const updateQuantity = useCallback((itemId: string, quantity: number) => {
     if (quantity <= 0) {
-      setItems((prev) => prev.filter((i) => i.product.id !== productId));
+      setItems((prev) => prev.filter((i) => i.id !== itemId));
     } else {
       setItems((prev) =>
-        prev.map((i) => (i.product.id === productId ? { ...i, quantity } : i))
+        prev.map((i) => (i.id === itemId ? { ...i, quantity } : i))
       );
     }
   }, []);
 
   const clearCart = useCallback(async () => {
-    // Mark cart as recovered when purchase completes
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -143,7 +146,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const totalItems = items.reduce((sum, i) => sum + i.quantity, 0);
-  const totalPrice = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+  const totalPrice = items.reduce((sum, i) => {
+    const price = i.variant?.price ?? i.product.price;
+    return sum + price * i.quantity;
+  }, 0);
 
   return (
     <CartContext.Provider
