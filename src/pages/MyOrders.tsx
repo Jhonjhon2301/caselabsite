@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Package, ChevronDown, ChevronUp, ArrowLeft, Truck, Clock, CheckCircle2, XCircle, Paintbrush, ShoppingBag, MapPin, CreditCard, Copy, ExternalLink, Loader2 } from "lucide-react";
+import { Package, ChevronDown, ChevronUp, ArrowLeft, Truck, Clock, CheckCircle2, XCircle, Paintbrush, ShoppingBag, MapPin, CreditCard, Copy, ExternalLink, Loader2, FileText } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
