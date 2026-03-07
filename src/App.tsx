@@ -47,6 +47,7 @@ import AdminB2B from "./pages/admin/AdminB2B";
 import AdminDRE from "./pages/admin/AdminDRE";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminLeads from "./pages/admin/AdminLeads";
+import AdminNewsletter from "./pages/admin/AdminNewsletter";
 import AdminDocs from "./pages/admin/AdminDocs";
 import AdminInternalStock from "./pages/admin/AdminInternalStock";
 import AdminProposals from "./pages/admin/AdminProposals";
