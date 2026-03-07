@@ -256,12 +256,6 @@ export default function Checkout() {
     e.preventDefault();
     if (!validate()) {
       toast.error("Preencha todos os campos obrigatórios");
-      // Scroll to first error
-      const firstErrorKey = Object.keys(errors)[0];
-      if (firstErrorKey) {
-        const el = document.querySelector(`[name="${firstErrorKey}"]`);
-        el?.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
       return;
     }
     if (!shippingInfo) {
