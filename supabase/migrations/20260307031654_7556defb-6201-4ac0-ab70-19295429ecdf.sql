@@ -1,0 +1,1 @@
+UPDATE products SET production_days = 4 WHERE id IN ('3e7d10ac-d090-414b-96eb-cc14e92f8dcd', '1b1a4a0d-c306-4a45-b303-4d843948b193');

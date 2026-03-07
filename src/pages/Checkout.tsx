@@ -106,6 +106,7 @@ export default function Checkout() {
 
   const fmt = (v: number) => `R$ ${v.toFixed(2).replace(".", ",")}`;
   const shippingCost = shippingInfo?.shipping_cost ?? 0;
+  const maxProductionDays = Math.max(0, ...items.map(i => (i.product as any).production_days ?? 0));
   const finalTotal = Math.max(0, totalPrice - couponDiscount + shippingCost);
 
   const formatCPF = (v: string) => {
@@ -325,7 +326,7 @@ export default function Checkout() {
           `${form.neighborhood.trim()}, ${form.city.trim()} - ${form.state.trim()}`,
           `CEP: ${form.cep.trim()}`,
           "",
-          `⏰ Entrega estimada: ${shippingInfo.shipping_estimated_days} dias úteis`,
+          `⏰ Entrega estimada: ${shippingInfo.shipping_estimated_days + maxProductionDays} dias úteis${maxProductionDays > 0 ? ` (inclui ${maxProductionDays} dias de produção)` : ""}`,
         ].filter(Boolean).join("\n");
 
         const whatsappUrl = `https://wa.me/5561992629861?text=${encodeURIComponent(message)}`;
@@ -489,7 +490,12 @@ export default function Checkout() {
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">
-                      Entrega em até {shippingInfo.shipping_estimated_days} dias úteis
+                      Entrega em até {shippingInfo.shipping_estimated_days + maxProductionDays} dias úteis
+                      {maxProductionDays > 0 && (
+                        <span className="block text-xs text-orange-600 mt-0.5">
+                          (inclui {maxProductionDays} dias úteis de produção)
+                        </span>
+                      )}
                     </span>
                     <span className="font-bold">
                       {shippingInfo.is_free_shipping ? (
