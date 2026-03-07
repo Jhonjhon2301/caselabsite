@@ -14,10 +14,10 @@ export default function CartDrawer() {
     setGeneratingQuote(true);
     try {
       await generateQuotePdf(
-        items.map(({ product, quantity }) => ({
-          name: product.name,
+        items.map(({ product, quantity, variant }) => ({
+          name: product.name + (variant ? ` (${variant.name})` : ""),
           quantity,
-          price: product.price,
+          price: variant?.price ?? product.price,
         }))
       );
       toast.success("Orçamento gerado!");
@@ -58,30 +58,41 @@ export default function CartDrawer() {
               </div>
             </div>
           ) : (
-            items.map(({ product, quantity, customName }, idx) => (
-              <div key={`${product.id}-${idx}`} className="flex gap-3 bg-secondary/60 rounded-xl p-3 border border-border/50">
-                <img src={product.images?.[0] || "/placeholder.svg"} alt={product.name} className="w-16 h-20 object-cover rounded-lg" />
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm truncate">{product.name}</h3>
-                  {customName && (
-                    <p className="text-[10px] text-primary font-medium mt-0.5">✏️ Nome: {customName}</p>
-                  )}
-                  <p className="text-sm font-bold text-primary mt-0.5">{fmt(product.price)}</p>
-                  <div className="flex items-center gap-1.5 mt-2">
-                    <button onClick={() => updateQuantity(product.id, quantity - 1)} className="p-1.5 hover:bg-muted rounded-lg border border-border transition-colors">
-                      <Minus className="w-3 h-3" />
-                    </button>
-                    <span className="font-semibold text-sm w-7 text-center">{quantity}</span>
-                    <button onClick={() => updateQuantity(product.id, quantity + 1)} className="p-1.5 hover:bg-muted rounded-lg border border-border transition-colors">
-                      <Plus className="w-3 h-3" />
-                    </button>
-                    <button onClick={() => removeFromCart(product.id)} className="ml-auto p-1.5 text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+            items.map((item) => {
+              const { id, product, quantity, customName, variant } = item;
+              const price = variant?.price ?? product.price;
+              const image = variant?.image || product.images?.[0] || "/placeholder.svg";
+              return (
+                <div key={id} className="flex gap-3 bg-secondary/60 rounded-xl p-3 border border-border/50">
+                  <img src={image} alt={product.name} className="w-16 h-20 object-cover rounded-lg" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-sm truncate">{product.name}</h3>
+                    {variant && (
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <div className="w-3 h-3 rounded-full border border-border" style={{ backgroundColor: variant.hex }} />
+                        <span className="text-[10px] text-muted-foreground font-medium">{variant.name}</span>
+                      </div>
+                    )}
+                    {customName && (
+                      <p className="text-[10px] text-primary font-medium mt-0.5">✏️ Nome: {customName}</p>
+                    )}
+                    <p className="text-sm font-bold text-primary mt-0.5">{fmt(price)}</p>
+                    <div className="flex items-center gap-1.5 mt-2">
+                      <button onClick={() => updateQuantity(id, quantity - 1)} className="p-1.5 hover:bg-muted rounded-lg border border-border transition-colors">
+                        <Minus className="w-3 h-3" />
+                      </button>
+                      <span className="font-semibold text-sm w-7 text-center">{quantity}</span>
+                      <button onClick={() => updateQuantity(id, quantity + 1)} className="p-1.5 hover:bg-muted rounded-lg border border-border transition-colors">
+                        <Plus className="w-3 h-3" />
+                      </button>
+                      <button onClick={() => removeFromCart(id)} className="ml-auto p-1.5 text-destructive hover:bg-destructive/10 rounded-lg transition-colors">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
