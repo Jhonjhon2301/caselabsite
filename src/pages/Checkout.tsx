@@ -326,7 +326,7 @@ export default function Checkout() {
           `${form.neighborhood.trim()}, ${form.city.trim()} - ${form.state.trim()}`,
           `CEP: ${form.cep.trim()}`,
           "",
-          `⏰ Entrega estimada: ${shippingInfo.shipping_estimated_days} dias úteis`,
+          `⏰ Entrega estimada: ${shippingInfo.shipping_estimated_days + maxProductionDays} dias úteis${maxProductionDays > 0 ? ` (inclui ${maxProductionDays} dias de produção)` : ""}`,
         ].filter(Boolean).join("\n");
 
         const whatsappUrl = `https://wa.me/5561992629861?text=${encodeURIComponent(message)}`;
