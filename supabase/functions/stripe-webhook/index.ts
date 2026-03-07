@@ -62,6 +62,38 @@ Deno.serve(async (req) => {
           console.error("Error updating order:", error);
         } else {
           console.log(`Order ${orderId} confirmed via Stripe webhook`);
+
+          // Auto-trigger transactional email
+          try {
+            const emailUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-order-email`;
+            await fetch(emailUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({ order_id: orderId, status: "confirmed" }),
+            });
+            console.log(`Email sent for order ${orderId}`);
+          } catch (emailErr) {
+            console.error("Email trigger error:", emailErr);
+          }
+
+          // Auto-trigger NF-e emission
+          try {
+            const nfeUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/auto-emit-nfe`;
+            await fetch(nfeUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+              },
+              body: JSON.stringify({ order_id: orderId }),
+            });
+            console.log(`NF-e triggered for order ${orderId}`);
+          } catch (nfeErr) {
+            console.error("NF-e trigger error:", nfeErr);
+          }
         }
       }
     }
