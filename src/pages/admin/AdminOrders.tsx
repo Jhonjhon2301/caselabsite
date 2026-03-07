@@ -141,6 +141,9 @@ export default function AdminOrders() {
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono text-xs text-muted-foreground">#{order.id.slice(0, 8)}</span>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${status.color}`}>{status.label}</span>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${order.payment_status === "paid" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                        {order.payment_status === "paid" ? "💰 Pago" : "⏳ Pgto Pendente"}
+                      </span>
                     </div>
                     <p className="text-sm font-medium">{profile?.full_name || profile?.email || "Cliente"}</p>
                     <p className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("pt-BR")} — R$ {Number(order.total).toFixed(2)}</p>
