@@ -21,6 +21,8 @@ interface StockItem {
   supplier: string | null;
   location: string | null;
   notes: string | null;
+  height_cm: number | null;
+  circumference_cm: number | null;
   created_at: string;
 }
 
@@ -36,6 +38,7 @@ export default function AdminInternalStock() {
   const [form, setForm] = useState({
     name: "", description: "", category: "", quantity: "0",
     min_quantity: "0", unit_cost: "0", supplier: "", location: "", notes: "",
+    height_cm: "", circumference_cm: "",
   });
 
   const fetchItems = async () => {
@@ -52,7 +55,7 @@ export default function AdminInternalStock() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", description: "", category: "", quantity: "0", min_quantity: "0", unit_cost: "0", supplier: "", location: "", notes: "" });
+    setForm({ name: "", description: "", category: "", quantity: "0", min_quantity: "0", unit_cost: "0", supplier: "", location: "", notes: "", height_cm: "", circumference_cm: "" });
     setDialogOpen(true);
   };
 
@@ -68,13 +71,15 @@ export default function AdminInternalStock() {
       supplier: item.supplier || "",
       location: item.location || "",
       notes: item.notes || "",
+      height_cm: item.height_cm != null ? String(item.height_cm) : "",
+      circumference_cm: item.circumference_cm != null ? String(item.circumference_cm) : "",
     });
     setDialogOpen(true);
   };
 
   const saveItem = async () => {
     if (!form.name.trim()) { toast.error("Preencha o nome do item"); return; }
-    const payload = {
+    const payload: any = {
       name: form.name.trim(),
       description: form.description.trim() || null,
       category: form.category || null,
@@ -84,6 +89,8 @@ export default function AdminInternalStock() {
       supplier: form.supplier.trim() || null,
       location: form.location.trim() || null,
       notes: form.notes.trim() || null,
+      height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
+      circumference_cm: form.circumference_cm ? parseFloat(form.circumference_cm) : null,
     };
 
     if (editing) {
@@ -173,12 +180,12 @@ export default function AdminInternalStock() {
                 <tr className="border-b border-border bg-muted/50">
                   <th className="text-left px-4 py-3 font-medium">Item</th>
                   <th className="text-center px-4 py-3 font-medium">Categoria</th>
+                  <th className="text-center px-4 py-3 font-medium">Medidas</th>
                   <th className="text-center px-4 py-3 font-medium">Qtd</th>
                   <th className="text-center px-4 py-3 font-medium">Mín</th>
                   <th className="text-center px-4 py-3 font-medium">Custo Unit.</th>
                   <th className="text-center px-4 py-3 font-medium">Valor Total</th>
                   <th className="text-center px-4 py-3 font-medium">Fornecedor</th>
-                  <th className="text-center px-4 py-3 font-medium">Local</th>
                   <th className="text-center px-4 py-3 font-medium w-24">Ações</th>
                 </tr>
               </thead>
@@ -201,6 +208,15 @@ export default function AdminInternalStock() {
                           <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{item.category}</span>
                         ) : "—"}
                       </td>
+                      <td className="px-4 py-3 text-center text-xs text-muted-foreground">
+                        {item.height_cm || item.circumference_cm ? (
+                          <div>
+                            {item.height_cm && <span>A: {item.height_cm}cm</span>}
+                            {item.height_cm && item.circumference_cm && <span> · </span>}
+                            {item.circumference_cm && <span>C: {item.circumference_cm}cm</span>}
+                          </div>
+                        ) : "—"}
+                      </td>
                       <td className="px-4 py-3 text-center">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
                           isLow ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary"
@@ -212,7 +228,6 @@ export default function AdminInternalStock() {
                       <td className="px-4 py-3 text-center">{fmt(item.unit_cost)}</td>
                       <td className="px-4 py-3 text-center font-medium">{fmt(item.quantity * item.unit_cost)}</td>
                       <td className="px-4 py-3 text-center text-muted-foreground">{item.supplier || "—"}</td>
-                      <td className="px-4 py-3 text-center text-muted-foreground">{item.location || "—"}</td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex justify-center gap-1">
                           <button onClick={() => openEdit(item)} className="p-2 hover:bg-muted rounded-lg transition-colors">
@@ -257,6 +272,16 @@ export default function AdminInternalStock() {
                 <option value="">Selecionar...</option>
                 {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Altura (cm)</Label>
+                <Input type="number" step="0.1" min="0" value={form.height_cm} onChange={(e) => setForm({ ...form, height_cm: e.target.value })} placeholder="Ex: 27" />
+              </div>
+              <div>
+                <Label>Circunferência (cm)</Label>
+                <Input type="number" step="0.1" min="0" value={form.circumference_cm} onChange={(e) => setForm({ ...form, circumference_cm: e.target.value })} placeholder="Ex: 23" />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>

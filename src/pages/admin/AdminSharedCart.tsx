@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Plus, Minus, Trash2, Send, Copy, Link, ShoppingCart, Search, Package } from "lucide-react";
+import { Plus, Minus, Trash2, Send, Copy, ShoppingCart, Search, Package, CreditCard, QrCode } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { logAudit } from "@/lib/audit";
 import type { Product, ProductVariant } from "@/types/product";
@@ -26,6 +26,7 @@ interface SharedCart {
   notes: string | null;
   total: number;
   status: string;
+  payment_method: string | null;
   created_at: string;
 }
 
@@ -38,6 +39,7 @@ export default function AdminSharedCart() {
   const [customerEmail, setCustomerEmail] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [notes, setNotes] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<"pix" | "card" | "">("");
   const [saving, setSaving] = useState(false);
   const [savedCarts, setSavedCarts] = useState<SharedCart[]>([]);
   const [loadingCarts, setLoadingCarts] = useState(true);
@@ -60,7 +62,6 @@ export default function AdminSharedCart() {
   };
 
   const addProduct = (product: Product, variant?: ProductVariant) => {
-    const key = `${product.id}_${variant?.hex || ""}`;
     setCartItems(prev => {
       const existing = prev.find(i => i.product_id === product.id && (i.variant_hex || "") === (variant?.hex || ""));
       if (existing) {
@@ -108,11 +109,12 @@ export default function AdminSharedCart() {
         notes: notes || null,
         total,
         status: "pending",
+        payment_method: paymentMethod || null,
       } as any).select().single();
 
       if (error) throw error;
 
-      await logAudit("create", "shared_cart", (data as any).id, { items: cartItems.length, total });
+      await logAudit("create", "shared_cart", (data as any).id, { items: cartItems.length, total, payment_method: paymentMethod });
       toast.success("Carrinho criado com sucesso!");
       
       const link = `${window.location.origin}/carrinho/${(data as any).id}`;
@@ -124,6 +126,7 @@ export default function AdminSharedCart() {
       setCustomerEmail("");
       setCustomerPhone("");
       setNotes("");
+      setPaymentMethod("");
       loadSavedCarts();
     } catch (err: any) {
       toast.error(err.message || "Erro ao salvar carrinho");
@@ -142,6 +145,7 @@ export default function AdminSharedCart() {
     const items = (cart.items as SharedCartItem[]);
     const itemsList = items.map(i => `• ${i.quantity}x ${i.product_name}${i.variant_name ? ` (${i.variant_name})` : ""} — ${fmt(i.price)}`).join("\n");
     const link = `${window.location.origin}/carrinho/${cart.id}`;
+    const payLabel = cart.payment_method === "pix" ? "PIX" : cart.payment_method === "card" ? "Cartão" : "PIX ou Cartão";
     const message = [
       "🛒 *Carrinho Montado — Case Lab*",
       "",
@@ -152,6 +156,7 @@ export default function AdminSharedCart() {
       itemsList,
       "",
       `💰 *Total: ${fmt(cart.total)}*`,
+      `💳 *Pagamento: ${payLabel}*`,
       "",
       `🔗 Finalize sua compra aqui: ${link}`,
       "",
@@ -239,6 +244,43 @@ export default function AdminSharedCart() {
               <input value={customerEmail} onChange={e => setCustomerEmail(e.target.value)} placeholder="E-mail" className="px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/30 outline-none sm:col-span-2" />
             </div>
             <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Observações para o cliente..." rows={2} className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:ring-2 focus:ring-primary/30 outline-none resize-none" />
+            
+            {/* Payment method selection */}
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wider">Forma de Pagamento</label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("pix")}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-xs ${
+                    paymentMethod === "pix" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <QrCode className={`w-5 h-5 ${paymentMethod === "pix" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="font-bold">Somente PIX</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("card")}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-xs ${
+                    paymentMethod === "card" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <CreditCard className={`w-5 h-5 ${paymentMethod === "card" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="font-bold">Somente Cartão</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("")}
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-xs ${
+                    paymentMethod === "" ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                  }`}
+                >
+                  <ShoppingCart className={`w-5 h-5 ${paymentMethod === "" ? "text-primary" : "text-muted-foreground"}`} />
+                  <span className="font-bold">Ambos</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Cart items */}
@@ -309,6 +351,7 @@ export default function AdminSharedCart() {
                   <th className="pb-2 font-semibold text-muted-foreground">Cliente</th>
                   <th className="pb-2 font-semibold text-muted-foreground">Itens</th>
                   <th className="pb-2 font-semibold text-muted-foreground">Total</th>
+                  <th className="pb-2 font-semibold text-muted-foreground">Pagamento</th>
                   <th className="pb-2 font-semibold text-muted-foreground">Status</th>
                   <th className="pb-2 font-semibold text-muted-foreground">Data</th>
                   <th className="pb-2 font-semibold text-muted-foreground">Ações</th>
@@ -320,6 +363,15 @@ export default function AdminSharedCart() {
                     <td className="py-2.5">{cart.customer_name || "—"}</td>
                     <td className="py-2.5">{(cart.items as SharedCartItem[]).reduce((s, i) => s + i.quantity, 0)} itens</td>
                     <td className="py-2.5 font-bold">{fmt(cart.total)}</td>
+                    <td className="py-2.5">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        cart.payment_method === "pix" ? "bg-green-100 text-green-700" :
+                        cart.payment_method === "card" ? "bg-blue-100 text-blue-700" :
+                        "bg-muted text-muted-foreground"
+                      }`}>
+                        {cart.payment_method === "pix" ? "PIX" : cart.payment_method === "card" ? "Cartão" : "Ambos"}
+                      </span>
+                    </td>
                     <td className="py-2.5">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                         cart.status === "completed" ? "bg-primary/10 text-primary" :

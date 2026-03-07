@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
-import { ShoppingCart, ArrowRight, Package } from "lucide-react";
+import { ShoppingCart, ArrowRight, Package, CreditCard, QrCode } from "lucide-react";
 import TopBar from "@/components/TopBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -100,6 +100,8 @@ export default function SharedCart() {
 
   const items = cart.items as SharedCartItem[];
   const total = items.reduce((s: number, i: SharedCartItem) => s + i.price * i.quantity, 0);
+  const paymentMethod = (cart as any).payment_method as string | null;
+  const payLabel = paymentMethod === "pix" ? "PIX" : paymentMethod === "card" ? "Cartão" : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,6 +145,13 @@ export default function SharedCart() {
             <span className="text-muted-foreground">Total</span>
             <span className="text-2xl font-black">{fmt(total)}</span>
           </div>
+
+          {payLabel && (
+            <div className="flex items-center justify-center gap-2 py-2 bg-muted/50 rounded-xl text-sm">
+              {paymentMethod === "pix" ? <QrCode className="w-4 h-4 text-primary" /> : <CreditCard className="w-4 h-4 text-primary" />}
+              <span className="font-semibold">Pagamento via {payLabel}</span>
+            </div>
+          )}
 
           <button
             onClick={handleAddAllToCart}

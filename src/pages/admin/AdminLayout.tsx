@@ -45,36 +45,39 @@ const ICON_MAP: Record<string, React.ElementType> = {
 
 const LABEL_MAP: Record<string, string> = {
   dashboard: "Dashboard",
+  orders: "Pedidos",
+  production: "Produção",
+  "shared-cart": "Montar Carrinho",
   products: "Produtos",
+  categories: "Categorias",
   stock: "Estoque",
   internal_stock: "Estoque Interno",
-  orders: "Pedidos",
-  financial: "Financeiro",
-  coupons: "Cupons",
-  categories: "Categorias",
-  documents: "Documentos",
-  banner: "Banner",
-  payments: "Pagamentos",
-  reminders: "Lembretes",
-  notes: "Notas",
-  team: "Equipe",
-  designer: "Designer Drive",
-  roles: "Cargos",
-  fiscal: "Notas Fiscais",
   customers: "Clientes",
+  leads: "Leads",
+  b2b: "B2B",
+  financial: "Financeiro",
+  dre: "DRE",
+  payments: "Pagamentos",
+  coupons: "Cupons",
+  proposals: "Propostas",
   blog: "Blog",
   reviews: "Avaliações",
-  bi: "BI Avançado",
-  production: "Produção",
-  b2b: "B2B",
-  dre: "DRE",
-  audit: "Auditoria",
-  leads: "Leads",
   newsletter: "Newsletter",
+  banner: "Banner",
+  designer: "Designer Drive",
+  fiscal: "Notas Fiscais",
+  documents: "Documentos",
+  team: "Equipe",
+  roles: "Cargos",
+  audit: "Auditoria",
+  reminders: "Lembretes",
+  notes: "Notas",
+  bi: "BI Avançado",
   docs: "Documentação",
-  proposals: "Propostas",
-  "shared-cart": "Montar Carrinho",
 };
+
+// Ordered keys for sidebar display
+const ORDERED_KEYS = Object.keys(LABEL_MAP);
 
 export default function AdminLayout() {
   const { user, isAdmin, adminPosition, isLoading, signOut } = useAuth();
@@ -107,7 +110,7 @@ export default function AdminLayout() {
         setPermissions(data.permissions as string[]);
         setPositionLabel(data.label as string);
       } else {
-        setPermissions(Object.keys(LABEL_MAP));
+        setPermissions(ORDERED_KEYS);
         setPositionLabel("CEO");
       }
     };
@@ -115,8 +118,9 @@ export default function AdminLayout() {
   }, [adminPosition]);
 
   const links = useMemo(() => {
-    return permissions
-      .filter((p) => LABEL_MAP[p])
+    // Sort by ORDERED_KEYS order
+    return ORDERED_KEYS
+      .filter((p) => permissions.includes(p) && LABEL_MAP[p])
       .map((p) => ({
         to: `/admin/${p}`,
         icon: ICON_MAP[p] || Package,
