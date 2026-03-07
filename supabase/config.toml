@@ -32,3 +32,9 @@ verify_jwt = false
 
 [functions.smart-repurchase]
 verify_jwt = false
+
+[functions.send-newsletter]
+verify_jwt = false
+
+[functions.send-order-email]
+verify_jwt = false

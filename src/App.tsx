@@ -47,6 +47,7 @@ import AdminB2B from "./pages/admin/AdminB2B";
 import AdminDRE from "./pages/admin/AdminDRE";
 import AdminAuditLog from "./pages/admin/AdminAuditLog";
 import AdminLeads from "./pages/admin/AdminLeads";
+import AdminNewsletter from "./pages/admin/AdminNewsletter";
 import AdminDocs from "./pages/admin/AdminDocs";
 import AdminInternalStock from "./pages/admin/AdminInternalStock";
 import AdminProposals from "./pages/admin/AdminProposals";
@@ -130,6 +131,7 @@ const App = () => (
                 <Route path="dre" element={<AdminDRE />} />
                 <Route path="audit" element={<AdminAuditLog />} />
                 <Route path="leads" element={<AdminLeads />} />
+                <Route path="newsletter" element={<AdminNewsletter />} />
                 <Route path="docs" element={<AdminDocs />} />
                 <Route path="internal_stock" element={<AdminInternalStock />} />
                 <Route path="proposals" element={<AdminProposals />} />
