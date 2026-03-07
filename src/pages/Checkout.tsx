@@ -530,6 +530,7 @@ export default function Checkout() {
                 Forma de Pagamento
               </h2>
               <div className="grid grid-cols-2 gap-4">
+                {(!forcedPaymentMethod || forcedPaymentMethod === "pix") && (
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("pix")}
@@ -541,6 +542,8 @@ export default function Checkout() {
                   <span className={`font-bold text-sm ${paymentMethod === "pix" ? "text-primary" : "text-foreground"}`}>Pix</span>
                   <span className="text-[10px] text-muted-foreground">Pagamento instantâneo</span>
                 </button>
+                )}
+                {(!forcedPaymentMethod || forcedPaymentMethod === "card") && (
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("card")}
@@ -552,6 +555,7 @@ export default function Checkout() {
                   <span className={`font-bold text-sm ${paymentMethod === "card" ? "text-primary" : "text-foreground"}`}>Cartão</span>
                   <span className="text-[10px] text-muted-foreground">Crédito ou débito</span>
                 </button>
+                )}
               </div>
             </div>
           </div>
