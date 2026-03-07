@@ -9,6 +9,7 @@ interface Order {
   id: string;
   user_id: string;
   status: string;
+  payment_status: string;
   subtotal: number;
   discount: number;
   total: number;
