@@ -89,10 +89,14 @@ export default function MyOrders() {
     setExpandedOrder(orderId);
     if (!orderItems[orderId]) {
       try {
-        const { data } = await supabase.from("order_items").select("*").eq("order_id", orderId);
-        setOrderItems(prev => ({ ...prev, [orderId]: data ?? [] }));
+        const [itemsRes, notesRes] = await Promise.all([
+          supabase.from("order_items").select("*").eq("order_id", orderId),
+          supabase.from("fiscal_notes").select("id, pdf_url, number, status, access_key").eq("order_id", orderId).eq("status", "authorized"),
+        ]);
+        setOrderItems(prev => ({ ...prev, [orderId]: itemsRes.data ?? [] }));
+        setFiscalNotes(prev => ({ ...prev, [orderId]: notesRes.data ?? [] }));
       } catch (err) {
-        console.error("Error fetching order items:", err);
+        console.error("Error fetching order details:", err);
       }
     }
   };
