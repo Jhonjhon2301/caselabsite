@@ -630,9 +630,11 @@ export type Database = {
       internal_stock: {
         Row: {
           category: string | null
+          circumference_cm: number | null
           created_at: string
           created_by: string
           description: string | null
+          height_cm: number | null
           id: string
           location: string | null
           min_quantity: number
@@ -645,9 +647,11 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          circumference_cm?: number | null
           created_at?: string
           created_by: string
           description?: string | null
+          height_cm?: number | null
           id?: string
           location?: string | null
           min_quantity?: number
@@ -660,9 +664,11 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          circumference_cm?: number | null
           created_at?: string
           created_by?: string
           description?: string | null
+          height_cm?: number | null
           id?: string
           location?: string | null
           min_quantity?: number
@@ -1311,6 +1317,7 @@ export type Database = {
           id: string
           items: Json
           notes: string | null
+          payment_method: string | null
           status: string
           total: number
           updated_at: string
@@ -1325,6 +1332,7 @@ export type Database = {
           id?: string
           items?: Json
           notes?: string | null
+          payment_method?: string | null
           status?: string
           total?: number
           updated_at?: string
@@ -1339,6 +1347,7 @@ export type Database = {
           id?: string
           items?: Json
           notes?: string | null
+          payment_method?: string | null
           status?: string
           total?: number
           updated_at?: string
