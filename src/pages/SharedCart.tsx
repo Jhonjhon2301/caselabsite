@@ -84,6 +84,13 @@ export default function SharedCart() {
     // Mark as completed
     await supabase.from("shared_carts").update({ status: "completed" } as any).eq("id", id);
 
+    // Store payment method restriction for checkout
+    if (paymentMethod) {
+      sessionStorage.setItem("shared_cart_payment_method", paymentMethod);
+    } else {
+      sessionStorage.removeItem("shared_cart_payment_method");
+    }
+
     toast.success("Produtos adicionados ao carrinho!");
     setAdding(false);
   };
