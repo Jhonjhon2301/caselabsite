@@ -6,7 +6,7 @@ import {
   Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign,
   Users, ImageIcon, FileText, Warehouse, CreditCard, Bell, StickyNote,
   Palette, Shield, Menu, X, Receipt, LayoutDashboard, Star, BookOpen,
-  BarChart3, Factory, Building2, FileBarChart, ShieldAlert, Mail, FileCode
+  BarChart3, Factory, Building2, FileBarChart, ShieldAlert, Mail, FileCode, Megaphone
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
