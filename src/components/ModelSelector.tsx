@@ -37,7 +37,7 @@ export default function ModelSelector({ selectedModelId, onSelectModel }: ModelS
         <div className="flex items-center gap-3 mb-6 sm:mb-8">
           <div className="h-px flex-1 bg-border" />
           <h2 className="font-heading font-black text-xs sm:text-sm uppercase tracking-[0.2em] text-muted-foreground whitespace-nowrap">
-            Nossas Linhas
+            Explore por Categoria
           </h2>
           <div className="h-px flex-1 bg-border" />
         </div>
