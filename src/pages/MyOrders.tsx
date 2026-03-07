@@ -267,6 +267,28 @@ export default function MyOrders() {
                         )}
                       </div>
 
+                      {/* Nota Fiscal */}
+                      {fiscalNotes[order.id]?.length > 0 && (
+                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="w-4 h-4 text-green-600" />
+                            <p className="text-sm font-bold text-green-700 dark:text-green-400">Nota Fiscal</p>
+                          </div>
+                          {fiscalNotes[order.id].map((nf: any) => (
+                            <div key={nf.id} className="flex items-center justify-between">
+                              <span className="text-sm text-green-700 dark:text-green-400">
+                                NF-e {nf.number ? `#${nf.number}` : "emitida"}
+                              </span>
+                              {nf.pdf_url && (
+                                <a href={nf.pdf_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-sm font-medium text-green-600 hover:text-green-700 transition-colors">
+                                  <ExternalLink className="w-3.5 h-3.5" /> Baixar PDF
+                                </a>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       {/* Items */}
                       <div>
                         <p className="text-xs font-semibold mb-2">Itens do Pedido</p>
