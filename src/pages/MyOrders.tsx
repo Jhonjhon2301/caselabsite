@@ -38,6 +38,7 @@ export default function MyOrders() {
   const [orderItems, setOrderItems] = useState<Record<string, any[]>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [retryingPayment, setRetryingPayment] = useState<string | null>(null);
+  const [fiscalNotes, setFiscalNotes] = useState<Record<string, any[]>>({});
 
   const handleRetryPayment = async (orderId: string) => {
     setRetryingPayment(orderId);
