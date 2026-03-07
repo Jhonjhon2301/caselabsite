@@ -9,10 +9,7 @@ import { Save, CreditCard, QrCode, Wallet, Truck } from "lucide-react";
 import type { Json } from "@/integrations/supabase/types";
 
 interface PaymentConfig {
-  active_gateway: "mercadopago" | "stripe" | "infinitepay";
-  stripe_enabled: boolean;
-  mercadopago_enabled: boolean;
-  infinitepay_enabled: boolean;
+  active_gateway: "stripe";
   pix_enabled: boolean;
   card_enabled: boolean;
 }
@@ -23,10 +20,7 @@ interface ShippingConfig {
 }
 
 const defaultConfig: PaymentConfig = {
-  active_gateway: "mercadopago",
-  stripe_enabled: false,
-  mercadopago_enabled: true,
-  infinitepay_enabled: false,
+  active_gateway: "stripe",
   pix_enabled: true,
   card_enabled: true,
 };
@@ -35,12 +29,6 @@ const defaultShipping: ShippingConfig = {
   margin_type: "fixed",
   margin_value: 0,
 };
-
-const gateways = [
-  { id: "mercadopago" as const, label: "Mercado Pago", icon: Wallet, description: "Pix, cartão de crédito e débito" },
-  { id: "stripe" as const, label: "Stripe", icon: CreditCard, description: "Cartão, Apple Pay, Google Pay" },
-  { id: "infinitepay" as const, label: "InfinitePay", icon: QrCode, description: "Pix e cartão" },
-];
 
 export default function AdminPayments() {
   const [config, setConfig] = useState<PaymentConfig>(defaultConfig);
