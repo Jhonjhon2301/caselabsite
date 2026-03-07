@@ -558,22 +558,33 @@ export default function Checkout() {
 
               {/* Items */}
               <div className="space-y-3 mb-4 max-h-60 overflow-y-auto">
-                {items.map(({ product, quantity, customName }, idx) => (
-                  <div key={`${product.id}-${idx}`} className="flex gap-3">
-                    <img src={product.images?.[0] || "/placeholder.svg"} alt={product.name} className="w-14 h-14 rounded-lg object-cover border border-border" />
+                {items.map((item) => {
+                  const { id, product, quantity, customName, variant } = item;
+                  const price = variant?.price ?? product.price;
+                  const image = variant?.image || product.images?.[0] || "/placeholder.svg";
+                  return (
+                  <div key={id} className="flex gap-3">
+                    <img src={image} alt={product.name} className="w-14 h-14 rounded-lg object-cover border border-border" />
                     <div className="flex-1 min-w-0">
                       <h4 className="text-xs font-semibold truncate">{product.name}</h4>
+                      {variant && (
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <div className="w-2.5 h-2.5 rounded-full border border-border" style={{ backgroundColor: variant.hex }} />
+                          <span className="text-[10px] text-muted-foreground">{variant.name}</span>
+                        </div>
+                      )}
                       {customName && <p className="text-[10px] text-primary">✏️ Nome: {customName}</p>}
-                      <p className="text-xs text-muted-foreground">{fmt(product.price)}</p>
+                      <p className="text-xs text-muted-foreground">{fmt(price)}</p>
                       <div className="flex items-center gap-1 mt-1">
-                        <button type="button" onClick={() => updateQuantity(product.id, quantity - 1)} className="p-0.5 hover:bg-muted rounded border border-border"><Minus className="w-3 h-3" /></button>
+                        <button type="button" onClick={() => updateQuantity(id, quantity - 1)} className="p-0.5 hover:bg-muted rounded border border-border"><Minus className="w-3 h-3" /></button>
                         <span className="text-xs font-bold w-5 text-center">{quantity}</span>
-                        <button type="button" onClick={() => updateQuantity(product.id, quantity + 1)} className="p-0.5 hover:bg-muted rounded border border-border"><Plus className="w-3 h-3" /></button>
-                        <button type="button" onClick={() => removeFromCart(product.id)} className="ml-auto p-0.5 text-destructive hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3" /></button>
+                        <button type="button" onClick={() => updateQuantity(id, quantity + 1)} className="p-0.5 hover:bg-muted rounded border border-border"><Plus className="w-3 h-3" /></button>
+                        <button type="button" onClick={() => removeFromCart(id)} className="ml-auto p-0.5 text-destructive hover:bg-destructive/10 rounded"><Trash2 className="w-3 h-3" /></button>
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Coupon */}
