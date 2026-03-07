@@ -46,6 +46,7 @@ const ALL_PERMISSIONS = [
   { key: "leads", label: "Leads" },
   { key: "docs", label: "Documentação" },
   { key: "proposals", label: "Propostas" },
+  { key: "shared-cart", label: "Montar Carrinho" },
 ];
 
 export default function AdminRoles() {
