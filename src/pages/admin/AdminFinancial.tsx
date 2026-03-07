@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, BarChart3, ShoppingBag, CheckCircle, Clock, X, Repeat, ToggleLeft, ToggleRight } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, Plus, Trash2, BarChart3, ShoppingBag, CheckCircle, Clock, X, Repeat, ToggleLeft, ToggleRight, Pencil } from "lucide-react";
 
 interface OrderWithItems {
   id: string;
@@ -58,9 +58,16 @@ export default function AdminFinancial() {
   const [showSaleForm, setShowSaleForm] = useState(false);
   const [showFixedForm, setShowFixedForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"sales" | "expenses" | "fixed">("sales");
+  const [editingExpenseId, setEditingExpenseId] = useState<string | null>(null);
+  const [editingSaleId, setEditingSaleId] = useState<string | null>(null);
+  const [editingFixedId, setEditingFixedId] = useState<string | null>(null);
   const [expForm, setExpForm] = useState({ description: "", amount: "", category: "", expense_date: new Date().toISOString().split("T")[0], due_date: "" });
   const [saleForm, setSaleForm] = useState({ description: "", amount: "", customer_name: "", sale_date: new Date().toISOString().split("T")[0], notes: "" });
   const [fixedForm, setFixedForm] = useState({ description: "", amount: "", category: "", recurrence: "monthly", day_of_month: "1" });
+
+  const resetExpForm = () => { setExpForm({ description: "", amount: "", category: "", expense_date: new Date().toISOString().split("T")[0], due_date: "" }); setEditingExpenseId(null); };
+  const resetSaleForm = () => { setSaleForm({ description: "", amount: "", customer_name: "", sale_date: new Date().toISOString().split("T")[0], notes: "" }); setEditingSaleId(null); };
+  const resetFixedForm = () => { setFixedForm({ description: "", amount: "", category: "", recurrence: "monthly", day_of_month: "1" }); setEditingFixedId(null); };
 
   const fetchData = async () => {
     setLoading(true);
@@ -112,58 +119,117 @@ export default function AdminFinancial() {
   const pendingExpenses = filteredExpenses.filter((e) => e.status === "pending");
   const overdueExpenses = pendingExpenses.filter((e) => e.due_date && new Date(e.due_date) < new Date());
 
-  const handleAddExpense = async (e: React.FormEvent) => {
+  // === Expense CRUD ===
+  const openEditExpense = (ex: Expense) => {
+    setExpForm({
+      description: ex.description,
+      amount: String(ex.amount),
+      category: ex.category || "",
+      expense_date: ex.expense_date,
+      due_date: ex.due_date || "",
+    });
+    setEditingExpenseId(ex.id);
+    setShowExpenseForm(true);
+  };
+
+  const handleSaveExpense = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!expForm.description.trim() || !expForm.amount) { toast.error("Preencha descrição e valor"); return; }
-    const { error } = await supabase.from("expenses").insert({
+    const payload = {
       description: expForm.description.trim(),
       amount: parseFloat(expForm.amount),
       category: expForm.category.trim() || null,
       expense_date: expForm.expense_date,
       due_date: expForm.due_date || null,
-      status: "pending",
-      created_by: user!.id,
-    });
-    if (error) { toast.error("Erro ao salvar despesa"); return; }
-    toast.success("Despesa registrada!");
+    };
+
+    if (editingExpenseId) {
+      const { error } = await supabase.from("expenses").update(payload).eq("id", editingExpenseId);
+      if (error) { toast.error("Erro ao atualizar despesa"); return; }
+      toast.success("Despesa atualizada!");
+    } else {
+      const { error } = await supabase.from("expenses").insert({ ...payload, status: "pending", created_by: user!.id });
+      if (error) { toast.error("Erro ao salvar despesa"); return; }
+      toast.success("Despesa registrada!");
+    }
     setShowExpenseForm(false);
-    setExpForm({ description: "", amount: "", category: "", expense_date: new Date().toISOString().split("T")[0], due_date: "" });
+    resetExpForm();
     fetchData();
   };
 
-  const handleAddSale = async (e: React.FormEvent) => {
+  // === Sale CRUD ===
+  const openEditSale = (sale: ManualSale) => {
+    setSaleForm({
+      description: sale.description,
+      amount: String(sale.amount),
+      customer_name: sale.customer_name || "",
+      sale_date: sale.sale_date,
+      notes: sale.notes || "",
+    });
+    setEditingSaleId(sale.id);
+    setShowSaleForm(true);
+  };
+
+  const handleSaveSale = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!saleForm.description.trim() || !saleForm.amount) { toast.error("Preencha descrição e valor"); return; }
-    const { error } = await supabase.from("manual_sales").insert({
+    const payload = {
       description: saleForm.description.trim(),
       amount: parseFloat(saleForm.amount),
       customer_name: saleForm.customer_name.trim() || null,
       sale_date: saleForm.sale_date,
       notes: saleForm.notes.trim() || null,
-      created_by: user!.id,
-    });
-    if (error) { toast.error("Erro ao salvar venda"); return; }
-    toast.success("Venda registrada!");
+    };
+
+    if (editingSaleId) {
+      const { error } = await supabase.from("manual_sales").update(payload).eq("id", editingSaleId);
+      if (error) { toast.error("Erro ao atualizar venda"); return; }
+      toast.success("Venda atualizada!");
+    } else {
+      const { error } = await supabase.from("manual_sales").insert({ ...payload, created_by: user!.id });
+      if (error) { toast.error("Erro ao salvar venda"); return; }
+      toast.success("Venda registrada!");
+    }
     setShowSaleForm(false);
-    setSaleForm({ description: "", amount: "", customer_name: "", sale_date: new Date().toISOString().split("T")[0], notes: "" });
+    resetSaleForm();
     fetchData();
   };
 
-  const handleAddFixed = async (e: React.FormEvent) => {
+  // === Fixed Expense CRUD ===
+  const openEditFixed = (fx: FixedExpense) => {
+    setFixedForm({
+      description: fx.description,
+      amount: String(fx.amount),
+      category: fx.category || "",
+      recurrence: fx.recurrence,
+      day_of_month: String(fx.day_of_month || 1),
+    });
+    setEditingFixedId(fx.id);
+    setShowFixedForm(true);
+  };
+
+  const handleSaveFixed = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fixedForm.description.trim() || !fixedForm.amount) { toast.error("Preencha descrição e valor"); return; }
-    const { error } = await supabase.from("fixed_expenses").insert({
+    const payload = {
       description: fixedForm.description.trim(),
       amount: parseFloat(fixedForm.amount),
       category: fixedForm.category.trim() || null,
       recurrence: fixedForm.recurrence,
       day_of_month: parseInt(fixedForm.day_of_month) || 1,
-      created_by: user!.id,
-    });
-    if (error) { toast.error("Erro ao salvar gasto fixo"); return; }
-    toast.success("Gasto fixo registrado!");
+    };
+
+    if (editingFixedId) {
+      const { error } = await supabase.from("fixed_expenses").update(payload).eq("id", editingFixedId);
+      if (error) { toast.error("Erro ao atualizar gasto fixo"); return; }
+      toast.success("Gasto fixo atualizado!");
+    } else {
+      const { error } = await supabase.from("fixed_expenses").insert({ ...payload, created_by: user!.id });
+      if (error) { toast.error("Erro ao salvar gasto fixo"); return; }
+      toast.success("Gasto fixo registrado!");
+    }
     setShowFixedForm(false);
-    setFixedForm({ description: "", amount: "", category: "", recurrence: "monthly", day_of_month: "1" });
+    resetFixedForm();
     fetchData();
   };
 
@@ -290,20 +356,24 @@ export default function AdminFinancial() {
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading font-bold text-lg">Vendas Externas</h2>
-            <button onClick={() => setShowSaleForm(!showSaleForm)} className="btn-primary text-xs">
-              {showSaleForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {showSaleForm ? "Cancelar" : "Nova Venda"}
+            <button onClick={() => { if (showSaleForm && !editingSaleId) { setShowSaleForm(false); } else { resetSaleForm(); setShowSaleForm(true); } }} className="btn-primary text-xs">
+              {showSaleForm && !editingSaleId ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {showSaleForm && !editingSaleId ? "Cancelar" : "Nova Venda"}
             </button>
           </div>
 
           {showSaleForm && (
-            <form onSubmit={handleAddSale} className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6 p-4 bg-muted/50 rounded-lg">
+            <form onSubmit={handleSaveSale} className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6 p-4 bg-muted/50 rounded-lg">
+              <div className="md:col-span-2 flex items-center justify-between">
+                <span className="text-sm font-semibold">{editingSaleId ? "✏️ Editando Venda" : "Nova Venda"}</span>
+                {editingSaleId && <button type="button" onClick={() => { setShowSaleForm(false); resetSaleForm(); }} className="text-xs text-muted-foreground hover:text-foreground">Cancelar edição</button>}
+              </div>
               <input type="text" placeholder="Descrição da venda *" value={saleForm.description} onChange={(e) => setSaleForm({ ...saleForm, description: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" required maxLength={200} />
               <input type="number" step="0.01" min="0.01" placeholder="Valor (R$) *" value={saleForm.amount} onChange={(e) => setSaleForm({ ...saleForm, amount: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" required />
               <input type="text" placeholder="Nome do cliente" value={saleForm.customer_name} onChange={(e) => setSaleForm({ ...saleForm, customer_name: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" maxLength={100} />
               <input type="date" value={saleForm.sale_date} onChange={(e) => setSaleForm({ ...saleForm, sale_date: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" />
               <input type="text" placeholder="Observações" value={saleForm.notes} onChange={(e) => setSaleForm({ ...saleForm, notes: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" maxLength={500} />
               <div className="flex justify-end">
-                <button type="submit" className="btn-primary text-xs">Salvar Venda</button>
+                <button type="submit" className="btn-primary text-xs">{editingSaleId ? "Atualizar" : "Salvar"} Venda</button>
               </div>
             </form>
           )}
@@ -322,8 +392,9 @@ export default function AdminFinancial() {
                       {sale.notes && ` · ${sale.notes}`}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-green-600">+ {fmt(Number(sale.amount))}</span>
+                    <button onClick={() => openEditSale(sale)} className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"><Pencil className="w-3.5 h-3.5" /></button>
                     <button onClick={() => handleDeleteSale(sale.id)} className="p-1.5 hover:bg-destructive/10 rounded text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
@@ -338,13 +409,17 @@ export default function AdminFinancial() {
         <div className="bg-card border border-border rounded-xl p-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-heading font-bold text-lg">Despesas</h2>
-            <button onClick={() => setShowExpenseForm(!showExpenseForm)} className="btn-primary text-xs">
-              {showExpenseForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {showExpenseForm ? "Cancelar" : "Nova Despesa"}
+            <button onClick={() => { if (showExpenseForm && !editingExpenseId) { setShowExpenseForm(false); } else { resetExpForm(); setShowExpenseForm(true); } }} className="btn-primary text-xs">
+              {showExpenseForm && !editingExpenseId ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {showExpenseForm && !editingExpenseId ? "Cancelar" : "Nova Despesa"}
             </button>
           </div>
 
           {showExpenseForm && (
-            <form onSubmit={handleAddExpense} className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 p-4 bg-muted/50 rounded-lg">
+            <form onSubmit={handleSaveExpense} className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 p-4 bg-muted/50 rounded-lg">
+              <div className="md:col-span-3 flex items-center justify-between">
+                <span className="text-sm font-semibold">{editingExpenseId ? "✏️ Editando Despesa" : "Nova Despesa"}</span>
+                {editingExpenseId && <button type="button" onClick={() => { setShowExpenseForm(false); resetExpForm(); }} className="text-xs text-muted-foreground hover:text-foreground">Cancelar edição</button>}
+              </div>
               <input type="text" placeholder="Descrição *" value={expForm.description} onChange={(e) => setExpForm({ ...expForm, description: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" required maxLength={200} />
               <input type="number" step="0.01" min="0.01" placeholder="Valor (R$) *" value={expForm.amount} onChange={(e) => setExpForm({ ...expForm, amount: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" required />
               <input type="text" placeholder="Categoria" value={expForm.category} onChange={(e) => setExpForm({ ...expForm, category: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" maxLength={50} />
@@ -357,7 +432,7 @@ export default function AdminFinancial() {
                 <input type="date" value={expForm.due_date} onChange={(e) => setExpForm({ ...expForm, due_date: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" />
               </div>
               <div className="flex items-end">
-                <button type="submit" className="btn-primary text-xs w-full">Salvar Despesa</button>
+                <button type="submit" className="btn-primary text-xs w-full">{editingExpenseId ? "Atualizar" : "Salvar"} Despesa</button>
               </div>
             </form>
           )}
@@ -387,8 +462,9 @@ export default function AdminFinancial() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-red-600">- {fmt(Number(ex.amount))}</span>
+                    <button onClick={() => openEditExpense(ex)} className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"><Pencil className="w-3.5 h-3.5" /></button>
                     <button onClick={() => handleDeleteExpense(ex.id)} className="p-1.5 hover:bg-destructive/10 rounded text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
@@ -406,13 +482,17 @@ export default function AdminFinancial() {
               <h2 className="font-heading font-bold text-lg">Gastos Fixos</h2>
               <p className="text-xs text-muted-foreground mt-0.5">Despesas recorrentes como aluguel, internet, etc.</p>
             </div>
-            <button onClick={() => setShowFixedForm(!showFixedForm)} className="btn-primary text-xs">
-              {showFixedForm ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {showFixedForm ? "Cancelar" : "Novo Gasto Fixo"}
+            <button onClick={() => { if (showFixedForm && !editingFixedId) { setShowFixedForm(false); } else { resetFixedForm(); setShowFixedForm(true); } }} className="btn-primary text-xs">
+              {showFixedForm && !editingFixedId ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />} {showFixedForm && !editingFixedId ? "Cancelar" : "Novo Gasto Fixo"}
             </button>
           </div>
 
           {showFixedForm && (
-            <form onSubmit={handleAddFixed} className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 p-4 bg-muted/50 rounded-lg">
+            <form onSubmit={handleSaveFixed} className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6 p-4 bg-muted/50 rounded-lg">
+              <div className="md:col-span-3 flex items-center justify-between">
+                <span className="text-sm font-semibold">{editingFixedId ? "✏️ Editando Gasto Fixo" : "Novo Gasto Fixo"}</span>
+                {editingFixedId && <button type="button" onClick={() => { setShowFixedForm(false); resetFixedForm(); }} className="text-xs text-muted-foreground hover:text-foreground">Cancelar edição</button>}
+              </div>
               <input type="text" placeholder="Descrição * (ex: Aluguel)" value={fixedForm.description} onChange={(e) => setFixedForm({ ...fixedForm, description: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" required maxLength={200} />
               <input type="number" step="0.01" min="0.01" placeholder="Valor (R$) *" value={fixedForm.amount} onChange={(e) => setFixedForm({ ...fixedForm, amount: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" required />
               <input type="text" placeholder="Categoria (ex: Infraestrutura)" value={fixedForm.category} onChange={(e) => setFixedForm({ ...fixedForm, category: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" maxLength={50} />
@@ -429,7 +509,7 @@ export default function AdminFinancial() {
                 <input type="number" min="1" max="31" value={fixedForm.day_of_month} onChange={(e) => setFixedForm({ ...fixedForm, day_of_month: e.target.value })} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" />
               </div>
               <div className="flex items-end">
-                <button type="submit" className="btn-primary text-xs w-full">Salvar Gasto Fixo</button>
+                <button type="submit" className="btn-primary text-xs w-full">{editingFixedId ? "Atualizar" : "Salvar"} Gasto Fixo</button>
               </div>
             </form>
           )}
@@ -454,8 +534,9 @@ export default function AdminFinancial() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-purple-600">{fmt(Number(fx.amount))}</span>
+                    <button onClick={() => openEditFixed(fx)} className="p-1.5 hover:bg-muted rounded text-muted-foreground hover:text-foreground"><Pencil className="w-3.5 h-3.5" /></button>
                     <button onClick={() => handleDeleteFixed(fx.id)} className="p-1.5 hover:bg-destructive/10 rounded text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 </div>
