@@ -82,6 +82,14 @@ export default function Checkout() {
   }, [items.length, navigate, user]);
 
   useEffect(() => {
+    // Check for shared cart payment method restriction
+    const sharedCartPM = sessionStorage.getItem("shared_cart_payment_method");
+    if (sharedCartPM === "pix" || sharedCartPM === "card") {
+      setForcedPaymentMethod(sharedCartPM);
+      setPaymentMethod(sharedCartPM);
+      sessionStorage.removeItem("shared_cart_payment_method");
+    }
+
     supabase
       .from("site_settings")
       .select("value")
@@ -91,7 +99,9 @@ export default function Checkout() {
         if (data?.value) {
           const v = data.value as any;
           setPaymentConfig((prev) => ({ ...prev, ...v }));
-          if (!v.pix_enabled && v.card_enabled) setPaymentMethod("card");
+          if (!sharedCartPM) {
+            if (!v.pix_enabled && v.card_enabled) setPaymentMethod("card");
+          }
         }
       });
   }, []);
