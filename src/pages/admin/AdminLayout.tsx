@@ -69,6 +69,7 @@ const LABEL_MAP: Record<string, string> = {
   dre: "DRE",
   audit: "Auditoria",
   leads: "Leads",
+  newsletter: "Newsletter",
   docs: "Documentação",
   proposals: "Propostas",
 };
