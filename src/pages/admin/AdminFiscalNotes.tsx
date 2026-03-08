@@ -37,6 +37,7 @@ interface EmitForm {
 const emptyForm: EmitForm = {
   customerName: "",
   customerCpf: "",
+  customerCnpj: "",
   customerEmail: "",
   notes: "",
   items: [{ name: "", quantity: 1, price: 0, code: "" }],
