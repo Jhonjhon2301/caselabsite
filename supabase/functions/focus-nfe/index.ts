@@ -15,6 +15,7 @@ Deno.serve(async (req) => {
   }
 
   const FOCUS_TOKEN = Deno.env.get("FOCUS_NFE_TOKEN");
+  const FOCUS_ISSUER_CNPJ = (Deno.env.get("FOCUS_ISSUER_CNPJ") || "").replace(/\D/g, "");
   if (!FOCUS_TOKEN) {
     return new Response(JSON.stringify({ error: "FOCUS_NFE_TOKEN não configurado" }), {
       status: 500,

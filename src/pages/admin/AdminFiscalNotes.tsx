@@ -128,7 +128,7 @@ export default function AdminFiscalNotes() {
         setForm({ ...emptyForm, items: [{ name: "", quantity: 1, price: 0, code: "" }] });
         fetchNotes();
       } else {
-        toast.error(data?.focusResult?.mensagem || "Erro ao emitir NF-e");
+        toast.error(data?.error || data?.focusResult?.mensagem || "Erro ao emitir NF-e");
       }
     } catch (err: any) {
       toast.error(err.message || "Erro ao emitir NF-e");
