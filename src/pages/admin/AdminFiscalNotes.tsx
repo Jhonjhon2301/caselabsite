@@ -28,6 +28,7 @@ interface FiscalNote {
 interface EmitForm {
   customerName: string;
   customerCpf: string;
+  customerCnpj: string;
   customerEmail: string;
   notes: string;
   items: { name: string; quantity: number; price: number; code: string }[];
