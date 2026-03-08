@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -31,14 +31,20 @@ Deno.serve(async (req) => {
     });
   }
 
-  const supabase = createClient(
+  const supabaseAdmin = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
+
+  const supabaseUser = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_ANON_KEY")!,
     { global: { headers: { Authorization: authHeader } } }
   );
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
   if (userError || !user) {
+    console.error("Auth error:", userError);
     return new Response(JSON.stringify({ error: "Não autorizado" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -47,11 +53,19 @@ Deno.serve(async (req) => {
 
   const userId = user.id;
 
-  // Check admin
-  const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  console.log("Admin check:", { userId, isAdmin, roleError });
-  if (roleError || !isAdmin) {
-    return new Response(JSON.stringify({ error: "Acesso negado", detail: roleError?.message }), {
+  // Check admin using service role to avoid RLS issues
+  const { data: roleData } = await supabaseAdmin
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .limit(1);
+
+  const isAdmin = roleData && roleData.length > 0;
+  console.log("Admin check:", { userId, isAdmin });
+
+  if (!isAdmin) {
+    return new Response(JSON.stringify({ error: "Acesso negado" }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -62,15 +76,16 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json();
     const { action } = body;
+    console.log("Action:", action);
 
     if (action === "emit") {
-      return await handleEmit(supabase, body, authB64, userId);
+      return await handleEmit(supabaseAdmin, body, authB64, userId);
     } else if (action === "query") {
-      return await handleQuery(supabase, body, authB64);
+      return await handleQuery(supabaseAdmin, body, authB64);
     } else if (action === "cancel") {
-      return await handleCancel(supabase, body, authB64);
+      return await handleCancel(supabaseAdmin, body, authB64);
     } else if (action === "list") {
-      return await handleList(supabase);
+      return await handleList(supabaseAdmin);
     } else {
       return new Response(JSON.stringify({ error: "Ação inválida" }), {
         status: 400,
@@ -93,35 +108,35 @@ async function handleEmit(
   userId: string
 ) {
   const { customerName, customerCpf, customerCnpj, customerEmail, items, total, notes, orderId } = body;
-  const cleanCpf = customerCpf?.replace(/\D/g, "");
-  const cleanCnpj = customerCnpj?.replace(/\D/g, "");
+  const cleanCpf = customerCpf?.replace(/\D/g, "") || "";
+  const cleanCnpj = customerCnpj?.replace(/\D/g, "") || "";
+
+  console.log("Emitting NF-e:", { customerName, cleanCpf, cleanCnpj, itemCount: items?.length, total });
 
   const ref = `NF-${Date.now().toString(36).toUpperCase()}`;
 
   // Build NF-e payload for Focus NFe API
   const nfeData: Record<string, any> = {
     natureza_operacao: "Venda de mercadoria",
-    forma_pagamento: "0", // à vista
-    tipo_documento: "1", // saída
-    finalidade_emissao: "1", // normal
+    forma_pagamento: "0",
+    tipo_documento: "1",
+    finalidade_emissao: "1",
     consumidor_final: cleanCnpj ? "0" : "1",
     presenca_comprador: "9",
     nome_destinatario: customerName || "CONSUMIDOR FINAL",
-    cpf_destinatario: cleanCnpj ? undefined : (cleanCpf || undefined),
-    cnpj_destinatario: cleanCnpj || undefined,
     indicador_inscricao_estadual_destinatario: "9",
     items: items.map((item: any, idx: number) => ({
       numero_item: idx + 1,
       codigo_produto: item.code || `PROD-${idx + 1}`,
       descricao: item.name,
-      quantidade_comercial: item.quantity.toFixed(4),
-      quantidade_tributavel: item.quantity.toFixed(4),
-      valor_unitario_comercial: item.price.toFixed(2),
-      valor_unitario_tributavel: item.price.toFixed(2),
-      valor_bruto: (item.price * item.quantity).toFixed(2),
+      quantidade_comercial: Number(item.quantity).toFixed(4),
+      quantidade_tributavel: Number(item.quantity).toFixed(4),
+      valor_unitario_comercial: Number(item.price).toFixed(2),
+      valor_unitario_tributavel: Number(item.price).toFixed(2),
+      valor_bruto: (Number(item.price) * Number(item.quantity)).toFixed(2),
       unidade_comercial: "UN",
       unidade_tributavel: "UN",
-      codigo_ncm: "7323.93.00", // generic metal container NCM
+      codigo_ncm: "7323.93.00",
       cfop: "5102",
       icms_situacao_tributaria: "102",
       icms_origem: "0",
@@ -131,14 +146,23 @@ async function handleEmit(
     formas_pagamento: [
       {
         tipo_pagamento: "01",
-        valor_pagamento: total.toFixed(2),
+        valor_pagamento: Number(total).toFixed(2),
       },
     ],
   };
 
+  // Set CPF or CNPJ (not both)
+  if (cleanCnpj) {
+    nfeData.cnpj_destinatario = cleanCnpj;
+  } else if (cleanCpf) {
+    nfeData.cpf_destinatario = cleanCpf;
+  }
+
   if (customerEmail) {
     nfeData.email_destinatario = customerEmail;
   }
+
+  console.log("NF-e payload ref:", ref, JSON.stringify(nfeData).substring(0, 500));
 
   // Call Focus NFe API
   const focusRes = await fetch(`${FOCUS_BASE_URL}/v2/nfe?ref=${ref}`, {
@@ -151,11 +175,12 @@ async function handleEmit(
   });
 
   const focusResult = await focusRes.json();
+  console.log("Focus response:", focusRes.status, JSON.stringify(focusResult));
 
   const status = focusRes.ok ? "processing" : "error";
   const errorMessage = focusRes.ok ? null : (focusResult.mensagem || JSON.stringify(focusResult));
 
-  // Save to database
+  // Save to database using service role
   const { data: savedNote, error: dbError } = await supabase
     .from("fiscal_notes")
     .insert({
@@ -164,7 +189,7 @@ async function handleEmit(
       status,
       focus_ref: ref,
       customer_name: customerName,
-      customer_cpf: customerCpf,
+      customer_cpf: cleanCnpj || cleanCpf || null,
       customer_email: customerEmail,
       total,
       items,
@@ -176,6 +201,7 @@ async function handleEmit(
     .single();
 
   if (dbError) {
+    console.error("DB save error:", dbError);
     throw new Error(`Erro ao salvar nota: ${dbError.message}`);
   }
 
@@ -198,8 +224,8 @@ async function handleQuery(
   });
 
   const focusResult = await focusRes.json();
+  console.log("Query result:", JSON.stringify(focusResult));
 
-  // Update local record
   const updateData: Record<string, any> = {};
 
   if (focusResult.status === "autorizado") {
@@ -264,7 +290,10 @@ async function handleList(supabase: ReturnType<typeof createClient>) {
     .order("created_at", { ascending: false })
     .limit(100);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    console.error("List error:", error);
+    throw new Error(error.message);
+  }
 
   return new Response(JSON.stringify({ notes: data }), {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
