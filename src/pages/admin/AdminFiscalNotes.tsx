@@ -112,6 +112,7 @@ export default function AdminFiscalNotes() {
           action: "emit",
           customerName: form.customerName,
           customerCpf: form.customerCpf,
+          customerCnpj: form.customerCnpj,
           customerEmail: form.customerEmail,
           items: form.items,
           total,
