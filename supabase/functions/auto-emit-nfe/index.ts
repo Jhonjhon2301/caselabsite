@@ -108,6 +108,11 @@ Deno.serve(async (req) => {
       ],
     };
 
+    // Explicit emitter identity helps multi-company Focus accounts
+    if (FOCUS_ISSUER_CNPJ) {
+      nfeData.cnpj_emitente = FOCUS_ISSUER_CNPJ;
+    }
+
     // Send email to customer
     if (order.customer_email) {
       nfeData.email_destinatario = order.customer_email;
