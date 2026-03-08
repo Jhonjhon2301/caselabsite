@@ -29,12 +29,16 @@ export default function AdminTeam() {
   const [searchEmail, setSearchEmail] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
-  const [newPosition, setNewPosition] = useState("ceo");
+  const [newPosition, setNewPosition] = useState("");
   const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     supabase.from("custom_positions").select("name, label").order("created_at").then(({ data }) => {
-      setPositions((data ?? []).map((p: any) => ({ value: p.name, label: p.label })));
+      const opts = (data ?? []).map((p: any) => ({ value: p.name, label: p.label }));
+      setPositions(opts);
+      if (opts.length > 0 && !newPosition) {
+        setNewPosition(opts[0].value);
+      }
     });
   }, []);
 
@@ -81,40 +85,89 @@ export default function AdminTeam() {
   };
 
   const searchUsers = async () => {
-    if (!searchEmail.trim()) return;
+    if (!searchEmail.trim()) {
+      toast.error("Digite um e-mail para buscar");
+      return;
+    }
     setSearching(true);
-    const { data } = await supabase
-      .from("profiles")
-      .select("user_id, email, full_name")
-      .ilike("email", `%${searchEmail.trim()}%`)
-      .limit(10);
+    setSearchResults([]);
+    
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("user_id, email, full_name")
+        .ilike("email", `%${searchEmail.trim()}%`)
+        .limit(10);
 
-    // Filter out users that are already admins
-    const adminIds = new Set(members.map(m => m.user_id));
-    setSearchResults((data ?? []).filter((p: any) => !adminIds.has(p.user_id)));
+      if (error) {
+        console.error("Search error:", error);
+        toast.error("Erro ao buscar: " + error.message);
+        setSearching(false);
+        return;
+      }
+
+      // Filter out users that are already admins
+      const adminIds = new Set(members.map(m => m.user_id));
+      const filtered = (data ?? []).filter((p: any) => !adminIds.has(p.user_id));
+      setSearchResults(filtered);
+      
+      if (filtered.length === 0) {
+        toast.info(data?.length ? "Todos os resultados já são admins" : "Nenhum usuário encontrado com esse e-mail");
+      }
+    } catch (err) {
+      console.error("Search error:", err);
+      toast.error("Erro ao buscar usuários");
+    }
+    
     setSearching(false);
   };
 
   const addMember = async (userId: string) => {
-    setAdding(true);
-    // Update existing user_role to admin
-    const { error } = await supabase
-      .from("user_roles")
-      .update({ role: "admin" as any, position: newPosition })
-      .eq("user_id", userId);
-
-    if (error) {
-      toast.error("Erro ao adicionar: " + error.message);
-      setAdding(false);
+    if (!newPosition) {
+      toast.error("Selecione um cargo primeiro");
       return;
     }
+    
+    setAdding(true);
+    try {
+      // First try update
+      const { data: updated, error: updateError } = await supabase
+        .from("user_roles")
+        .update({ role: "admin" as any, position: newPosition })
+        .eq("user_id", userId)
+        .select();
 
-    toast.success("Membro adicionado à equipe!");
-    setShowAdd(false);
-    setSearchEmail("");
-    setSearchResults([]);
+      if (updateError) {
+        console.error("Update error:", updateError);
+        toast.error("Erro ao adicionar: " + updateError.message);
+        setAdding(false);
+        return;
+      }
+
+      // If no rows updated, the user might not have a role record yet
+      if (!updated || updated.length === 0) {
+        const { error: insertError } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role: "admin" as any, position: newPosition });
+        
+        if (insertError) {
+          console.error("Insert error:", insertError);
+          toast.error("Erro ao adicionar: " + insertError.message);
+          setAdding(false);
+          return;
+        }
+      }
+
+      toast.success("Membro adicionado à equipe!");
+      setShowAdd(false);
+      setSearchEmail("");
+      setSearchResults([]);
+      fetchMembers();
+    } catch (err: any) {
+      console.error("Add member error:", err);
+      toast.error("Erro inesperado ao adicionar membro");
+    }
     setAdding(false);
-    fetchMembers();
   };
 
   return (
@@ -139,6 +192,21 @@ export default function AdminTeam() {
           <p className="text-xs text-muted-foreground mb-3">
             Busque pelo e-mail do usuário cadastrado para promovê-lo a admin.
           </p>
+
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Cargo</label>
+            <select
+              value={newPosition}
+              onChange={(e) => setNewPosition(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-input bg-background text-sm w-full sm:w-auto"
+            >
+              {positions.length === 0 && <option value="">Nenhum cargo cadastrado</option>}
+              {positions.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex gap-2 mb-3">
             <input
               type="text"
@@ -151,23 +219,10 @@ export default function AdminTeam() {
             <button
               onClick={searchUsers}
               disabled={searching}
-              className="px-4 py-2.5 rounded-lg bg-muted text-sm font-medium hover:bg-muted/80"
+              className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
             >
-              <Search className="w-4 h-4" />
+              {searching ? "..." : <Search className="w-4 h-4" />}
             </button>
-          </div>
-
-          <div className="mb-3">
-            <label className="block text-xs font-medium text-muted-foreground mb-1">Cargo</label>
-            <select
-              value={newPosition}
-              onChange={(e) => setNewPosition(e.target.value)}
-              className="px-3 py-2 rounded-lg border border-input bg-background text-sm w-full sm:w-auto"
-            >
-              {positions.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
           </div>
 
           {searchResults.length > 0 && (
@@ -183,15 +238,11 @@ export default function AdminTeam() {
                     disabled={adding}
                     className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 disabled:opacity-50"
                   >
-                    {adding ? "..." : "Adicionar"}
+                    {adding ? "Adicionando..." : "Adicionar"}
                   </button>
                 </div>
               ))}
             </div>
-          )}
-
-          {searchResults.length === 0 && searchEmail && !searching && (
-            <p className="text-xs text-muted-foreground">Nenhum usuário encontrado. Verifique se o e-mail está correto e se o usuário já tem cadastro.</p>
           )}
         </div>
       )}
