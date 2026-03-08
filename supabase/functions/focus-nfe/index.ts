@@ -92,7 +92,9 @@ async function handleEmit(
   authB64: string,
   userId: string
 ) {
-  const { customerName, customerCpf, customerEmail, items, total, notes, orderId } = body;
+  const { customerName, customerCpf, customerCnpj, customerEmail, items, total, notes, orderId } = body;
+  const cleanCpf = customerCpf?.replace(/\D/g, "");
+  const cleanCnpj = customerCnpj?.replace(/\D/g, "");
 
   const ref = `NF-${Date.now().toString(36).toUpperCase()}`;
 
