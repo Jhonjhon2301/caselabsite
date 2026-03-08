@@ -107,7 +107,10 @@ export default function Auth() {
         },
       });
       if (error) {
-        toast.error(error.message);
+        const msg = error.message === "User already registered" 
+          ? "Este e-mail já está cadastrado. Faça login." 
+          : error.message;
+        toast.error(msg);
       } else {
         toast.success("Cadastro realizado! Verifique seu e-mail para confirmar a conta.");
       }
