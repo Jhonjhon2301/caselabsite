@@ -48,9 +48,10 @@ Deno.serve(async (req) => {
   const userId = user.id;
 
   // Check admin
-  const { data: isAdmin } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
-  if (!isAdmin) {
-    return new Response(JSON.stringify({ error: "Acesso negado" }), {
+  const { data: isAdmin, error: roleError } = await supabase.rpc("has_role", { _user_id: userId, _role: "admin" });
+  console.log("Admin check:", { userId, isAdmin, roleError });
+  if (roleError || !isAdmin) {
+    return new Response(JSON.stringify({ error: "Acesso negado", detail: roleError?.message }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
