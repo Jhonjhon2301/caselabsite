@@ -143,8 +143,15 @@ Deno.serve(async (req) => {
     const focusResult = await focusRes.json();
     console.log("Focus NFe response:", JSON.stringify(focusResult));
 
+    const isIssuerUnauthorized =
+      focusResult?.codigo === "permissao_negada" &&
+      typeof focusResult?.mensagem === "string" &&
+      focusResult.mensagem.toLowerCase().includes("emitente não autorizado");
+
     const status = focusRes.ok ? "processing" : "error";
-    const errorMessage = focusRes.ok ? null : (focusResult.mensagem || JSON.stringify(focusResult));
+    const errorMessage = isIssuerUnauthorized
+      ? "Emitente não autorizado na Focus NFe. Configure o CNPJ emissor correto no segredo FOCUS_ISSUER_CNPJ e valide no painel da Focus."
+      : (focusRes.ok ? null : (focusResult.mensagem || JSON.stringify(focusResult)));
 
     // Save fiscal note record
     await supabaseAdmin.from("fiscal_notes").insert({
