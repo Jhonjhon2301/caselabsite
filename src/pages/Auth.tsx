@@ -84,29 +84,31 @@ export default function Auth() {
       if (phone.replace(/\D/g, "").length < 10) { toast.error("Informe um telefone válido"); setLoading(false); return; }
       if (cpf.replace(/\D/g, "").length !== 11) { toast.error("Informe um CPF válido"); setLoading(false); return; }
 
-      const { error } = await signUp(email, password, fullName.trim());
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+            phone: phone.trim(),
+            cpf: cpf.trim(),
+            birth_date: birthDate || null,
+            gender: gender || null,
+            instagram: instagram.trim() || null,
+            address_cep: cep.replace(/\D/g, "") || null,
+            address_street: street.trim() || null,
+            address_number: addressNumber.trim() || null,
+            address_complement: complement.trim() || null,
+            address_neighborhood: neighborhood.trim() || null,
+            address_city: city.trim() || null,
+            address_state: addressState.trim() || null,
+          },
+          emailRedirectTo: window.location.origin,
+        },
+      });
       if (error) {
         toast.error(error.message);
       } else {
-        setTimeout(async () => {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            await supabase.from("profiles").update({
-              phone: phone.trim(),
-              cpf: cpf.trim(),
-              birth_date: birthDate || null,
-              gender: gender || null,
-              instagram: instagram.trim() || null,
-              address_cep: cep.replace(/\D/g, "") || null,
-              address_street: street.trim() || null,
-              address_number: addressNumber.trim() || null,
-              address_complement: complement.trim() || null,
-              address_neighborhood: neighborhood.trim() || null,
-              address_city: city.trim() || null,
-              address_state: addressState.trim() || null,
-            }).eq("user_id", user.id);
-          }
-        }, 1500);
         toast.success("Cadastro realizado! Verifique seu e-mail para confirmar a conta.");
       }
     }
