@@ -15,6 +15,7 @@ Deno.serve(async (req) => {
   }
 
   const FOCUS_TOKEN = Deno.env.get("FOCUS_NFE_TOKEN");
+  const FOCUS_ISSUER_CNPJ = (Deno.env.get("FOCUS_ISSUER_CNPJ") || "").replace(/\D/g, "");
   if (!FOCUS_TOKEN) {
     return new Response(JSON.stringify({ error: "FOCUS_NFE_TOKEN não configurado" }), {
       status: 500,
@@ -79,7 +80,7 @@ Deno.serve(async (req) => {
     console.log("Action:", action);
 
     if (action === "emit") {
-      return await handleEmit(supabaseAdmin, body, authB64, userId);
+      return await handleEmit(supabaseAdmin, body, authB64, userId, FOCUS_ISSUER_CNPJ);
     } else if (action === "query") {
       return await handleQuery(supabaseAdmin, body, authB64);
     } else if (action === "cancel") {
@@ -105,13 +106,21 @@ async function handleEmit(
   supabase: ReturnType<typeof createClient>,
   body: any,
   authB64: string,
-  userId: string
+  userId: string,
+  issuerCnpj: string
 ) {
   const { customerName, customerCpf, customerCnpj, customerEmail, items, total, notes, orderId } = body;
   const cleanCpf = customerCpf?.replace(/\D/g, "") || "";
   const cleanCnpj = customerCnpj?.replace(/\D/g, "") || "";
 
-  console.log("Emitting NF-e:", { customerName, cleanCpf, cleanCnpj, itemCount: items?.length, total });
+  console.log("Emitting NF-e:", {
+    customerName,
+    cleanCpf,
+    cleanCnpj,
+    issuerCnpj: issuerCnpj || "(not-configured)",
+    itemCount: items?.length,
+    total,
+  });
 
   const ref = `NF-${Date.now().toString(36).toUpperCase()}`;
 
@@ -151,6 +160,11 @@ async function handleEmit(
     ],
   };
 
+  // Explicit emitter identity helps multi-company Focus accounts
+  if (issuerCnpj) {
+    nfeData.cnpj_emitente = issuerCnpj;
+  }
+
   // Set CPF or CNPJ (not both)
   if (cleanCnpj) {
     nfeData.cnpj_destinatario = cleanCnpj;
@@ -162,7 +176,7 @@ async function handleEmit(
     nfeData.email_destinatario = customerEmail;
   }
 
-  console.log("NF-e payload ref:", ref, JSON.stringify(nfeData).substring(0, 500));
+  console.log("NF-e payload ref:", ref, JSON.stringify(nfeData).substring(0, 800));
 
   // Call Focus NFe API
   const focusRes = await fetch(`${FOCUS_BASE_URL}/v2/nfe?ref=${ref}`, {
@@ -177,8 +191,17 @@ async function handleEmit(
   const focusResult = await focusRes.json();
   console.log("Focus response:", focusRes.status, JSON.stringify(focusResult));
 
+  const focusMessage = focusResult?.mensagem || JSON.stringify(focusResult);
+  const isIssuerUnauthorized =
+    focusResult?.codigo === "permissao_negada" &&
+    typeof focusResult?.mensagem === "string" &&
+    focusResult.mensagem.toLowerCase().includes("emitente não autorizado");
+
+  const errorMessage = isIssuerUnauthorized
+    ? `Emitente não autorizado na Focus NFe. Configure o CNPJ emissor correto no segredo FOCUS_ISSUER_CNPJ e valide no painel da Focus.`
+    : (focusRes.ok ? null : focusMessage);
+
   const status = focusRes.ok ? "processing" : "error";
-  const errorMessage = focusRes.ok ? null : (focusResult.mensagem || JSON.stringify(focusResult));
 
   // Save to database using service role
   const { data: savedNote, error: dbError } = await supabase
@@ -205,9 +228,10 @@ async function handleEmit(
     throw new Error(`Erro ao salvar nota: ${dbError.message}`);
   }
 
+  // Return 200 to avoid frontend runtime throw on business validation errors
   return new Response(
-    JSON.stringify({ success: focusRes.ok, note: savedNote, focusResult }),
-    { status: focusRes.ok ? 200 : 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    JSON.stringify({ success: focusRes.ok, note: savedNote, focusResult, error: errorMessage }),
+    { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }
 

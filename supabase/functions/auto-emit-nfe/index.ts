@@ -15,6 +15,7 @@ Deno.serve(async (req) => {
   }
 
   const FOCUS_TOKEN = Deno.env.get("FOCUS_NFE_TOKEN");
+  const FOCUS_ISSUER_CNPJ = (Deno.env.get("FOCUS_ISSUER_CNPJ") || "").replace(/\D/g, "");
   if (!FOCUS_TOKEN) {
     return new Response(JSON.stringify({ error: "FOCUS_NFE_TOKEN não configurado" }), {
       status: 500,
@@ -107,6 +108,11 @@ Deno.serve(async (req) => {
       ],
     };
 
+    // Explicit emitter identity helps multi-company Focus accounts
+    if (FOCUS_ISSUER_CNPJ) {
+      nfeData.cnpj_emitente = FOCUS_ISSUER_CNPJ;
+    }
+
     // Send email to customer
     if (order.customer_email) {
       nfeData.email_destinatario = order.customer_email;
@@ -137,8 +143,15 @@ Deno.serve(async (req) => {
     const focusResult = await focusRes.json();
     console.log("Focus NFe response:", JSON.stringify(focusResult));
 
+    const isIssuerUnauthorized =
+      focusResult?.codigo === "permissao_negada" &&
+      typeof focusResult?.mensagem === "string" &&
+      focusResult.mensagem.toLowerCase().includes("emitente não autorizado");
+
     const status = focusRes.ok ? "processing" : "error";
-    const errorMessage = focusRes.ok ? null : (focusResult.mensagem || JSON.stringify(focusResult));
+    const errorMessage = isIssuerUnauthorized
+      ? "Emitente não autorizado na Focus NFe. Configure o CNPJ emissor correto no segredo FOCUS_ISSUER_CNPJ e valide no painel da Focus."
+      : (focusRes.ok ? null : (focusResult.mensagem || JSON.stringify(focusResult)));
 
     // Save fiscal note record
     await supabaseAdmin.from("fiscal_notes").insert({
