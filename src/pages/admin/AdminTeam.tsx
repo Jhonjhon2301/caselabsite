@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Shield, Pencil, Trash2 } from "lucide-react";
+import { Users, Shield, Pencil, Trash2, Plus, Search } from "lucide-react";
 
 interface TeamMember {
   id: string;
@@ -23,6 +23,14 @@ export default function AdminTeam() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPosition, setEditPosition] = useState("");
+
+  // Add member states
+  const [showAdd, setShowAdd] = useState(false);
+  const [searchEmail, setSearchEmail] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+  const [newPosition, setNewPosition] = useState("ceo");
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     supabase.from("custom_positions").select("name, label").order("created_at").then(({ data }) => {
@@ -72,12 +80,121 @@ export default function AdminTeam() {
     fetchMembers();
   };
 
+  const searchUsers = async () => {
+    if (!searchEmail.trim()) return;
+    setSearching(true);
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id, email, full_name")
+      .ilike("email", `%${searchEmail.trim()}%`)
+      .limit(10);
+
+    // Filter out users that are already admins
+    const adminIds = new Set(members.map(m => m.user_id));
+    setSearchResults((data ?? []).filter((p: any) => !adminIds.has(p.user_id)));
+    setSearching(false);
+  };
+
+  const addMember = async (userId: string) => {
+    setAdding(true);
+    // Update existing user_role to admin
+    const { error } = await supabase
+      .from("user_roles")
+      .update({ role: "admin" as any, position: newPosition })
+      .eq("user_id", userId);
+
+    if (error) {
+      toast.error("Erro ao adicionar: " + error.message);
+      setAdding(false);
+      return;
+    }
+
+    toast.success("Membro adicionado à equipe!");
+    setShowAdd(false);
+    setSearchEmail("");
+    setSearchResults([]);
+    setAdding(false);
+    fetchMembers();
+  };
+
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="font-heading text-2xl font-bold">Equipe</h1>
-        <p className="text-sm text-muted-foreground">Gerencie cargos e permissões da equipe admin</p>
+    <div className="p-4 sm:p-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
+        <div>
+          <h1 className="font-heading text-xl sm:text-2xl font-bold">Equipe</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground">Gerencie cargos e permissões da equipe admin</p>
+        </div>
+        <button
+          onClick={() => setShowAdd(!showAdd)}
+          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" /> Adicionar Membro
+        </button>
       </div>
+
+      {/* Add member panel */}
+      {showAdd && (
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-6 mb-6">
+          <h2 className="font-semibold text-base mb-4">Adicionar Membro à Equipe</h2>
+          <p className="text-xs text-muted-foreground mb-3">
+            Busque pelo e-mail do usuário cadastrado para promovê-lo a admin.
+          </p>
+          <div className="flex gap-2 mb-3">
+            <input
+              type="text"
+              placeholder="Buscar por e-mail..."
+              value={searchEmail}
+              onChange={(e) => setSearchEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && searchUsers()}
+              className="flex-1 px-3 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none"
+            />
+            <button
+              onClick={searchUsers}
+              disabled={searching}
+              className="px-4 py-2.5 rounded-lg bg-muted text-sm font-medium hover:bg-muted/80"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="mb-3">
+            <label className="block text-xs font-medium text-muted-foreground mb-1">Cargo</label>
+            <select
+              value={newPosition}
+              onChange={(e) => setNewPosition(e.target.value)}
+              className="px-3 py-2 rounded-lg border border-input bg-background text-sm w-full sm:w-auto"
+            >
+              {positions.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {searchResults.length > 0 && (
+            <div className="border border-border rounded-lg overflow-hidden">
+              {searchResults.map((user: any) => (
+                <div key={user.user_id} className="flex items-center justify-between p-3 border-b border-border last:border-0">
+                  <div>
+                    <p className="text-sm font-medium">{user.full_name || "Sem nome"}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => addMember(user.user_id)}
+                    disabled={adding}
+                    className="px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {adding ? "..." : "Adicionar"}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {searchResults.length === 0 && searchEmail && !searching && (
+            <p className="text-xs text-muted-foreground">Nenhum usuário encontrado. Verifique se o e-mail está correto e se o usuário já tem cadastro.</p>
+          )}
+        </div>
+      )}
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="p-4 border-b border-border bg-muted/30">
@@ -107,7 +224,7 @@ export default function AdminTeam() {
                     <select value={editPosition} onChange={(e) => setEditPosition(e.target.value)} className="px-2 py-1 rounded border border-input bg-background text-sm">
                       {positions.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                     </select>
-                    <button onClick={() => savePosition(m.id)} className="text-xs btn-primary py-1 px-3">Salvar</button>
+                    <button onClick={() => savePosition(m.id)} className="text-xs bg-primary text-primary-foreground py-1 px-3 rounded">Salvar</button>
                   </div>
                 ) : (
                   <span className="text-sm capitalize">{positions.find((p) => p.value === m.position)?.label.split("—")[0] || m.position || "CEO"}</span>
