@@ -80,7 +80,7 @@ Deno.serve(async (req) => {
     console.log("Action:", action);
 
     if (action === "emit") {
-      return await handleEmit(supabaseAdmin, body, authB64, userId);
+      return await handleEmit(supabaseAdmin, body, authB64, userId, FOCUS_ISSUER_CNPJ);
     } else if (action === "query") {
       return await handleQuery(supabaseAdmin, body, authB64);
     } else if (action === "cancel") {
