@@ -104,10 +104,11 @@ async function handleEmit(
     forma_pagamento: "0", // à vista
     tipo_documento: "1", // saída
     finalidade_emissao: "1", // normal
-    consumidor_final: "1",
-    presenca_comprador: "9", // outros
+    consumidor_final: cleanCnpj ? "0" : "1",
+    presenca_comprador: "9",
     nome_destinatario: customerName || "CONSUMIDOR FINAL",
-    cpf_destinatario: customerCpf?.replace(/\D/g, "") || undefined,
+    cpf_destinatario: cleanCnpj ? undefined : (cleanCpf || undefined),
+    cnpj_destinatario: cleanCnpj || undefined,
     indicador_inscricao_estadual_destinatario: "9",
     items: items.map((item: any, idx: number) => ({
       numero_item: idx + 1,
