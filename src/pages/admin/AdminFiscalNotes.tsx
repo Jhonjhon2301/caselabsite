@@ -196,19 +196,26 @@ export default function AdminFiscalNotes() {
           {/* Customer */}
           <div className="mb-4">
             <h3 className="text-sm font-medium mb-2">Dados do Destinatário</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <input
                 type="text"
-                placeholder="Nome"
+                placeholder="Nome / Razão Social"
                 value={form.customerName}
                 onChange={(e) => setForm({ ...form, customerName: e.target.value })}
                 className={inputClass}
               />
               <input
                 type="text"
-                placeholder="CPF"
+                placeholder="CPF (pessoa física)"
                 value={form.customerCpf}
                 onChange={(e) => setForm({ ...form, customerCpf: e.target.value })}
+                className={inputClass}
+              />
+              <input
+                type="text"
+                placeholder="CNPJ (pessoa jurídica)"
+                value={form.customerCnpj}
+                onChange={(e) => setForm({ ...form, customerCnpj: e.target.value })}
                 className={inputClass}
               />
               <input
@@ -216,7 +223,7 @@ export default function AdminFiscalNotes() {
                 placeholder="Email (opcional)"
                 value={form.customerEmail}
                 onChange={(e) => setForm({ ...form, customerEmail: e.target.value })}
-                className={`${inputClass} sm:col-span-2`}
+                className={`${inputClass} sm:col-span-3`}
               />
             </div>
           </div>

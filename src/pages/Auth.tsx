@@ -113,6 +113,7 @@ export default function Auth() {
         toast.error(msg);
       } else {
         toast.success("Cadastro realizado! Verifique seu e-mail para confirmar a conta.");
+        navigate("/");
       }
     }
     setLoading(false);
