@@ -38,6 +38,8 @@ export default function AdminArtTemplates() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [editingProducts, setEditingProducts] = useState<string | null>(null);
   const [editProductIds, setEditProductIds] = useState<string[]>([]);
+  const [editingInfo, setEditingInfo] = useState<string | null>(null);
+  const [editInfo, setEditInfo] = useState({ name: "", description: "", category: "" });
 
   const fetchData = async () => {
     const [{ data: artsData }, { data: prodsData }] = await Promise.all([
@@ -123,6 +125,23 @@ export default function AdminArtTemplates() {
     await supabase.from("art_templates").update({ product_ids: editProductIds } as any).eq("id", editingProducts);
     toast({ title: "Modelos atualizados!" });
     setEditingProducts(null);
+    fetchData();
+  };
+
+  const startEditInfo = (art: ArtTemplate) => {
+    setEditingInfo(art.id);
+    setEditInfo({ name: art.name, description: art.description || "", category: art.category || "" });
+  };
+
+  const saveEditInfo = async () => {
+    if (!editingInfo) return;
+    await supabase.from("art_templates").update({
+      name: editInfo.name,
+      description: editInfo.description || null,
+      category: editInfo.category || null,
+    } as any).eq("id", editingInfo);
+    toast({ title: "Informações atualizadas!" });
+    setEditingInfo(null);
     fetchData();
   };
 
@@ -253,10 +272,38 @@ export default function AdminArtTemplates() {
               </div>
               <div className="p-3 space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-bold">{art.name}</p>
-                    {art.category && <p className="text-xs text-muted-foreground">{art.category}</p>}
-                  </div>
+                  {editingInfo === art.id ? (
+                    <div className="space-y-2 w-full">
+                      <Input
+                        value={editInfo.name}
+                        onChange={(e) => setEditInfo({ ...editInfo, name: e.target.value })}
+                        placeholder="Nome"
+                        className="h-7 text-xs"
+                      />
+                      <Input
+                        value={editInfo.category}
+                        onChange={(e) => setEditInfo({ ...editInfo, category: e.target.value })}
+                        placeholder="Categoria"
+                        className="h-7 text-xs"
+                      />
+                      <Input
+                        value={editInfo.description}
+                        onChange={(e) => setEditInfo({ ...editInfo, description: e.target.value })}
+                        placeholder="Descrição"
+                        className="h-7 text-xs"
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1 text-xs h-7" onClick={saveEditInfo}>Salvar</Button>
+                        <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setEditingInfo(null)}>Cancelar</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="cursor-pointer" onClick={() => startEditInfo(art)}>
+                      <p className="text-sm font-bold">{art.name}</p>
+                      {art.category && <p className="text-xs text-muted-foreground">{art.category}</p>}
+                      {!art.category && <p className="text-[10px] text-destructive">Sem categoria - clique para editar</p>}
+                    </div>
+                  )}
                 </div>
 
                 {/* Associated products */}
