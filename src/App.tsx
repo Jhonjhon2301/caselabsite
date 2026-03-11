@@ -53,6 +53,7 @@ import AdminInternalStock from "./pages/admin/AdminInternalStock";
 import AdminProposals from "./pages/admin/AdminProposals";
 import AdminSharedCart from "./pages/admin/AdminSharedCart";
 import SharedCart from "./pages/SharedCart";
+import ArtCatalog from "./pages/ArtCatalog";
 import About from "./pages/About";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
