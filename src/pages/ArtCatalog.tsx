@@ -8,8 +8,9 @@ import WhatsAppFloat from "@/components/WhatsAppFloat";
 import SEOHead from "@/components/SEOHead";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/types/product";
-import { Loader2, Palette, ShoppingCart, MessageCircle } from "lucide-react";
+import { Loader2, Palette, ShoppingCart, MessageCircle, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import LiveChat from "@/components/LiveChat";
 
