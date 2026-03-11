@@ -128,6 +128,23 @@ export default function AdminArtTemplates() {
     fetchData();
   };
 
+  const startEditInfo = (art: ArtTemplate) => {
+    setEditingInfo(art.id);
+    setEditInfo({ name: art.name, description: art.description || "", category: art.category || "" });
+  };
+
+  const saveEditInfo = async () => {
+    if (!editingInfo) return;
+    await supabase.from("art_templates").update({
+      name: editInfo.name,
+      description: editInfo.description || null,
+      category: editInfo.category || null,
+    } as any).eq("id", editingInfo);
+    toast({ title: "Informações atualizadas!" });
+    setEditingInfo(null);
+    fetchData();
+  };
+
   const getProductName = (id: string) => products.find((p) => p.id === id)?.name || id.slice(0, 8);
 
   const ProductSelector = ({ selected, onToggle }: { selected: string[]; onToggle: (id: string) => void }) => (
