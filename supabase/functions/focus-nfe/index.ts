@@ -182,9 +182,10 @@ async function handleEmit(
   console.log("Brasil NFe response:", JSON.stringify(brasilResult));
 
   const returnNF = brasilResult?.ReturnNF || {};
-  const isAuthorized = returnNF?.ChaveNFe || returnNF?.Numero;
-  const status = isAuthorized ? "authorized" : (brasilRes.ok ? "processing" : "error");
-  const errorMessage = brasilRes.ok ? null : (brasilResult?.Error || returnNF?.Motivo || JSON.stringify(brasilResult));
+  const hasError = brasilResult?.Error || !brasilRes.ok;
+  const isAuthorized = !hasError && (returnNF?.ChaveNFe || returnNF?.Numero);
+  const status = isAuthorized ? "authorized" : (hasError ? "error" : "processing");
+  const errorMessage = brasilResult?.Error || (!brasilRes.ok ? (returnNF?.Motivo || JSON.stringify(brasilResult)) : null);
 
   // Store PDF if returned
   let pdfUrl: string | null = null;

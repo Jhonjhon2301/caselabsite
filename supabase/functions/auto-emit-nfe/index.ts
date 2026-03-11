@@ -151,9 +151,10 @@ Deno.serve(async (req) => {
     console.log("Brasil NFe response:", JSON.stringify(brasilResult));
 
     const returnNF = brasilResult?.ReturnNF || {};
-    const isAuthorized = returnNF?.ChaveNFe || returnNF?.Numero;
-    const status = isAuthorized ? "authorized" : (brasilRes.ok ? "processing" : "error");
-    const errorMessage = brasilRes.ok ? null : (brasilResult?.Error || brasilResult?.ReturnNF?.Motivo || JSON.stringify(brasilResult));
+    const hasError = brasilResult?.Error || !brasilRes.ok;
+    const isAuthorized = !hasError && (returnNF?.ChaveNFe || returnNF?.Numero);
+    const status = isAuthorized ? "authorized" : (hasError ? "error" : "processing");
+    const errorMessage = brasilResult?.Error || (!brasilRes.ok ? (returnNF?.Motivo || JSON.stringify(brasilResult)) : null);
 
     // Extract PDF and XML from Base64 response
     let pdfUrl: string | null = null;
