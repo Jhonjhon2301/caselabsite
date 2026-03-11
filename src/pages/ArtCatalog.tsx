@@ -8,8 +8,9 @@ import WhatsAppFloat from "@/components/WhatsAppFloat";
 import SEOHead from "@/components/SEOHead";
 import { useCart } from "@/contexts/CartContext";
 import type { Product } from "@/types/product";
-import { Loader2, Palette, ShoppingCart, MessageCircle } from "lucide-react";
+import { Loader2, Palette, ShoppingCart, MessageCircle, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import LiveChat from "@/components/LiveChat";
 
@@ -29,6 +30,7 @@ export default function ArtCatalog() {
   const [loading, setLoading] = useState(true);
   const [selectedArt, setSelectedArt] = useState<ArtTemplate | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [personName, setPersonName] = useState("");
   const [filterCategory, setFilterCategory] = useState("Todos");
   const { addToCart } = useCart();
   const { toast } = useToast();
@@ -54,10 +56,15 @@ export default function ArtCatalog() {
       toast({ title: "Selecione uma arte e um modelo de garrafa", variant: "destructive" });
       return;
     }
-    addToCart(selectedProduct, `Arte: ${selectedArt.name}`);
-    toast({ title: "Adicionado ao carrinho!", description: `${selectedProduct.name} com ${selectedArt.name}` });
+    if (!personName.trim()) {
+      toast({ title: "Digite o nome para personalização", variant: "destructive" });
+      return;
+    }
+    addToCart(selectedProduct, `${personName.trim()} | Arte: ${selectedArt.name}`);
+    toast({ title: "Adicionado ao carrinho!", description: `${selectedProduct.name} com ${selectedArt.name} — Nome: ${personName.trim()}` });
     setSelectedArt(null);
     setSelectedProduct(null);
+    setPersonName("");
   };
 
   const handleWhatsApp = () => {
@@ -183,6 +190,22 @@ export default function ArtCatalog() {
                 </div>
               </div>
 
+              {/* Step 3: Name */}
+              <div>
+                <h2 className="font-heading font-bold text-lg mb-4">
+                  <Type className="inline w-5 h-5 mr-1" />
+                  3. Digite o Nome
+                </h2>
+                <Input
+                  placeholder="Ex: Maria, João..."
+                  value={personName}
+                  onChange={(e) => setPersonName(e.target.value)}
+                  maxLength={30}
+                  className="text-base"
+                />
+                <p className="text-xs text-muted-foreground mt-1">Nome que será gravado na garrafa</p>
+              </div>
+
               {/* Summary */}
               <div className="bg-card rounded-xl border border-border p-4 space-y-4">
                 <h3 className="font-heading font-bold text-sm">Resumo</h3>
@@ -194,6 +217,10 @@ export default function ArtCatalog() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Modelo:</span>
                     <span className="font-medium">{selectedProduct?.name || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Nome:</span>
+                    <span className="font-medium">{personName.trim() || "—"}</span>
                   </div>
                   {selectedProduct && (
                     <div className="flex justify-between border-t border-border pt-2">
