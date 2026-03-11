@@ -7,7 +7,7 @@ import {
   Users, ImageIcon, FileText, Warehouse, CreditCard, Bell, StickyNote,
   Palette, Shield, Menu, X, Receipt, LayoutDashboard, Star, BookOpen,
   BarChart3, Factory, Building2, FileBarChart, ShieldAlert, Mail, FileCode, Megaphone,
-  MessageSquare, Palette
+  MessageSquare
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
