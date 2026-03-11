@@ -145,6 +145,7 @@ export type Database = {
           name: string
           pdf_url: string | null
           preview_url: string
+          product_ids: string[]
           updated_at: string
         }
         Insert: {
@@ -157,6 +158,7 @@ export type Database = {
           name: string
           pdf_url?: string | null
           preview_url: string
+          product_ids?: string[]
           updated_at?: string
         }
         Update: {
@@ -169,6 +171,7 @@ export type Database = {
           name?: string
           pdf_url?: string | null
           preview_url?: string
+          product_ids?: string[]
           updated_at?: string
         }
         Relationships: []

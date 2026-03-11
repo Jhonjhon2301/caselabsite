@@ -1,0 +1,1 @@
+ALTER TABLE public.art_templates ADD COLUMN product_ids uuid[] NOT NULL DEFAULT '{}'::uuid[];
