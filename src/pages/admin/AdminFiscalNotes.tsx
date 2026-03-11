@@ -150,11 +150,10 @@ export default function AdminFiscalNotes() {
   };
 
   const handleCancel = async (note: FiscalNote) => {
-    if (!note.focus_ref) return;
     if (!confirm("Tem certeza que deseja cancelar esta nota fiscal?")) return;
     try {
       const { data } = await supabase.functions.invoke("focus-nfe", {
-        body: { action: "cancel", noteId: note.id, focusRef: note.focus_ref },
+        body: { action: "cancel", noteId: note.id },
       });
       if (data?.success) {
         toast.success("Nota cancelada!");
