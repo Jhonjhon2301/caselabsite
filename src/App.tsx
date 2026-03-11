@@ -52,7 +52,10 @@ import AdminDocs from "./pages/admin/AdminDocs";
 import AdminInternalStock from "./pages/admin/AdminInternalStock";
 import AdminProposals from "./pages/admin/AdminProposals";
 import AdminSharedCart from "./pages/admin/AdminSharedCart";
+import AdminChat from "./pages/admin/AdminChat";
+import AdminArtTemplates from "./pages/admin/AdminArtTemplates";
 import SharedCart from "./pages/SharedCart";
+import ArtCatalog from "./pages/ArtCatalog";
 import About from "./pages/About";
 import ResetPassword from "./pages/ResetPassword";
 import Profile from "./pages/Profile";
@@ -99,6 +102,7 @@ const App = () => (
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/b2b" element={<B2B />} />
               <Route path="/carrinho/:id" element={<SharedCart />} />
+              <Route path="/artes" element={<ArtCatalog />} />
               <Route path="/garrafa-personalizada-academia" element={<SEOGarrafaAcademia />} />
               <Route path="/brindes-corporativos-personalizados" element={<SEOBrindesCorporativos />} />
               <Route path="/garrafa-termica-com-logo" element={<SEOGarrafaTermica />} />
@@ -139,6 +143,8 @@ const App = () => (
                 <Route path="internal_stock" element={<AdminInternalStock />} />
                 <Route path="proposals" element={<AdminProposals />} />
                 <Route path="shared-cart" element={<AdminSharedCart />} />
+                <Route path="chat" element={<AdminChat />} />
+                <Route path="art-templates" element={<AdminArtTemplates />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -6,7 +6,8 @@ import {
   Package, ShoppingCart, Tag, Grid3X3, LogOut, Home, DollarSign,
   Users, ImageIcon, FileText, Warehouse, CreditCard, Bell, StickyNote,
   Palette, Shield, Menu, X, Receipt, LayoutDashboard, Star, BookOpen,
-  BarChart3, Factory, Building2, FileBarChart, ShieldAlert, Mail, FileCode, Megaphone
+  BarChart3, Factory, Building2, FileBarChart, ShieldAlert, Mail, FileCode, Megaphone,
+  MessageSquare
 } from "lucide-react";
 import logo from "@/assets/logo.jpeg";
 
@@ -41,6 +42,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   docs: FileCode,
   proposals: FileText,
   "shared-cart": ShoppingCart,
+  chat: MessageSquare,
+  "art-templates": Palette,
 };
 
 const LABEL_MAP: Record<string, string> = {
@@ -74,6 +77,8 @@ const LABEL_MAP: Record<string, string> = {
   notes: "Notas",
   bi: "BI Avançado",
   docs: "Documentação",
+  chat: "Chat",
+  "art-templates": "Artes",
 };
 
 // Ordered keys for sidebar display

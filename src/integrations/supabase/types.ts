@@ -134,6 +134,45 @@ export type Database = {
         }
         Relationships: []
       }
+      art_templates: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          pdf_url: string | null
+          preview_url: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          pdf_url?: string | null
+          preview_url: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          pdf_url?: string | null
+          preview_url?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       b2b_customers: {
         Row: {
           cnpj: string | null
@@ -323,6 +362,83 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_conversations: {
+        Row: {
+          assigned_seller_id: string | null
+          created_at: string
+          customer_email: string | null
+          customer_id: string
+          customer_name: string | null
+          id: string
+          last_message_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_seller_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_id: string
+          customer_name?: string | null
+          id?: string
+          last_message_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_seller_id?: string | null
+          created_at?: string
+          customer_email?: string | null
+          customer_id?: string
+          customer_name?: string | null
+          id?: string
+          last_message_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          is_read: boolean
+          sender_id: string
+          sender_name: string | null
+          sender_role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          sender_id: string
+          sender_name?: string | null
+          sender_role?: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          sender_id?: string
+          sender_name?: string | null
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -1428,6 +1544,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_position: {
+        Args: { _position: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
