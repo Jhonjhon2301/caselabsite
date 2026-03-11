@@ -9,6 +9,7 @@ import CartDrawer from "@/components/CartDrawer";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import SEOHead from "@/components/SEOHead";
+import LiveChat from "@/components/LiveChat";
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
