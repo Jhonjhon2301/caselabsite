@@ -102,6 +102,7 @@ const App = () => (
               <Route path="/blog/:slug" element={<BlogPost />} />
               <Route path="/b2b" element={<B2B />} />
               <Route path="/carrinho/:id" element={<SharedCart />} />
+              <Route path="/artes" element={<ArtCatalog />} />
               <Route path="/garrafa-personalizada-academia" element={<SEOGarrafaAcademia />} />
               <Route path="/brindes-corporativos-personalizados" element={<SEOBrindesCorporativos />} />
               <Route path="/garrafa-termica-com-logo" element={<SEOGarrafaTermica />} />
