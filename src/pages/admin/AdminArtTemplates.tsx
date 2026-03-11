@@ -272,10 +272,38 @@ export default function AdminArtTemplates() {
               </div>
               <div className="p-3 space-y-2">
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-bold">{art.name}</p>
-                    {art.category && <p className="text-xs text-muted-foreground">{art.category}</p>}
-                  </div>
+                  {editingInfo === art.id ? (
+                    <div className="space-y-2 w-full">
+                      <Input
+                        value={editInfo.name}
+                        onChange={(e) => setEditInfo({ ...editInfo, name: e.target.value })}
+                        placeholder="Nome"
+                        className="h-7 text-xs"
+                      />
+                      <Input
+                        value={editInfo.category}
+                        onChange={(e) => setEditInfo({ ...editInfo, category: e.target.value })}
+                        placeholder="Categoria"
+                        className="h-7 text-xs"
+                      />
+                      <Input
+                        value={editInfo.description}
+                        onChange={(e) => setEditInfo({ ...editInfo, description: e.target.value })}
+                        placeholder="Descrição"
+                        className="h-7 text-xs"
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1 text-xs h-7" onClick={saveEditInfo}>Salvar</Button>
+                        <Button size="sm" variant="outline" className="text-xs h-7" onClick={() => setEditingInfo(null)}>Cancelar</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="cursor-pointer" onClick={() => startEditInfo(art)}>
+                      <p className="text-sm font-bold">{art.name}</p>
+                      {art.category && <p className="text-xs text-muted-foreground">{art.category}</p>}
+                      {!art.category && <p className="text-[10px] text-destructive">Sem categoria - clique para editar</p>}
+                    </div>
+                  )}
                 </div>
 
                 {/* Associated products */}
