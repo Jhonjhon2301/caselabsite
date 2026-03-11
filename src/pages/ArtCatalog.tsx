@@ -218,6 +218,10 @@ export default function ArtCatalog() {
                     <span className="text-muted-foreground">Modelo:</span>
                     <span className="font-medium">{selectedProduct?.name || "—"}</span>
                   </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Nome:</span>
+                    <span className="font-medium">{personName.trim() || "—"}</span>
+                  </div>
                   {selectedProduct && (
                     <div className="flex justify-between border-t border-border pt-2">
                       <span className="font-bold">Total:</span>
