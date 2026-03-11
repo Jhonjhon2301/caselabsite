@@ -42,6 +42,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   docs: FileCode,
   proposals: FileText,
   "shared-cart": ShoppingCart,
+  chat: MessageSquare,
+  "art-templates": Palette,
 };
 
 const LABEL_MAP: Record<string, string> = {
