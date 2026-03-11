@@ -138,10 +138,9 @@ export default function AdminFiscalNotes() {
   };
 
   const handleRefresh = async (note: FiscalNote) => {
-    if (!note.focus_ref) return;
     try {
       await supabase.functions.invoke("focus-nfe", {
-        body: { action: "query", noteId: note.id, focusRef: note.focus_ref },
+        body: { action: "query", noteId: note.id },
       });
       toast.success("Status atualizado!");
       fetchNotes();
