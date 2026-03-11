@@ -56,10 +56,15 @@ export default function ArtCatalog() {
       toast({ title: "Selecione uma arte e um modelo de garrafa", variant: "destructive" });
       return;
     }
-    addToCart(selectedProduct, `Arte: ${selectedArt.name}`);
-    toast({ title: "Adicionado ao carrinho!", description: `${selectedProduct.name} com ${selectedArt.name}` });
+    if (!personName.trim()) {
+      toast({ title: "Digite o nome para personalização", variant: "destructive" });
+      return;
+    }
+    addToCart(selectedProduct, personName.trim(), undefined, `Arte: ${selectedArt.name}`);
+    toast({ title: "Adicionado ao carrinho!", description: `${selectedProduct.name} com ${selectedArt.name} — Nome: ${personName.trim()}` });
     setSelectedArt(null);
     setSelectedProduct(null);
+    setPersonName("");
   };
 
   const handleWhatsApp = () => {
