@@ -296,12 +296,17 @@ export default function AdminArtTemplates() {
                         placeholder="Nome"
                         className="h-7 text-xs"
                       />
-                      <Input
-                        value={editInfo.category}
-                        onChange={(e) => setEditInfo({ ...editInfo, category: e.target.value })}
-                        placeholder="Categoria"
-                        className="h-7 text-xs"
-                      />
+                      <Select value={editInfo.category || "__none__"} onValueChange={(v) => setEditInfo({ ...editInfo, category: v === "__none__" ? "" : v })}>
+                        <SelectTrigger className="h-7 text-xs">
+                          <SelectValue placeholder="Categoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Sem categoria</SelectItem>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.name}>{c.icon ?? "📦"} {c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input
                         value={editInfo.description}
                         onChange={(e) => setEditInfo({ ...editInfo, description: e.target.value })}
