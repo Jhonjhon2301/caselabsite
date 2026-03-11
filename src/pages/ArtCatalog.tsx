@@ -30,6 +30,7 @@ export default function ArtCatalog() {
   const [loading, setLoading] = useState(true);
   const [selectedArt, setSelectedArt] = useState<ArtTemplate | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [personName, setPersonName] = useState("");
   const [filterCategory, setFilterCategory] = useState("Todos");
   const { addToCart } = useCart();
   const { toast } = useToast();
