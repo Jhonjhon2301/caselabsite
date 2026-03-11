@@ -3,8 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Palette, Plus, Trash2, Loader2, Package, Check } from "lucide-react";
+
+interface CategoryOption {
+  id: string;
+  name: string;
+  icon: string | null;
+}
 
 interface ArtTemplate {
   id: string;
@@ -30,6 +37,7 @@ export default function AdminArtTemplates() {
   const { toast } = useToast();
   const [arts, setArts] = useState<ArtTemplate[]>([]);
   const [products, setProducts] = useState<SimpleProduct[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", category: "" });
@@ -42,12 +50,14 @@ export default function AdminArtTemplates() {
   const [editInfo, setEditInfo] = useState({ name: "", description: "", category: "" });
 
   const fetchData = async () => {
-    const [{ data: artsData }, { data: prodsData }] = await Promise.all([
+    const [{ data: artsData }, { data: prodsData }, { data: catsData }] = await Promise.all([
       supabase.from("art_templates").select("*").order("created_at", { ascending: false }),
       supabase.from("products").select("id, name, price, images").eq("is_active", true).order("name"),
+      supabase.from("categories").select("id, name, icon").order("name"),
     ]);
     setArts((artsData as ArtTemplate[]) ?? []);
     setProducts((prodsData as SimpleProduct[]) ?? []);
+    setCategories((catsData as CategoryOption[]) ?? []);
     setLoading(false);
   };
 
@@ -198,11 +208,17 @@ export default function AdminArtTemplates() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="Nome da arte *"
           />
-          <Input
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-            placeholder="Categoria (ex: Médico, Esporte)"
-          />
+          <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v === "__none__" ? "" : v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">Sem categoria</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.name}>{c.icon ?? "📦"} {c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -280,12 +296,17 @@ export default function AdminArtTemplates() {
                         placeholder="Nome"
                         className="h-7 text-xs"
                       />
-                      <Input
-                        value={editInfo.category}
-                        onChange={(e) => setEditInfo({ ...editInfo, category: e.target.value })}
-                        placeholder="Categoria"
-                        className="h-7 text-xs"
-                      />
+                      <Select value={editInfo.category || "__none__"} onValueChange={(v) => setEditInfo({ ...editInfo, category: v === "__none__" ? "" : v })}>
+                        <SelectTrigger className="h-7 text-xs">
+                          <SelectValue placeholder="Categoria" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">Sem categoria</SelectItem>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.name}>{c.icon ?? "📦"} {c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <Input
                         value={editInfo.description}
                         onChange={(e) => setEditInfo({ ...editInfo, description: e.target.value })}
