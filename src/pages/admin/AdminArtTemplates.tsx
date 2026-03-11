@@ -37,6 +37,7 @@ export default function AdminArtTemplates() {
   const { toast } = useToast();
   const [arts, setArts] = useState<ArtTemplate[]>([]);
   const [products, setProducts] = useState<SimpleProduct[]>([]);
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({ name: "", description: "", category: "" });
