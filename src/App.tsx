@@ -52,6 +52,8 @@ import AdminDocs from "./pages/admin/AdminDocs";
 import AdminInternalStock from "./pages/admin/AdminInternalStock";
 import AdminProposals from "./pages/admin/AdminProposals";
 import AdminSharedCart from "./pages/admin/AdminSharedCart";
+import AdminChat from "./pages/admin/AdminChat";
+import AdminArtTemplates from "./pages/admin/AdminArtTemplates";
 import SharedCart from "./pages/SharedCart";
 import ArtCatalog from "./pages/ArtCatalog";
 import About from "./pages/About";
