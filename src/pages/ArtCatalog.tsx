@@ -60,7 +60,7 @@ export default function ArtCatalog() {
       toast({ title: "Digite o nome para personalização", variant: "destructive" });
       return;
     }
-    addToCart(selectedProduct, personName.trim(), undefined, `Arte: ${selectedArt.name}`);
+    addToCart(selectedProduct, `${personName.trim()} | Arte: ${selectedArt.name}`);
     toast({ title: "Adicionado ao carrinho!", description: `${selectedProduct.name} com ${selectedArt.name} — Nome: ${personName.trim()}` });
     setSelectedArt(null);
     setSelectedProduct(null);
