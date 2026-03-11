@@ -32,6 +32,7 @@ const Index = () => {
       <Footer />
       <CartDrawer />
       <WhatsAppFloat />
+      <LiveChat />
     </div>
   );
 };
