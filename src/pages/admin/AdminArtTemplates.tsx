@@ -3,8 +3,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Palette, Plus, Trash2, Loader2, Package, Check } from "lucide-react";
+
+interface CategoryOption {
+  id: string;
+  name: string;
+  icon: string | null;
+}
 
 interface ArtTemplate {
   id: string;
