@@ -38,6 +38,8 @@ export default function AdminArtTemplates() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [editingProducts, setEditingProducts] = useState<string | null>(null);
   const [editProductIds, setEditProductIds] = useState<string[]>([]);
+  const [editingInfo, setEditingInfo] = useState<string | null>(null);
+  const [editInfo, setEditInfo] = useState({ name: "", description: "", category: "" });
 
   const fetchData = async () => {
     const [{ data: artsData }, { data: prodsData }] = await Promise.all([
