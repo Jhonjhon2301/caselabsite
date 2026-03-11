@@ -50,12 +50,14 @@ export default function AdminArtTemplates() {
   const [editInfo, setEditInfo] = useState({ name: "", description: "", category: "" });
 
   const fetchData = async () => {
-    const [{ data: artsData }, { data: prodsData }] = await Promise.all([
+    const [{ data: artsData }, { data: prodsData }, { data: catsData }] = await Promise.all([
       supabase.from("art_templates").select("*").order("created_at", { ascending: false }),
       supabase.from("products").select("id, name, price, images").eq("is_active", true).order("name"),
+      supabase.from("categories").select("id, name, icon").order("name"),
     ]);
     setArts((artsData as ArtTemplate[]) ?? []);
     setProducts((prodsData as SimpleProduct[]) ?? []);
+    setCategories((catsData as CategoryOption[]) ?? []);
     setLoading(false);
   };
 
