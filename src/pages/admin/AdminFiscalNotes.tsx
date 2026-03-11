@@ -177,7 +177,7 @@ export default function AdminFiscalNotes() {
         <div>
           <h1 className="font-heading text-xl sm:text-2xl font-bold">Notas Fiscais</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Emissão e gestão de NF-e via Focus NFe (Homologação)
+            Emissão e gestão de NF-e via Brasil NFe (Produção)
           </p>
         </div>
         <button
