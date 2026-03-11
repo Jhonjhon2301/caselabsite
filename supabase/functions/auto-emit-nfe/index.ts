@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     const brasilRes = await fetch(`${BRASILNFE_BASE_URL}/EnviarNotaFiscal`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${BRASILNFE_TOKEN}`,
+        Token: BRASILNFE_TOKEN,
         "Content-Type": "application/json",
       },
       body: JSON.stringify(nfePayload),

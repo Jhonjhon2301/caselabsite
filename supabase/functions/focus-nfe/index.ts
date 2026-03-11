@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
   }
 
   const headers = {
-    Authorization: `Bearer ${BRASILNFE_TOKEN}`,
+    Token: BRASILNFE_TOKEN,
     "Content-Type": "application/json",
   };
 
