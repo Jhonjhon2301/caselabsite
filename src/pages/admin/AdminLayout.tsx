@@ -77,6 +77,8 @@ const LABEL_MAP: Record<string, string> = {
   notes: "Notas",
   bi: "BI Avançado",
   docs: "Documentação",
+  chat: "Chat",
+  "art-templates": "Artes",
 };
 
 // Ordered keys for sidebar display
