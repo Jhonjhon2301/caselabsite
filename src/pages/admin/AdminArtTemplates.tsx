@@ -208,11 +208,17 @@ export default function AdminArtTemplates() {
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="Nome da arte *"
           />
-          <Input
-            value={form.category}
-            onChange={(e) => setForm({ ...form, category: e.target.value })}
-            placeholder="Categoria (ex: Médico, Esporte)"
-          />
+          <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v === "__none__" ? "" : v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione a categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__none__">Sem categoria</SelectItem>
+              {categories.map((c) => (
+                <SelectItem key={c.id} value={c.name}>{c.icon ?? "📦"} {c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
