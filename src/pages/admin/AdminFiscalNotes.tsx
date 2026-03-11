@@ -138,10 +138,9 @@ export default function AdminFiscalNotes() {
   };
 
   const handleRefresh = async (note: FiscalNote) => {
-    if (!note.focus_ref) return;
     try {
       await supabase.functions.invoke("focus-nfe", {
-        body: { action: "query", noteId: note.id, focusRef: note.focus_ref },
+        body: { action: "query", noteId: note.id },
       });
       toast.success("Status atualizado!");
       fetchNotes();
@@ -151,11 +150,10 @@ export default function AdminFiscalNotes() {
   };
 
   const handleCancel = async (note: FiscalNote) => {
-    if (!note.focus_ref) return;
     if (!confirm("Tem certeza que deseja cancelar esta nota fiscal?")) return;
     try {
       const { data } = await supabase.functions.invoke("focus-nfe", {
-        body: { action: "cancel", noteId: note.id, focusRef: note.focus_ref },
+        body: { action: "cancel", noteId: note.id },
       });
       if (data?.success) {
         toast.success("Nota cancelada!");
@@ -177,7 +175,7 @@ export default function AdminFiscalNotes() {
         <div>
           <h1 className="font-heading text-xl sm:text-2xl font-bold">Notas Fiscais</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
-            Emissão e gestão de NF-e via Focus NFe (Homologação)
+            Emissão e gestão de NF-e via Brasil NFe (Produção)
           </p>
         </div>
         <button

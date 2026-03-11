@@ -6,18 +6,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Produção ativa com certificado válido até 03/03/2027
-const FOCUS_BASE_URL = "https://api.focusnfe.com.br";
+// Migrado para Brasil NFe API
+const BRASILNFE_BASE_URL = "https://api.brasilnfe.com.br/services/fiscal";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const FOCUS_TOKEN = Deno.env.get("FOCUS_NFE_TOKEN");
-  const FOCUS_ISSUER_CNPJ = (Deno.env.get("FOCUS_ISSUER_CNPJ") || "").replace(/\D/g, "");
-  if (!FOCUS_TOKEN) {
-    return new Response(JSON.stringify({ error: "FOCUS_NFE_TOKEN não configurado" }), {
+  const BRASILNFE_TOKEN = Deno.env.get("BRASILNFE_TOKEN");
+  if (!BRASILNFE_TOKEN) {
+    return new Response(JSON.stringify({ error: "BRASILNFE_TOKEN não configurado" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -45,7 +44,6 @@ Deno.serve(async (req) => {
 
   const { data: { user }, error: userError } = await supabaseUser.auth.getUser();
   if (userError || !user) {
-    console.error("Auth error:", userError);
     return new Response(JSON.stringify({ error: "Não autorizado" }), {
       status: 401,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -54,7 +52,7 @@ Deno.serve(async (req) => {
 
   const userId = user.id;
 
-  // Check admin using service role to avoid RLS issues
+  // Check admin
   const { data: roleData } = await supabaseAdmin
     .from("user_roles")
     .select("role")
@@ -62,17 +60,17 @@ Deno.serve(async (req) => {
     .eq("role", "admin")
     .limit(1);
 
-  const isAdmin = roleData && roleData.length > 0;
-  console.log("Admin check:", { userId, isAdmin });
-
-  if (!isAdmin) {
+  if (!roleData || roleData.length === 0) {
     return new Response(JSON.stringify({ error: "Acesso negado" }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
-  const authB64 = btoa(`${FOCUS_TOKEN}:`);
+  const headers = {
+    Authorization: `Bearer ${BRASILNFE_TOKEN}`,
+    "Content-Type": "application/json",
+  };
 
   try {
     const body = await req.json();
@@ -80,11 +78,11 @@ Deno.serve(async (req) => {
     console.log("Action:", action);
 
     if (action === "emit") {
-      return await handleEmit(supabaseAdmin, body, authB64, userId, FOCUS_ISSUER_CNPJ);
+      return await handleEmit(supabaseAdmin, body, headers, userId);
     } else if (action === "query") {
-      return await handleQuery(supabaseAdmin, body, authB64);
+      return await handleQuery(supabaseAdmin, body, headers);
     } else if (action === "cancel") {
-      return await handleCancel(supabaseAdmin, body, authB64);
+      return await handleCancel(supabaseAdmin, body, headers);
     } else if (action === "list") {
       return await handleList(supabaseAdmin);
     } else {
@@ -94,7 +92,7 @@ Deno.serve(async (req) => {
       });
     }
   } catch (error) {
-    console.error("Focus NFe error:", error);
+    console.error("Brasil NFe error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Erro interno" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -105,116 +103,122 @@ Deno.serve(async (req) => {
 async function handleEmit(
   supabase: ReturnType<typeof createClient>,
   body: any,
-  authB64: string,
-  userId: string,
-  issuerCnpj: string
+  headers: Record<string, string>,
+  userId: string
 ) {
   const { customerName, customerCpf, customerCnpj, customerEmail, items, total, notes, orderId } = body;
   const cleanCpf = customerCpf?.replace(/\D/g, "") || "";
   const cleanCnpj = customerCnpj?.replace(/\D/g, "") || "";
 
-  console.log("Emitting NF-e:", {
-    customerName,
-    cleanCpf,
-    cleanCnpj,
-    issuerCnpj: issuerCnpj || "(not-configured)",
-    itemCount: items?.length,
-    total,
-  });
+  const internalRef = `NF-${Date.now().toString(36).toUpperCase()}`;
 
-  const ref = `NF-${Date.now().toString(36).toUpperCase()}`;
-
-  // Build NF-e payload for Focus NFe API
-  const nfeData: Record<string, any> = {
-    natureza_operacao: "Venda de mercadoria",
-    forma_pagamento: "0",
-    tipo_documento: "1",
-    finalidade_emissao: "1",
-    consumidor_final: cleanCnpj ? "0" : "1",
-    presenca_comprador: "9",
-    nome_destinatario: customerName || "CONSUMIDOR FINAL",
-    indicador_inscricao_estadual_destinatario: "9",
-    items: items.map((item: any, idx: number) => ({
-      numero_item: idx + 1,
-      codigo_produto: item.code || `PROD-${idx + 1}`,
-      descricao: item.name,
-      quantidade_comercial: Number(item.quantity).toFixed(4),
-      quantidade_tributavel: Number(item.quantity).toFixed(4),
-      valor_unitario_comercial: Number(item.price).toFixed(2),
-      valor_unitario_tributavel: Number(item.price).toFixed(2),
-      valor_bruto: (Number(item.price) * Number(item.quantity)).toFixed(2),
-      unidade_comercial: "UN",
-      unidade_tributavel: "UN",
-      codigo_ncm: "7323.93.00",
-      cfop: "5102",
-      icms_situacao_tributaria: "102",
-      icms_origem: "0",
-      pis_situacao_tributaria: "07",
-      cofins_situacao_tributaria: "07",
+  // Build Brasil NFe payload
+  const nfePayload: Record<string, any> = {
+    TipoAmbiente: "1", // Produção
+    ModeloDocumento: 55,
+    NaturezaOperacao: "Venda de mercadoria",
+    Finalidade: 1,
+    ConsumidorFinal: !cleanCnpj,
+    IndicadorPresenca: 9, // Outros
+    CalcularIBPT: true,
+    IdentificadorInterno: internalRef,
+    Observacao: notes || undefined,
+    Cliente: {
+      Nome: customerName || "CONSUMIDOR FINAL",
+      IndicadorInscricaoEstadual: 9,
+    },
+    Produtos: items.map((item: any, idx: number) => ({
+      Codigo: item.code || `PROD-${idx + 1}`,
+      Descricao: item.name,
+      Quantidade: Number(item.quantity),
+      ValorUnitario: Number(item.price),
+      UnidadeComercial: "UN",
+      UnidadeTributavel: "UN",
+      CodigoNCM: "73239300",
+      CFOP: "5102",
+      ICMS: {
+        SituacaoTributaria: "102",
+        Origem: 0,
+      },
+      PIS: {
+        SituacaoTributaria: "07",
+      },
+      COFINS: {
+        SituacaoTributaria: "07",
+      },
     })),
-    formas_pagamento: [
+    Pagamentos: [
       {
-        tipo_pagamento: "01",
-        valor_pagamento: Number(total).toFixed(2),
+        TipoPagamento: "01",
+        ValorPagamento: Number(total),
       },
     ],
   };
 
-  // Explicit emitter identity helps multi-company Focus accounts
-  if (issuerCnpj) {
-    nfeData.cnpj_emitente = issuerCnpj;
-  }
-
-  // Set CPF or CNPJ (not both)
+  // Set CPF or CNPJ
   if (cleanCnpj) {
-    nfeData.cnpj_destinatario = cleanCnpj;
+    nfePayload.Cliente.CNPJ = cleanCnpj;
   } else if (cleanCpf) {
-    nfeData.cpf_destinatario = cleanCpf;
+    if (cleanCpf.length === 11) {
+      nfePayload.Cliente.CPF = cleanCpf;
+    } else if (cleanCpf.length === 14) {
+      nfePayload.Cliente.CNPJ = cleanCpf;
+    }
   }
 
   if (customerEmail) {
-    nfeData.email_destinatario = customerEmail;
+    nfePayload.Cliente.Email = customerEmail;
   }
 
-  console.log("NF-e payload ref:", ref, JSON.stringify(nfeData).substring(0, 800));
+  console.log("Emitting NF-e via Brasil NFe, ref:", internalRef);
 
-  // Call Focus NFe API
-  const focusRes = await fetch(`${FOCUS_BASE_URL}/v2/nfe?ref=${ref}`, {
+  const brasilRes = await fetch(`${BRASILNFE_BASE_URL}/EnviarNotaFiscal`, {
     method: "POST",
-    headers: {
-      Authorization: `Basic ${authB64}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(nfeData),
+    headers,
+    body: JSON.stringify(nfePayload),
   });
 
-  const focusResult = await focusRes.json();
-  console.log("Focus response:", focusRes.status, JSON.stringify(focusResult));
+  const brasilResult = await brasilRes.json();
+  console.log("Brasil NFe response:", JSON.stringify(brasilResult));
 
-  const focusMessage = focusResult?.mensagem || JSON.stringify(focusResult);
-  const isIssuerUnauthorized =
-    focusResult?.codigo === "permissao_negada" &&
-    typeof focusResult?.mensagem === "string" &&
-    focusResult.mensagem.toLowerCase().includes("emitente não autorizado");
+  const returnNF = brasilResult?.ReturnNF || {};
+  const isAuthorized = returnNF?.ChaveNFe || returnNF?.Numero;
+  const status = isAuthorized ? "authorized" : (brasilRes.ok ? "processing" : "error");
+  const errorMessage = brasilRes.ok ? null : (brasilResult?.Error || returnNF?.Motivo || JSON.stringify(brasilResult));
 
-  const errorMessage = isIssuerUnauthorized
-    ? `Emitente não autorizado na Focus NFe. Configure o CNPJ emissor correto no segredo FOCUS_ISSUER_CNPJ e valide no painel da Focus.`
-    : (focusRes.ok ? null : focusMessage);
+  // Store PDF if returned
+  let pdfUrl: string | null = null;
+  if (brasilResult?.Base64File) {
+    try {
+      const pdfBytes = Uint8Array.from(atob(brasilResult.Base64File), c => c.charCodeAt(0));
+      const pdfPath = `nfe-pdfs/${internalRef}.pdf`;
+      await supabase.storage.from("designer-files").upload(pdfPath, pdfBytes, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+      const { data: { publicUrl } } = supabase.storage.from("designer-files").getPublicUrl(pdfPath);
+      pdfUrl = publicUrl;
+    } catch (e) {
+      console.error("Error storing PDF:", e);
+    }
+  }
 
-  const status = focusRes.ok ? "processing" : "error";
-
-  // Save to database using service role
+  // Save to database
   const { data: savedNote, error: dbError } = await supabase
     .from("fiscal_notes")
     .insert({
       order_id: orderId || null,
       type: "nfe",
       status,
-      focus_ref: ref,
+      focus_ref: internalRef,
       customer_name: customerName,
       customer_cpf: cleanCnpj || cleanCpf || null,
       customer_email: customerEmail,
       total,
+      number: returnNF?.Numero?.toString() || null,
+      series: returnNF?.Serie?.toString() || null,
+      access_key: returnNF?.ChaveNFe || null,
+      pdf_url: pdfUrl,
       items,
       notes,
       error_message: errorMessage,
@@ -228,9 +232,8 @@ async function handleEmit(
     throw new Error(`Erro ao salvar nota: ${dbError.message}`);
   }
 
-  // Return 200 to avoid frontend runtime throw on business validation errors
   return new Response(
-    JSON.stringify({ success: focusRes.ok, note: savedNote, focusResult, error: errorMessage }),
+    JSON.stringify({ success: brasilRes.ok, note: savedNote, brasilResult: { status, error: errorMessage }, error: errorMessage }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }
@@ -238,35 +241,55 @@ async function handleEmit(
 async function handleQuery(
   supabase: ReturnType<typeof createClient>,
   body: any,
-  authB64: string
+  headers: Record<string, string>
 ) {
-  const { noteId, focusRef } = body;
+  const { noteId } = body;
 
-  const focusRes = await fetch(`${FOCUS_BASE_URL}/v2/nfe/${focusRef}`, {
-    method: "GET",
-    headers: { Authorization: `Basic ${authB64}` },
+  // Fetch the note to get the access_key
+  const { data: note } = await supabase
+    .from("fiscal_notes")
+    .select("access_key")
+    .eq("id", noteId)
+    .single();
+
+  if (!note?.access_key) {
+    return new Response(
+      JSON.stringify({ error: "Nota sem chave de acesso para consulta" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  // Query using ObterArquivoNotaFiscal to get PDF
+  const brasilRes = await fetch(`${BRASILNFE_BASE_URL}/ObterArquivoNotaFiscal`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      ChaveNF: note.access_key,
+      FileType: 2, // PDF
+      TipoDocumentoFiscal: 1, // Saída
+    }),
   });
 
-  const focusResult = await focusRes.json();
-  console.log("Query result:", JSON.stringify(focusResult));
+  const result = await brasilRes.text();
+  console.log("Query result status:", brasilRes.status);
 
   const updateData: Record<string, any> = {};
 
-  if (focusResult.status === "autorizado") {
-    updateData.status = "authorized";
-    updateData.number = focusResult.numero;
-    updateData.series = focusResult.serie;
-    updateData.access_key = focusResult.chave_nfe;
-    updateData.xml_url = focusResult.caminho_xml_nota_fiscal;
-    updateData.pdf_url = focusResult.caminho_danfe;
-  } else if (focusResult.status === "erro_autorizacao") {
-    updateData.status = "error";
-    updateData.error_message = focusResult.mensagem_sefaz || focusResult.mensagem;
-  } else if (focusResult.status === "cancelado") {
-    updateData.status = "cancelled";
-    updateData.cancel_xml_url = focusResult.caminho_xml_cancelamento;
-  } else if (focusResult.status === "processando_autorizacao") {
-    updateData.status = "processing";
+  // If we get a PDF back, store it
+  if (brasilRes.ok && result && !result.startsWith("{")) {
+    try {
+      const pdfBytes = Uint8Array.from(atob(result), c => c.charCodeAt(0));
+      const pdfPath = `nfe-pdfs/${note.access_key}.pdf`;
+      await supabase.storage.from("designer-files").upload(pdfPath, pdfBytes, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+      const { data: { publicUrl } } = supabase.storage.from("designer-files").getPublicUrl(pdfPath);
+      updateData.pdf_url = publicUrl;
+      updateData.status = "authorized";
+    } catch (e) {
+      console.error("Error storing queried PDF:", e);
+    }
   }
 
   if (Object.keys(updateData).length > 0) {
@@ -274,7 +297,7 @@ async function handleQuery(
   }
 
   return new Response(
-    JSON.stringify({ focusResult, updateData }),
+    JSON.stringify({ success: brasilRes.ok, updateData }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }
@@ -282,27 +305,45 @@ async function handleQuery(
 async function handleCancel(
   supabase: ReturnType<typeof createClient>,
   body: any,
-  authB64: string
+  headers: Record<string, string>
 ) {
-  const { noteId, focusRef, justificativa } = body;
+  const { noteId, justificativa } = body;
 
-  const focusRes = await fetch(`${FOCUS_BASE_URL}/v2/nfe/${focusRef}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Basic ${authB64}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ justificativa: justificativa || "Cancelamento solicitado pelo emissor" }),
+  // Fetch note access_key
+  const { data: note } = await supabase
+    .from("fiscal_notes")
+    .select("access_key")
+    .eq("id", noteId)
+    .single();
+
+  if (!note?.access_key) {
+    return new Response(
+      JSON.stringify({ error: "Nota sem chave de acesso para cancelamento" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const brasilRes = await fetch(`${BRASILNFE_BASE_URL}/CancelarNotaFiscal`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      TipoAmbiente: 1,
+      ChaveNF: note.access_key,
+      Justificativa: justificativa || "Cancelamento solicitado pelo emissor",
+    }),
   });
 
-  const focusResult = await focusRes.json();
+  const brasilResult = await brasilRes.json();
+  console.log("Cancel result:", JSON.stringify(brasilResult));
 
-  if (focusRes.ok) {
+  const isSuccess = brasilResult?.Status === 1 || brasilRes.ok;
+
+  if (isSuccess) {
     await supabase.from("fiscal_notes").update({ status: "cancelled" }).eq("id", noteId);
   }
 
   return new Response(
-    JSON.stringify({ success: focusRes.ok, focusResult }),
+    JSON.stringify({ success: isSuccess, brasilResult }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }

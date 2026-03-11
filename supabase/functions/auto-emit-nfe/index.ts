@@ -6,18 +6,16 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Produção ativa com certificado válido até 03/03/2027
-const FOCUS_BASE_URL = "https://api.focusnfe.com.br";
+const BRASILNFE_BASE_URL = "https://api.brasilnfe.com.br/services/fiscal";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const FOCUS_TOKEN = Deno.env.get("FOCUS_NFE_TOKEN");
-  const FOCUS_ISSUER_CNPJ = (Deno.env.get("FOCUS_ISSUER_CNPJ") || "").replace(/\D/g, "");
-  if (!FOCUS_TOKEN) {
-    return new Response(JSON.stringify({ error: "FOCUS_NFE_TOKEN não configurado" }), {
+  const BRASILNFE_TOKEN = Deno.env.get("BRASILNFE_TOKEN");
+  if (!BRASILNFE_TOKEN) {
+    return new Response(JSON.stringify({ error: "BRASILNFE_TOKEN não configurado" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -68,101 +66,129 @@ Deno.serve(async (req) => {
       .update({ payment_status: "paid", status: "confirmed" })
       .eq("id", order_id);
 
-    const ref = `NF-${Date.now().toString(36).toUpperCase()}`;
-    const authB64 = btoa(`${FOCUS_TOKEN}:`);
+    const internalRef = `PEDIDO-${order_id.slice(0, 8).toUpperCase()}`;
+    const cleanCpf = order.customer_cpf?.replace(/\D/g, "") || "";
 
-    // Build NF-e payload
-    const nfeData: Record<string, any> = {
-      natureza_operacao: "Venda de mercadoria",
-      forma_pagamento: "0",
-      tipo_documento: "1",
-      finalidade_emissao: "1",
-      consumidor_final: "1",
-      presenca_comprador: "9",
-      nome_destinatario: order.customer_name || "CONSUMIDOR FINAL",
-      cpf_destinatario: order.customer_cpf?.replace(/\D/g, "") || undefined,
-      indicador_inscricao_estadual_destinatario: "9",
-      items: items.map((item: any, idx: number) => ({
-        numero_item: idx + 1,
-        codigo_produto: item.product_id || `PROD-${idx + 1}`,
-        descricao: item.product_name,
-        quantidade_comercial: item.quantity.toFixed(4),
-        quantidade_tributavel: item.quantity.toFixed(4),
-        valor_unitario_comercial: Number(item.unit_price).toFixed(2),
-        valor_unitario_tributavel: Number(item.unit_price).toFixed(2),
-        valor_bruto: (Number(item.unit_price) * item.quantity).toFixed(2),
-        unidade_comercial: "UN",
-        unidade_tributavel: "UN",
-        codigo_ncm: "7323.93.00",
-        cfop: "5102",
-        icms_situacao_tributaria: "102",
-        icms_origem: "0",
-        pis_situacao_tributaria: "07",
-        cofins_situacao_tributaria: "07",
+    // Build Brasil NFe payload
+    const nfePayload: Record<string, any> = {
+      TipoAmbiente: "1", // Produção
+      ModeloDocumento: 55, // NF-e
+      NaturezaOperacao: "Venda de mercadoria",
+      Finalidade: 1, // Normal
+      ConsumidorFinal: true,
+      IndicadorPresenca: 2, // Não presencial, Internet
+      CalcularIBPT: true,
+      IdentificadorInterno: internalRef,
+      Cliente: {
+        Nome: order.customer_name || "CONSUMIDOR FINAL",
+        IndicadorInscricaoEstadual: 9, // Não contribuinte
+      },
+      Produtos: items.map((item: any, idx: number) => ({
+        Codigo: item.product_id || `PROD-${idx + 1}`,
+        Descricao: item.product_name,
+        Quantidade: item.quantity,
+        ValorUnitario: Number(item.unit_price),
+        UnidadeComercial: "UN",
+        UnidadeTributavel: "UN",
+        CodigoNCM: "73239300",
+        CFOP: "5102",
+        ICMS: {
+          SituacaoTributaria: "102",
+          Origem: 0,
+        },
+        PIS: {
+          SituacaoTributaria: "07",
+        },
+        COFINS: {
+          SituacaoTributaria: "07",
+        },
       })),
-      formas_pagamento: [
+      Pagamentos: [
         {
-          tipo_pagamento: "01",
-          valor_pagamento: Number(order.total).toFixed(2),
+          TipoPagamento: "01",
+          ValorPagamento: Number(order.total),
         },
       ],
     };
 
-    // Explicit emitter identity helps multi-company Focus accounts
-    if (FOCUS_ISSUER_CNPJ) {
-      nfeData.cnpj_emitente = FOCUS_ISSUER_CNPJ;
+    // Set CPF
+    if (cleanCpf && cleanCpf.length === 11) {
+      nfePayload.Cliente.CPF = cleanCpf;
+    } else if (cleanCpf && cleanCpf.length === 14) {
+      nfePayload.Cliente.CNPJ = cleanCpf;
     }
 
     // Send email to customer
     if (order.customer_email) {
-      nfeData.email_destinatario = order.customer_email;
+      nfePayload.Cliente.Email = order.customer_email;
     }
 
     // Shipping address
     if (order.shipping_address) {
-      nfeData.logradouro_destinatario = order.shipping_address;
-      nfeData.numero_destinatario = order.shipping_number || "S/N";
-      nfeData.bairro_destinatario = order.shipping_neighborhood || "";
-      nfeData.municipio_destinatario = order.shipping_city || "";
-      nfeData.uf_destinatario = order.shipping_state || "";
-      nfeData.cep_destinatario = order.shipping_cep?.replace(/\D/g, "") || "";
+      nfePayload.Cliente.Endereco = {
+        Logradouro: order.shipping_address,
+        Numero: order.shipping_number || "S/N",
+        Bairro: order.shipping_neighborhood || "",
+        Municipio: order.shipping_city || "",
+        UF: order.shipping_state || "",
+        CEP: order.shipping_cep?.replace(/\D/g, "") || "",
+      };
     }
 
-    console.log("Emitting NF-e for order:", order_id, "ref:", ref);
+    console.log("Emitting NF-e via Brasil NFe for order:", order_id);
 
-    // Call Focus NFe
-    const focusRes = await fetch(`${FOCUS_BASE_URL}/v2/nfe?ref=${ref}`, {
+    // Call Brasil NFe API
+    const brasilRes = await fetch(`${BRASILNFE_BASE_URL}/EnviarNotaFiscal`, {
       method: "POST",
       headers: {
-        Authorization: `Basic ${authB64}`,
+        Authorization: `Bearer ${BRASILNFE_TOKEN}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(nfeData),
+      body: JSON.stringify(nfePayload),
     });
 
-    const focusResult = await focusRes.json();
-    console.log("Focus NFe response:", JSON.stringify(focusResult));
+    const brasilResult = await brasilRes.json();
+    console.log("Brasil NFe response:", JSON.stringify(brasilResult));
 
-    const isIssuerUnauthorized =
-      focusResult?.codigo === "permissao_negada" &&
-      typeof focusResult?.mensagem === "string" &&
-      focusResult.mensagem.toLowerCase().includes("emitente não autorizado");
+    const returnNF = brasilResult?.ReturnNF || {};
+    const isAuthorized = returnNF?.ChaveNFe || returnNF?.Numero;
+    const status = isAuthorized ? "authorized" : (brasilRes.ok ? "processing" : "error");
+    const errorMessage = brasilRes.ok ? null : (brasilResult?.Error || brasilResult?.ReturnNF?.Motivo || JSON.stringify(brasilResult));
 
-    const status = focusRes.ok ? "processing" : "error";
-    const errorMessage = isIssuerUnauthorized
-      ? "Emitente não autorizado na Focus NFe. Configure o CNPJ emissor correto no segredo FOCUS_ISSUER_CNPJ e valide no painel da Focus."
-      : (focusRes.ok ? null : (focusResult.mensagem || JSON.stringify(focusResult)));
+    // Extract PDF and XML from Base64 response
+    let pdfUrl: string | null = null;
+    let xmlUrl: string | null = null;
+
+    // If we get Base64File (PDF), store it
+    if (brasilResult?.Base64File) {
+      try {
+        const pdfBytes = Uint8Array.from(atob(brasilResult.Base64File), c => c.charCodeAt(0));
+        const pdfPath = `nfe-pdfs/${order_id}.pdf`;
+        await supabaseAdmin.storage.from("designer-files").upload(pdfPath, pdfBytes, {
+          contentType: "application/pdf",
+          upsert: true,
+        });
+        const { data: { publicUrl } } = supabaseAdmin.storage.from("designer-files").getPublicUrl(pdfPath);
+        pdfUrl = publicUrl;
+      } catch (e) {
+        console.error("Error storing PDF:", e);
+      }
+    }
 
     // Save fiscal note record
     await supabaseAdmin.from("fiscal_notes").insert({
       order_id,
       type: "nfe",
       status,
-      focus_ref: ref,
+      focus_ref: internalRef, // Reusing field for internal reference
       customer_name: order.customer_name,
       customer_cpf: order.customer_cpf,
       customer_email: order.customer_email,
       total: order.total,
+      number: returnNF?.Numero?.toString() || null,
+      series: returnNF?.Serie?.toString() || null,
+      access_key: returnNF?.ChaveNFe || null,
+      pdf_url: pdfUrl,
       items: items.map((i: any) => ({
         name: i.product_name,
         quantity: i.quantity,
@@ -173,8 +199,8 @@ Deno.serve(async (req) => {
     });
 
     return new Response(
-      JSON.stringify({ success: focusRes.ok, focusResult }),
-      { status: focusRes.ok ? 200 : 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ success: brasilRes.ok, brasilResult: { status, number: returnNF?.Numero, access_key: returnNF?.ChaveNFe } }),
+      { status: brasilRes.ok ? 200 : 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {
     console.error("Auto emit NF-e error:", error);
