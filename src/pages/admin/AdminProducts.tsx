@@ -77,7 +77,7 @@ export default function AdminProducts() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50", text_rotation: "0", text_orientation: "horizontal", discount_percent: "0", meta_title: "", meta_description: "", purchase_cost: "0", production_days: "3" });
+    setForm({ name: "", description: "", price: "", category_id: "", is_active: true, is_customizable: false, text_top: "42", text_left: "50", text_rotation: "0", text_orientation: "horizontal", discount_percent: "0", meta_title: "", meta_description: "", purchase_cost: "0", production_days: "3", ncm: "00000000", cfop: "5102", cest: "", ean: "", unidade_comercial: "UND", origem_produto: "0", cod_situacao_tributaria_icms: "102", cod_situacao_tributaria_pis: "07", cod_situacao_tributaria_cofins: "07" });
     setImageUrls([]);
     setVariants([]);
     setShowForm(true);
