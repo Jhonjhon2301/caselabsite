@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
 
     const { data: items } = await supabaseAdmin
       .from("order_items")
-      .select("*")
+      .select("*, products(ncm, cfop, cest, ean, unidade_comercial, origem_produto, cod_situacao_tributaria_icms, cod_situacao_tributaria_pis, cod_situacao_tributaria_cofins)")
       .eq("order_id", order_id);
 
     if (!items || items.length === 0) throw new Error("Pedido sem itens");
