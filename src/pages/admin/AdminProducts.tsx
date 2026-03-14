@@ -431,6 +431,97 @@ export default function AdminProducts() {
               <p className="text-xs text-muted-foreground mt-1">Tempo de produção antes do envio. Será somado ao prazo da transportadora.</p>
             </div>
 
+            {/* Fiscal Fields */}
+            <div className="border border-border rounded-xl p-4 bg-muted/30">
+              <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">🧾 Dados Fiscais (NF-e)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">NCM *</label>
+                  <input type="text" maxLength={8} value={form.ncm} onChange={(e) => setForm({ ...form, ncm: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" placeholder="00000000" />
+                  <p className="text-[10px] text-muted-foreground mt-1">8 dígitos. Ex: 73239300 (garrafas térmicas)</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">CFOP</label>
+                  <input type="number" value={form.cfop} onChange={(e) => setForm({ ...form, cfop: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" placeholder="5102" />
+                  <p className="text-[10px] text-muted-foreground mt-1">Ex: 5102 (venda merc. adquirida)</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">CEST</label>
+                  <input type="text" maxLength={7} value={form.cest} onChange={(e) => setForm({ ...form, cest: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" placeholder="Opcional" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">EAN / Código de Barras</label>
+                  <input type="text" value={form.ean} onChange={(e) => setForm({ ...form, ean: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none" placeholder="Opcional" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">Unidade Comercial</label>
+                  <select value={form.unidade_comercial} onChange={(e) => setForm({ ...form, unidade_comercial: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none">
+                    <option value="UND">UND - Unidade</option>
+                    <option value="CX">CX - Caixa</option>
+                    <option value="KG">KG - Quilograma</option>
+                    <option value="PC">PC - Peça</option>
+                    <option value="PAR">PAR - Par</option>
+                    <option value="PCT">PCT - Pacote</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">Origem do Produto</label>
+                  <select value={form.origem_produto} onChange={(e) => setForm({ ...form, origem_produto: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none">
+                    <option value="0">0 - Nacional</option>
+                    <option value="1">1 - Estrangeira (importação direta)</option>
+                    <option value="2">2 - Estrangeira (mercado interno)</option>
+                    <option value="3">3 - Nacional (importação 40-70%)</option>
+                    <option value="5">5 - Nacional (importação ≤40%)</option>
+                    <option value="8">8 - Nacional (importação &gt;70%)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">CST ICMS</label>
+                  <select value={form.cod_situacao_tributaria_icms} onChange={(e) => setForm({ ...form, cod_situacao_tributaria_icms: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none">
+                    <option value="00">00 - Tributada integralmente</option>
+                    <option value="10">10 - Tributada com ST</option>
+                    <option value="20">20 - Com redução BC</option>
+                    <option value="40">40 - Isenta</option>
+                    <option value="41">41 - Não tributada</option>
+                    <option value="60">60 - ICMS cobrado anteriormente por ST</option>
+                    <option value="102">102 - Simples Nacional sem crédito</option>
+                    <option value="103">103 - Simples Nacional isento</option>
+                    <option value="400">400 - Não tributada pelo Simples</option>
+                    <option value="500">500 - ICMS cobrado por ST (Simples)</option>
+                    <option value="900">900 - Outros</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">CST PIS</label>
+                  <select value={form.cod_situacao_tributaria_pis} onChange={(e) => setForm({ ...form, cod_situacao_tributaria_pis: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none">
+                    <option value="01">01 - Tributável alíquota básica</option>
+                    <option value="04">04 - Monofásica alíquota zero</option>
+                    <option value="06">06 - Alíquota zero</option>
+                    <option value="07">07 - Isenta</option>
+                    <option value="08">08 - Sem incidência</option>
+                    <option value="09">09 - Com suspensão</option>
+                    <option value="49">49 - Outras saídas</option>
+                    <option value="99">99 - Outras operações</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">CST COFINS</label>
+                  <select value={form.cod_situacao_tributaria_cofins} onChange={(e) => setForm({ ...form, cod_situacao_tributaria_cofins: e.target.value })} className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:ring-2 focus:ring-ring outline-none">
+                    <option value="01">01 - Tributável alíquota básica</option>
+                    <option value="04">04 - Monofásica alíquota zero</option>
+                    <option value="06">06 - Alíquota zero</option>
+                    <option value="07">07 - Isenta</option>
+                    <option value="08">08 - Sem incidência</option>
+                    <option value="09">09 - Com suspensão</option>
+                    <option value="49">49 - Outras saídas</option>
+                    <option value="99">99 - Outras operações</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             {/* Images */}
             <div>
               <label className="block text-sm font-medium mb-2">Imagens do produto</label>
