@@ -85,15 +85,21 @@ export default function AdminProducts() {
 
   const openEdit = (p: Product) => {
     setEditing(p);
+    const pa = p as any;
     setForm({
       name: p.name, description: p.description ?? "", price: String(p.price),
       category_id: p.category_id ?? "", is_active: p.is_active, is_customizable: p.is_customizable,
       text_top: String(p.text_top ?? 42), text_left: String(p.text_left ?? 50), text_rotation: String(p.text_rotation ?? 0),
-      text_orientation: (p as any).text_orientation ?? "horizontal",
+      text_orientation: pa.text_orientation ?? "horizontal",
       discount_percent: String(p.discount_percent ?? 0),
-      meta_title: (p as any).meta_title ?? "", meta_description: (p as any).meta_description ?? "",
-      purchase_cost: String((p as any).purchase_cost ?? 0),
-      production_days: String((p as any).production_days ?? 3),
+      meta_title: pa.meta_title ?? "", meta_description: pa.meta_description ?? "",
+      purchase_cost: String(pa.purchase_cost ?? 0),
+      production_days: String(pa.production_days ?? 3),
+      ncm: pa.ncm ?? "00000000", cfop: String(pa.cfop ?? 5102), cest: pa.cest ?? "", ean: pa.ean ?? "",
+      unidade_comercial: pa.unidade_comercial ?? "UND", origem_produto: String(pa.origem_produto ?? 0),
+      cod_situacao_tributaria_icms: pa.cod_situacao_tributaria_icms ?? "102",
+      cod_situacao_tributaria_pis: pa.cod_situacao_tributaria_pis ?? "07",
+      cod_situacao_tributaria_cofins: pa.cod_situacao_tributaria_cofins ?? "07",
     });
     setImageUrls(p.images ?? []);
     setVariants((p.variants as ProductVariant[]) ?? []);
