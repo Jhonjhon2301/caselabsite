@@ -50,6 +50,11 @@ export default function AdminProducts() {
     discount_percent: "0",
     meta_title: "", meta_description: "", purchase_cost: "0",
     production_days: "3",
+    ncm: "00000000", cfop: "5102", cest: "", ean: "",
+    unidade_comercial: "UND", origem_produto: "0",
+    cod_situacao_tributaria_icms: "102",
+    cod_situacao_tributaria_pis: "07",
+    cod_situacao_tributaria_cofins: "07",
   });
   const [uploading, setUploading] = useState(false);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
