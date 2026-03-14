@@ -1183,10 +1183,16 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
+          cest: string | null
+          cfop: number | null
           circumference_cm: number | null
+          cod_situacao_tributaria_cofins: string | null
+          cod_situacao_tributaria_icms: string | null
+          cod_situacao_tributaria_pis: string | null
           created_at: string
           description: string | null
           discount_percent: number | null
+          ean: string | null
           height_cm: number | null
           id: string
           images: string[] | null
@@ -1196,6 +1202,8 @@ export type Database = {
           meta_description: string | null
           meta_title: string | null
           name: string
+          ncm: string | null
+          origem_produto: number | null
           price: number
           production_days: number | null
           purchase_cost: number
@@ -1204,15 +1212,22 @@ export type Database = {
           text_orientation: string | null
           text_rotation: number | null
           text_top: number | null
+          unidade_comercial: string | null
           updated_at: string
           variants: Json | null
         }
         Insert: {
           category_id?: string | null
+          cest?: string | null
+          cfop?: number | null
           circumference_cm?: number | null
+          cod_situacao_tributaria_cofins?: string | null
+          cod_situacao_tributaria_icms?: string | null
+          cod_situacao_tributaria_pis?: string | null
           created_at?: string
           description?: string | null
           discount_percent?: number | null
+          ean?: string | null
           height_cm?: number | null
           id?: string
           images?: string[] | null
@@ -1222,6 +1237,8 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           name: string
+          ncm?: string | null
+          origem_produto?: number | null
           price?: number
           production_days?: number | null
           purchase_cost?: number
@@ -1230,15 +1247,22 @@ export type Database = {
           text_orientation?: string | null
           text_rotation?: number | null
           text_top?: number | null
+          unidade_comercial?: string | null
           updated_at?: string
           variants?: Json | null
         }
         Update: {
           category_id?: string | null
+          cest?: string | null
+          cfop?: number | null
           circumference_cm?: number | null
+          cod_situacao_tributaria_cofins?: string | null
+          cod_situacao_tributaria_icms?: string | null
+          cod_situacao_tributaria_pis?: string | null
           created_at?: string
           description?: string | null
           discount_percent?: number | null
+          ean?: string | null
           height_cm?: number | null
           id?: string
           images?: string[] | null
@@ -1248,6 +1272,8 @@ export type Database = {
           meta_description?: string | null
           meta_title?: string | null
           name?: string
+          ncm?: string | null
+          origem_produto?: number | null
           price?: number
           production_days?: number | null
           purchase_cost?: number
@@ -1256,6 +1282,7 @@ export type Database = {
           text_orientation?: string | null
           text_rotation?: number | null
           text_top?: number | null
+          unidade_comercial?: string | null
           updated_at?: string
           variants?: Json | null
         }
