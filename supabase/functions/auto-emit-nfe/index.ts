@@ -84,21 +84,18 @@ Deno.serve(async (req) => {
         NmProduto: item.product_name,
         Quantidade: item.quantity,
         ValorUnitario: Number(item.unit_price),
-        UnidadeComercial: "UND",
-        UnidadeComercialTributavel: "UND",
-        NCM: "73239300",
-        CFOP: 5102,
-        OrigemProduto: 0,
+        ValorTotal: Number(item.unit_price) * item.quantity,
+        UnidadeComercial: item.products?.unidade_comercial || "UND",
+        UnidadeComercialTributavel: item.products?.unidade_comercial || "UND",
+        NCM: item.products?.ncm || "00000000",
+        CFOP: Number(item.products?.cfop) || 5102,
+        OrigemProduto: Number(item.products?.origem_produto) || 0,
+        ...(item.products?.ean && { EAN: item.products.ean }),
+        ...(item.products?.cest && { CEST: item.products.cest }),
         Imposto: {
-          ICMS: {
-            CodSituacaoTributaria: "102",
-          },
-          PIS: {
-            CodSituacaoTributaria: "07",
-          },
-          COFINS: {
-            CodSituacaoTributaria: "07",
-          },
+          ICMS: { CodSituacaoTributaria: item.products?.cod_situacao_tributaria_icms || "102" },
+          PIS: { CodSituacaoTributaria: item.products?.cod_situacao_tributaria_pis || "07" },
+          COFINS: { CodSituacaoTributaria: item.products?.cod_situacao_tributaria_cofins || "07" },
         },
       })),
       Pagamentos: [
