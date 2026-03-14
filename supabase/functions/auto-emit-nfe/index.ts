@@ -30,7 +30,6 @@ Deno.serve(async (req) => {
     const { order_id } = await req.json();
     if (!order_id) throw new Error("order_id é obrigatório");
 
-    // Fetch order
     const { data: order, error: orderErr } = await supabaseAdmin
       .from("orders")
       .select("*")
@@ -39,7 +38,6 @@ Deno.serve(async (req) => {
 
     if (orderErr || !order) throw new Error("Pedido não encontrado");
 
-    // Check if NF-e already emitted for this order
     const { data: existing } = await supabaseAdmin
       .from("fiscal_notes")
       .select("id")
@@ -52,7 +50,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Fetch order items
     const { data: items } = await supabaseAdmin
       .from("order_items")
       .select("*")
@@ -60,7 +57,6 @@ Deno.serve(async (req) => {
 
     if (!items || items.length === 0) throw new Error("Pedido sem itens");
 
-    // Update order payment status
     await supabaseAdmin
       .from("orders")
       .update({ payment_status: "paid", status: "confirmed" })
@@ -69,58 +65,60 @@ Deno.serve(async (req) => {
     const internalRef = `PEDIDO-${order_id.slice(0, 8).toUpperCase()}`;
     const cleanCpf = order.customer_cpf?.replace(/\D/g, "") || "";
 
-    // Build Brasil NFe payload
+    // Build payload following official Brasil NFe API docs
     const nfePayload: Record<string, any> = {
-      TipoAmbiente: "1", // Produção
-      ModeloDocumento: 55, // NF-e
+      TipoAmbiente: "1",
+      ModeloDocumento: 55,
       NaturezaOperacao: "Venda de mercadoria",
-      Finalidade: 1, // Normal
+      Finalidade: 1,
       ConsumidorFinal: true,
-      IndicadorPresenca: 2, // Não presencial, Internet
+      IndicadorPresenca: 2,
       CalcularIBPT: true,
       IdentificadorInterno: internalRef,
       Cliente: {
-        Nome: order.customer_name || "CONSUMIDOR FINAL",
-        IndicadorInscricaoEstadual: 9, // Não contribuinte
+        NmCliente: order.customer_name || "CONSUMIDOR FINAL",
+        IndicadorIe: 9,
       },
       Produtos: items.map((item: any, idx: number) => ({
-        Codigo: item.product_id || `PROD-${idx + 1}`,
-        Descricao: item.product_name,
+        CodProdutoServico: String(idx + 1).padStart(4, "0"),
+        NmProduto: item.product_name,
         Quantidade: item.quantity,
         ValorUnitario: Number(item.unit_price),
-        UnidadeComercial: "UN",
-        UnidadeTributavel: "UN",
-        CodigoNCM: "73239300",
-        CFOP: "5102",
-        ICMS: {
-          SituacaoTributaria: "102",
-          Origem: 0,
-        },
-        PIS: {
-          SituacaoTributaria: "07",
-        },
-        COFINS: {
-          SituacaoTributaria: "07",
+        UnidadeComercial: "UND",
+        UnidadeComercialTributavel: "UND",
+        NCM: "73239300",
+        CFOP: 5102,
+        OrigemProduto: 0,
+        Imposto: {
+          ICMS: {
+            CodSituacaoTributaria: "102",
+          },
+          PIS: {
+            CodSituacaoTributaria: "07",
+          },
+          COFINS: {
+            CodSituacaoTributaria: "07",
+          },
         },
       })),
       Pagamentos: [
         {
-          TipoPagamento: "01",
-          ValorPagamento: Number(order.total),
+          FormaPagamento: "17",
+          VlPago: Number(order.total),
         },
       ],
     };
 
-    // Set CPF
-    if (cleanCpf && cleanCpf.length === 11) {
-      nfePayload.Cliente.CPF = cleanCpf;
-    } else if (cleanCpf && cleanCpf.length === 14) {
-      nfePayload.Cliente.CNPJ = cleanCpf;
+    // Set CPF/CNPJ
+    if (cleanCpf) {
+      nfePayload.Cliente.CpfCnpj = cleanCpf;
     }
 
-    // Send email to customer
+    // Contact info
     if (order.customer_email) {
-      nfePayload.Cliente.Email = order.customer_email;
+      nfePayload.Cliente.Contato = {
+        Email: order.customer_email,
+      };
     }
 
     // Shipping address
@@ -130,14 +128,13 @@ Deno.serve(async (req) => {
         Numero: order.shipping_number || "S/N",
         Bairro: order.shipping_neighborhood || "",
         Municipio: order.shipping_city || "",
-        UF: order.shipping_state || "",
-        CEP: order.shipping_cep?.replace(/\D/g, "") || "",
+        Uf: order.shipping_state || "",
+        Cep: order.shipping_cep?.replace(/\D/g, "") || "",
       };
     }
 
     console.log("Emitting NF-e via Brasil NFe for order:", order_id);
 
-    // Call Brasil NFe API
     const brasilRes = await fetch(`${BRASILNFE_BASE_URL}/EnviarNotaFiscal`, {
       method: "POST",
       headers: {
@@ -152,15 +149,12 @@ Deno.serve(async (req) => {
 
     const returnNF = brasilResult?.ReturnNF || {};
     const hasError = brasilResult?.Error || !brasilRes.ok;
-    const isAuthorized = !hasError && (returnNF?.ChaveNFe || returnNF?.Numero);
+    const isAuthorized = !hasError && returnNF?.Ok === true;
     const status = isAuthorized ? "authorized" : (hasError ? "error" : "processing");
-    const errorMessage = brasilResult?.Error || (!brasilRes.ok ? (returnNF?.Motivo || JSON.stringify(brasilResult)) : null);
+    const errorMessage = brasilResult?.Error || (!brasilRes.ok ? (returnNF?.DsStatusRespostaSefaz || JSON.stringify(brasilResult)) : null);
 
-    // Extract PDF and XML from Base64 response
     let pdfUrl: string | null = null;
-    let xmlUrl: string | null = null;
 
-    // If we get Base64File (PDF), store it
     if (brasilResult?.Base64File) {
       try {
         const pdfBytes = Uint8Array.from(atob(brasilResult.Base64File), c => c.charCodeAt(0));
@@ -176,19 +170,18 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Save fiscal note record
     await supabaseAdmin.from("fiscal_notes").insert({
       order_id,
       type: "nfe",
       status,
-      focus_ref: internalRef, // Reusing field for internal reference
+      focus_ref: internalRef,
       customer_name: order.customer_name,
       customer_cpf: order.customer_cpf,
       customer_email: order.customer_email,
       total: order.total,
       number: returnNF?.Numero?.toString() || null,
       series: returnNF?.Serie?.toString() || null,
-      access_key: returnNF?.ChaveNFe || null,
+      access_key: returnNF?.ChaveNF || null,
       pdf_url: pdfUrl,
       items: items.map((i: any) => ({
         name: i.product_name,
@@ -200,7 +193,7 @@ Deno.serve(async (req) => {
     });
 
     return new Response(
-      JSON.stringify({ success: brasilRes.ok, brasilResult: { status, number: returnNF?.Numero, access_key: returnNF?.ChaveNFe } }),
+      JSON.stringify({ success: brasilRes.ok && isAuthorized, brasilResult: { status, number: returnNF?.Numero, access_key: returnNF?.ChaveNF } }),
       { status: brasilRes.ok ? 200 : 422, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {

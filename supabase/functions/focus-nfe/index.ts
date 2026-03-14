@@ -6,7 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Migrado para Brasil NFe API
 const BRASILNFE_BASE_URL = "https://api.brasilnfe.com.br/services/fiscal";
 
 Deno.serve(async (req) => {
@@ -22,7 +21,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // Auth check
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) {
     return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -52,7 +50,6 @@ Deno.serve(async (req) => {
 
   const userId = user.id;
 
-  // Check admin
   const { data: roleData } = await supabaseAdmin
     .from("user_roles")
     .select("role")
@@ -112,62 +109,62 @@ async function handleEmit(
 
   const internalRef = `NF-${Date.now().toString(36).toUpperCase()}`;
 
-  // Build Brasil NFe payload
+  // Build payload following official Brasil NFe API docs
   const nfePayload: Record<string, any> = {
-    TipoAmbiente: "1", // Produção
+    TipoAmbiente: "1",
     ModeloDocumento: 55,
     NaturezaOperacao: "Venda de mercadoria",
     Finalidade: 1,
     ConsumidorFinal: !cleanCnpj,
-    IndicadorPresenca: 9, // Outros
+    IndicadorPresenca: 9,
     CalcularIBPT: true,
     IdentificadorInterno: internalRef,
     Observacao: notes || undefined,
     Cliente: {
-      Nome: customerName || "CONSUMIDOR FINAL",
-      IndicadorInscricaoEstadual: 9,
+      NmCliente: customerName || "CONSUMIDOR FINAL",
+      IndicadorIe: 9,
     },
     Produtos: items.map((item: any, idx: number) => ({
-      Codigo: item.code || `PROD-${idx + 1}`,
-      Descricao: item.name,
+      CodProdutoServico: item.code || String(idx + 1).padStart(4, "0"),
+      NmProduto: item.name,
       Quantidade: Number(item.quantity),
       ValorUnitario: Number(item.price),
-      UnidadeComercial: "UN",
-      UnidadeTributavel: "UN",
-      CodigoNCM: "73239300",
-      CFOP: "5102",
-      ICMS: {
-        SituacaoTributaria: "102",
-        Origem: 0,
-      },
-      PIS: {
-        SituacaoTributaria: "07",
-      },
-      COFINS: {
-        SituacaoTributaria: "07",
+      UnidadeComercial: "UND",
+      UnidadeComercialTributavel: "UND",
+      NCM: "73239300",
+      CFOP: 5102,
+      OrigemProduto: 0,
+      Imposto: {
+        ICMS: {
+          CodSituacaoTributaria: "102",
+        },
+        PIS: {
+          CodSituacaoTributaria: "07",
+        },
+        COFINS: {
+          CodSituacaoTributaria: "07",
+        },
       },
     })),
     Pagamentos: [
       {
-        TipoPagamento: "01",
-        ValorPagamento: Number(total),
+        FormaPagamento: "17",
+        VlPago: Number(total),
       },
     ],
   };
 
   // Set CPF or CNPJ
   if (cleanCnpj) {
-    nfePayload.Cliente.CNPJ = cleanCnpj;
+    nfePayload.Cliente.CpfCnpj = cleanCnpj;
   } else if (cleanCpf) {
-    if (cleanCpf.length === 11) {
-      nfePayload.Cliente.CPF = cleanCpf;
-    } else if (cleanCpf.length === 14) {
-      nfePayload.Cliente.CNPJ = cleanCpf;
-    }
+    nfePayload.Cliente.CpfCnpj = cleanCpf;
   }
 
   if (customerEmail) {
-    nfePayload.Cliente.Email = customerEmail;
+    nfePayload.Cliente.Contato = {
+      Email: customerEmail,
+    };
   }
 
   console.log("Emitting NF-e via Brasil NFe, ref:", internalRef);
@@ -183,9 +180,9 @@ async function handleEmit(
 
   const returnNF = brasilResult?.ReturnNF || {};
   const hasError = brasilResult?.Error || !brasilRes.ok;
-  const isAuthorized = !hasError && (returnNF?.ChaveNFe || returnNF?.Numero);
+  const isAuthorized = !hasError && returnNF?.Ok === true;
   const status = isAuthorized ? "authorized" : (hasError ? "error" : "processing");
-  const errorMessage = brasilResult?.Error || (!brasilRes.ok ? (returnNF?.Motivo || JSON.stringify(brasilResult)) : null);
+  const errorMessage = brasilResult?.Error || (!brasilRes.ok ? (returnNF?.DsStatusRespostaSefaz || JSON.stringify(brasilResult)) : null);
 
   // Store PDF if returned
   let pdfUrl: string | null = null;
@@ -218,7 +215,7 @@ async function handleEmit(
       total,
       number: returnNF?.Numero?.toString() || null,
       series: returnNF?.Serie?.toString() || null,
-      access_key: returnNF?.ChaveNFe || null,
+      access_key: returnNF?.ChaveNF || null,
       pdf_url: pdfUrl,
       items,
       notes,
@@ -234,7 +231,7 @@ async function handleEmit(
   }
 
   return new Response(
-    JSON.stringify({ success: brasilRes.ok, note: savedNote, brasilResult: { status, error: errorMessage }, error: errorMessage }),
+    JSON.stringify({ success: brasilRes.ok && isAuthorized, note: savedNote, brasilResult: { status, error: errorMessage }, error: errorMessage }),
     { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }
@@ -246,7 +243,6 @@ async function handleQuery(
 ) {
   const { noteId } = body;
 
-  // Fetch the note to get the access_key
   const { data: note } = await supabase
     .from("fiscal_notes")
     .select("access_key")
@@ -260,14 +256,13 @@ async function handleQuery(
     );
   }
 
-  // Query using ObterArquivoNotaFiscal to get PDF
   const brasilRes = await fetch(`${BRASILNFE_BASE_URL}/ObterArquivoNotaFiscal`, {
     method: "POST",
     headers,
     body: JSON.stringify({
       ChaveNF: note.access_key,
-      FileType: 2, // PDF
-      TipoDocumentoFiscal: 1, // Saída
+      FileType: 2,
+      TipoDocumentoFiscal: 1,
     }),
   });
 
@@ -276,7 +271,6 @@ async function handleQuery(
 
   const updateData: Record<string, any> = {};
 
-  // If we get a PDF back, store it
   if (brasilRes.ok && result && !result.startsWith("{")) {
     try {
       const pdfBytes = Uint8Array.from(atob(result), c => c.charCodeAt(0));
@@ -310,7 +304,6 @@ async function handleCancel(
 ) {
   const { noteId, justificativa } = body;
 
-  // Fetch note access_key
   const { data: note } = await supabase
     .from("fiscal_notes")
     .select("access_key")
@@ -337,7 +330,7 @@ async function handleCancel(
   const brasilResult = await brasilRes.json();
   console.log("Cancel result:", JSON.stringify(brasilResult));
 
-  const isSuccess = brasilResult?.Status === 1 || brasilRes.ok;
+  const isSuccess = brasilResult?.Status === true || brasilRes.ok;
 
   if (isSuccess) {
     await supabase.from("fiscal_notes").update({ status: "cancelled" }).eq("id", noteId);
