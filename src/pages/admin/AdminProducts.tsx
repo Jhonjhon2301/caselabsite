@@ -229,6 +229,15 @@ export default function AdminProducts() {
       meta_description: form.meta_description.trim() || null,
       purchase_cost: parseFloat(form.purchase_cost) || 0,
       production_days: parseInt(form.production_days) || 3,
+      ncm: form.ncm.trim() || "00000000",
+      cfop: parseInt(form.cfop) || 5102,
+      cest: form.cest.trim() || null,
+      ean: form.ean.trim() || null,
+      unidade_comercial: form.unidade_comercial || "UND",
+      origem_produto: parseInt(form.origem_produto) || 0,
+      cod_situacao_tributaria_icms: form.cod_situacao_tributaria_icms || "102",
+      cod_situacao_tributaria_pis: form.cod_situacao_tributaria_pis || "07",
+      cod_situacao_tributaria_cofins: form.cod_situacao_tributaria_cofins || "07",
     };
 
     if (editing) {
