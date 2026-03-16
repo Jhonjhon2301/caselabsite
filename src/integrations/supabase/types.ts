@@ -777,6 +777,7 @@ export type Database = {
         Row: {
           category: string | null
           circumference_cm: number | null
+          color_quantities: Json
           created_at: string
           created_by: string
           description: string | null
@@ -786,7 +787,9 @@ export type Database = {
           min_quantity: number
           name: string
           notes: string | null
+          product_id: string | null
           quantity: number
+          sales_note: string | null
           supplier: string | null
           unit_cost: number
           updated_at: string
@@ -794,6 +797,7 @@ export type Database = {
         Insert: {
           category?: string | null
           circumference_cm?: number | null
+          color_quantities?: Json
           created_at?: string
           created_by: string
           description?: string | null
@@ -803,7 +807,9 @@ export type Database = {
           min_quantity?: number
           name: string
           notes?: string | null
+          product_id?: string | null
           quantity?: number
+          sales_note?: string | null
           supplier?: string | null
           unit_cost?: number
           updated_at?: string
@@ -811,6 +817,7 @@ export type Database = {
         Update: {
           category?: string | null
           circumference_cm?: number | null
+          color_quantities?: Json
           created_at?: string
           created_by?: string
           description?: string | null
@@ -820,12 +827,22 @@ export type Database = {
           min_quantity?: number
           name?: string
           notes?: string | null
+          product_id?: string | null
           quantity?: number
+          sales_note?: string | null
           supplier?: string | null
           unit_cost?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "internal_stock_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       lead_captures: {
         Row: {
