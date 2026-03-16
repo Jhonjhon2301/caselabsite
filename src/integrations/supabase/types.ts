@@ -178,6 +178,13 @@ export type Database = {
       }
       b2b_customers: {
         Row: {
+          address_cep: string | null
+          address_city: string | null
+          address_complement: string | null
+          address_neighborhood: string | null
+          address_number: string | null
+          address_state: string | null
+          address_street: string | null
           cnpj: string | null
           company_name: string
           contact_email: string | null
@@ -186,14 +193,23 @@ export type Database = {
           created_at: string
           discount_percent: number
           id: string
+          indicador_ie: number | null
           is_approved: boolean
           min_order_quantity: number
           notes: string | null
           pricing_tier: string
+          state_registration: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          address_cep?: string | null
+          address_city?: string | null
+          address_complement?: string | null
+          address_neighborhood?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
           cnpj?: string | null
           company_name: string
           contact_email?: string | null
@@ -202,14 +218,23 @@ export type Database = {
           created_at?: string
           discount_percent?: number
           id?: string
+          indicador_ie?: number | null
           is_approved?: boolean
           min_order_quantity?: number
           notes?: string | null
           pricing_tier?: string
+          state_registration?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          address_cep?: string | null
+          address_city?: string | null
+          address_complement?: string | null
+          address_neighborhood?: string | null
+          address_number?: string | null
+          address_state?: string | null
+          address_street?: string | null
           cnpj?: string | null
           company_name?: string
           contact_email?: string | null
@@ -218,10 +243,12 @@ export type Database = {
           created_at?: string
           discount_percent?: number
           id?: string
+          indicador_ie?: number | null
           is_approved?: boolean
           min_order_quantity?: number
           notes?: string | null
           pricing_tier?: string
+          state_registration?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1193,6 +1220,7 @@ export type Database = {
           description: string | null
           discount_percent: number | null
           ean: string | null
+          fiscal_product_code: string | null
           height_cm: number | null
           id: string
           images: string[] | null
@@ -1228,6 +1256,7 @@ export type Database = {
           description?: string | null
           discount_percent?: number | null
           ean?: string | null
+          fiscal_product_code?: string | null
           height_cm?: number | null
           id?: string
           images?: string[] | null
@@ -1263,6 +1292,7 @@ export type Database = {
           description?: string | null
           discount_percent?: number | null
           ean?: string | null
+          fiscal_product_code?: string | null
           height_cm?: number | null
           id?: string
           images?: string[] | null
