@@ -77,14 +77,22 @@ export default function AdminInternalStock() {
         .order("name"),
     ]);
 
-    setItems(((stockItems as InternalStockItem[]) ?? []).map((item) => ({
+    const normalizedItems = ((stockItems ?? []) as unknown as Array<Record<string, any>>).map((item) => ({
       ...item,
-      color_quantities: Array.isArray((item as any).color_quantities) ? (item as any).color_quantities : [],
-      sales_note: (item as any).sales_note ?? null,
-      product_id: (item as any).product_id ?? null,
-    })));
-    setProducts((productOptions as InternalStockProductOption[]) ?? []);
-    setLoading(false);
+      color_quantities: Array.isArray(item.color_quantities) ? item.color_quantities : [],
+      sales_note: item.sales_note ?? null,
+      product_id: item.product_id ?? null,
+    })) as InternalStockItem[];
+
+    const normalizedProducts = ((productOptions ?? []) as unknown as Array<Record<string, any>>).map(
+      (product) => ({
+        ...product,
+        variants: Array.isArray(product.variants) ? product.variants : [],
+      }),
+    ) as InternalStockProductOption[];
+
+    setItems(normalizedItems);
+    setProducts(normalizedProducts);
   };
 
   useEffect(() => {
