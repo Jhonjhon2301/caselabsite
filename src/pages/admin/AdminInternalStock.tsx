@@ -94,6 +94,7 @@ export default function AdminInternalStock() {
     setItems(normalizedItems);
     setProducts(normalizedProducts);
     setLoading(false);
+  };
 
   useEffect(() => {
     fetchData();
