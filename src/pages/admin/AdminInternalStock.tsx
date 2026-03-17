@@ -337,7 +337,14 @@ export default function AdminInternalStock() {
                       className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <div className="flex items-start gap-2">
+                        <div className="flex items-start gap-3">
+                          {item.image_url ? (
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="h-10 w-10 shrink-0 rounded-lg border border-border object-cover"
+                            />
+                          ) : null}
                           {isLow ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" /> : null}
                           <div className="space-y-1">
                             <span className="font-medium">{item.name}</span>
