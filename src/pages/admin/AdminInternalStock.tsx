@@ -38,6 +38,7 @@ const emptyForm = {
   sales_note: "",
   height_cm: "",
   circumference_cm: "",
+  image_url: "",
 };
 
 const normalizeColorRows = (rows: EditableColorQuantity[]) =>

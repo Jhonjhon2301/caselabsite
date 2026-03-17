@@ -24,6 +24,7 @@ export interface InternalStockItem {
   location: string | null;
   notes: string | null;
   sales_note: string | null;
+  image_url: string | null;
   height_cm: number | null;
   circumference_cm: number | null;
   product_id: string | null;
