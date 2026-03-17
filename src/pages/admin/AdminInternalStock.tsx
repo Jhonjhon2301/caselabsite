@@ -425,6 +425,62 @@ export default function AdminInternalStock() {
           </DialogHeader>
 
           <div className="space-y-4 pr-1">
+            {/* Foto do item */}
+            <div>
+              <Label>Foto do item</Label>
+              <div className="mt-1 flex items-center gap-4">
+                {form.image_url ? (
+                  <div className="relative h-24 w-24 overflow-hidden rounded-lg border border-border">
+                    <img
+                      src={form.image_url}
+                      alt="Foto do item"
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, image_url: "" })}
+                      className="absolute right-1 top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                    <ImagePlus className="h-6 w-6" />
+                    <span className="text-[10px]">Adicionar</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setUploading(true);
+                        const ext = file.name.split(".").pop();
+                        const path = `internal-stock/${Date.now()}.${ext}`;
+                        const { error } = await supabase.storage
+                          .from("product-images")
+                          .upload(path, file, { upsert: true });
+                        if (error) {
+                          toast.error("Erro ao enviar imagem");
+                          setUploading(false);
+                          return;
+                        }
+                        const { data: urlData } = supabase.storage
+                          .from("product-images")
+                          .getPublicUrl(path);
+                        setForm((prev) => ({ ...prev, image_url: urlData.publicUrl }));
+                        setUploading(false);
+                        toast.success("Imagem enviada!");
+                      }}
+                    />
+                  </label>
+                )}
+                {uploading && <span className="text-xs text-muted-foreground">Enviando...</span>}
+              </div>
+            </div>
+
             <div>
               <Label>Vincular produto</Label>
               <select
