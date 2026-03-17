@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Package, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, ImagePlus, Package, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 
 import { InternalStockColorQuantitiesEditor } from "@/components/admin/internal-stock/InternalStockColorQuantitiesEditor";
 import type {
