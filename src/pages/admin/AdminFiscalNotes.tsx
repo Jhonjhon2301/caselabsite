@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
-  FileText, Plus, RefreshCw, XCircle, Download, Eye, ChevronDown, ChevronUp,
+  FileText, Plus, RefreshCw, XCircle, Download, Eye, ChevronDown, ChevronUp, Search,
 } from "lucide-react";
 
 // ─── Types ───
@@ -24,6 +24,39 @@ interface FiscalNote {
   notes: string | null;
   error_message: string | null;
   created_at: string;
+}
+
+interface ClientResult {
+  type: "cpf" | "cnpj";
+  name: string;
+  doc: string;
+  email: string;
+  phone: string;
+  ie: string;
+  indicadorIe: number;
+  cep: string;
+  logradouro: string;
+  numero: string;
+  bairro: string;
+  municipio: string;
+  uf: string;
+  complemento: string;
+}
+
+interface ProductResult {
+  id: string;
+  name: string;
+  price: number;
+  ncm: string;
+  cfop: number;
+  unidade: string;
+  origem: number;
+  cstIcms: string;
+  cstPis: string;
+  cstCofins: string;
+  ean: string;
+  cest: string;
+  fiscalCode: string;
 }
 
 const UF_OPTIONS = [
@@ -86,18 +119,15 @@ const sectionTitle = "text-sm font-bold text-primary flex items-center gap-2 mb-
 
 // ─── Default form ───
 const defaultForm = () => ({
-  // Tipo / Natureza / Finalidade
   modeloDocumento: 55,
   naturezaOperacao: "Venda de mercadoria",
   finalidade: 1,
   tipoAmbiente: "1",
-  // Destinatário
   consumidorFinal: true,
   cpfCnpj: "",
   nomeCliente: "",
   indicadorIe: 9,
   inscricaoEstadual: "",
-  // Endereço
   cep: "",
   logradouro: "",
   numero: "",
@@ -106,17 +136,13 @@ const defaultForm = () => ({
   uf: "",
   complemento: "",
   codMunicipio: "",
-  // Contato
   telefone: "",
   email: "",
-  // Produtos
   items: [{ code: "", name: "", quantity: 1, price: 0, discount: 0, ncm: "00000000", cfop: 5102, unidade: "UND", origem: 0, cstIcms: "102", cstPis: "07", cstCofins: "07" }] as any[],
-  // Transporte
   modalidadeFrete: 9,
   volumes: [] as any[],
   veiculo: { placa: "", uf: "", rntc: "" },
   reboques: [] as any[],
-  // Configurações
   indicadorPresenca: 2,
   dataEmissao: "",
   horaEmissao: "",
@@ -124,23 +150,18 @@ const defaultForm = () => ({
   horaSaida: "",
   observacao: "",
   observacaoFisco: "",
-  // Pagamento
   formaPagamento: "17",
   valorPago: 0,
   valorTroco: 0,
-  // Cobrança / Fatura
   faturaNumero: "",
   faturaValor: 0,
   faturaDesconto: 0,
   faturaValorLiquido: 0,
   parcelas: [] as { vencimento: string; valor: number }[],
-  // Referências
   nfReferencia: "",
-  // Exportação
   ufSaidaPais: "",
   localDespacho: "",
   localEmbarque: "",
-  // Identificador
   orderId: null as string | null,
 });
 
@@ -156,6 +177,188 @@ function Section({ title, icon, children, defaultOpen = true }: { title: string;
         {open ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
       </button>
       {open && <div className="p-4 space-y-4">{children}</div>}
+    </div>
+  );
+}
+
+// ─── Client Search Dropdown ───
+function ClientSearchInput({ onSelect }: { onSelect: (client: ClientResult) => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ClientResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const search = async (q: string) => {
+    setQuery(q);
+    if (q.trim().length < 2) { setResults([]); setOpen(false); return; }
+    setSearching(true);
+
+    const [{ data: profiles }, { data: b2b }] = await Promise.all([
+      supabase.from("profiles").select("full_name, cpf, email, phone, address_cep, address_street, address_number, address_neighborhood, address_city, address_state, address_complement").ilike("full_name", `%${q}%`).limit(10),
+      supabase.from("b2b_customers").select("company_name, cnpj, contact_email, contact_phone, state_registration, indicador_ie, address_cep, address_street, address_number, address_neighborhood, address_city, address_state, address_complement, contact_name").ilike("company_name", `%${q}%`).limit(10),
+    ]);
+
+    const mapped: ClientResult[] = [
+      ...(profiles || []).map((p: any) => ({
+        type: "cpf" as const,
+        name: p.full_name || "",
+        doc: p.cpf || "",
+        email: p.email || "",
+        phone: p.phone || "",
+        ie: "",
+        indicadorIe: 9,
+        cep: p.address_cep || "",
+        logradouro: p.address_street || "",
+        numero: p.address_number || "",
+        bairro: p.address_neighborhood || "",
+        municipio: p.address_city || "",
+        uf: p.address_state || "",
+        complemento: p.address_complement || "",
+      })),
+      ...(b2b || []).map((b: any) => ({
+        type: "cnpj" as const,
+        name: b.company_name || "",
+        doc: b.cnpj || "",
+        email: b.contact_email || "",
+        phone: b.contact_phone || "",
+        ie: b.state_registration || "",
+        indicadorIe: b.indicador_ie ?? 1,
+        cep: b.address_cep || "",
+        logradouro: b.address_street || "",
+        numero: b.address_number || "",
+        bairro: b.address_neighborhood || "",
+        municipio: b.address_city || "",
+        uf: b.address_state || "",
+        complemento: b.address_complement || "",
+      })),
+    ];
+
+    setResults(mapped);
+    setOpen(mapped.length > 0);
+    setSearching(false);
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="block text-xs font-bold text-primary mb-1.5 flex items-center gap-1.5">
+        <Search className="w-3.5 h-3.5" /> Buscar Destinatário
+      </label>
+      <input
+        type="text"
+        value={query}
+        onChange={e => search(e.target.value)}
+        onFocus={() => results.length > 0 && setOpen(true)}
+        placeholder="Digite o nome do cliente ou empresa..."
+        className={inputClass}
+      />
+      {searching && <p className="text-[10px] text-muted-foreground mt-1">Buscando...</p>}
+      {open && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
+          {results.map((c, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => { onSelect(c); setQuery(c.name); setOpen(false); }}
+              className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border last:border-0"
+            >
+              <div className="flex items-center gap-2">
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${c.type === "cnpj" ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}`}>
+                  {c.type === "cnpj" ? "CNPJ" : "CPF"}
+                </span>
+                <span className="text-sm font-medium">{c.name}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">{c.doc || "Sem documento"} · {c.email || "Sem email"}</p>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Product Search Dropdown ───
+function ProductSearchInput({ onSelect }: { onSelect: (product: ProductResult) => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ProductResult[]>([]);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const search = async (q: string) => {
+    setQuery(q);
+    if (q.trim().length < 2) { setResults([]); setOpen(false); return; }
+
+    const { data } = await supabase
+      .from("products")
+      .select("id, name, price, ncm, cfop, unidade_comercial, origem_produto, cod_situacao_tributaria_icms, cod_situacao_tributaria_pis, cod_situacao_tributaria_cofins, ean, cest, fiscal_product_code")
+      .ilike("name", `%${q}%`)
+      .eq("is_active", true)
+      .limit(10);
+
+    const mapped: ProductResult[] = (data || []).map((p: any) => ({
+      id: p.id,
+      name: p.name,
+      price: p.price,
+      ncm: p.ncm || "00000000",
+      cfop: p.cfop || 5102,
+      unidade: p.unidade_comercial || "UND",
+      origem: p.origem_produto || 0,
+      cstIcms: p.cod_situacao_tributaria_icms || "102",
+      cstPis: p.cod_situacao_tributaria_pis || "07",
+      cstCofins: p.cod_situacao_tributaria_cofins || "07",
+      ean: p.ean || "",
+      cest: p.cest || "",
+      fiscalCode: p.fiscal_product_code || "",
+    }));
+
+    setResults(mapped);
+    setOpen(mapped.length > 0);
+  };
+
+  return (
+    <div ref={ref} className="relative">
+      <label className="block text-xs font-bold text-primary mb-1.5 flex items-center gap-1.5">
+        <Search className="w-3.5 h-3.5" /> Buscar Produto
+      </label>
+      <input
+        type="text"
+        value={query}
+        onChange={e => search(e.target.value)}
+        onFocus={() => results.length > 0 && setOpen(true)}
+        placeholder="Digite o nome do produto..."
+        className={inputClass}
+      />
+      {open && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-card border border-border rounded-xl shadow-lg max-h-60 overflow-y-auto">
+          {results.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => { onSelect(p); setQuery(""); setOpen(false); }}
+              className="w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors border-b border-border last:border-0"
+            >
+              <span className="text-sm font-medium">{p.name}</span>
+              <p className="text-xs text-muted-foreground">NCM: {p.ncm} · CFOP: {p.cfop} · {fmt(p.price)}</p>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -187,6 +390,57 @@ export default function AdminFiscalNotes() {
 
   useEffect(() => { fetchNotes(); }, []);
 
+  const applyClientSelection = (client: ClientResult) => {
+    const isCnpj = client.type === "cnpj";
+    setForm(prev => ({
+      ...prev,
+      cpfCnpj: client.doc?.replace(/\D/g, "") || "",
+      nomeCliente: client.name,
+      email: client.email,
+      telefone: client.phone,
+      consumidorFinal: !isCnpj,
+      indicadorIe: client.indicadorIe,
+      inscricaoEstadual: client.ie,
+      cep: client.cep,
+      logradouro: client.logradouro,
+      numero: client.numero,
+      bairro: client.bairro,
+      municipio: client.municipio,
+      uf: client.uf,
+      complemento: client.complemento,
+    }));
+    toast.success(`Dados de ${client.name} preenchidos!`);
+  };
+
+  const addProductFromSearch = (product: ProductResult) => {
+    const newItem = {
+      code: product.fiscalCode || "",
+      name: product.name,
+      quantity: 1,
+      price: product.price,
+      discount: 0,
+      ncm: product.ncm,
+      cfop: product.cfop,
+      unidade: product.unidade,
+      origem: product.origem,
+      cstIcms: product.cstIcms,
+      cstPis: product.cstPis,
+      cstCofins: product.cstCofins,
+      ean: product.ean,
+      cest: product.cest,
+    };
+    // Replace first empty item or append
+    const firstEmpty = form.items.findIndex(i => !i.name.trim());
+    if (firstEmpty >= 0) {
+      const items = [...form.items];
+      items[firstEmpty] = newItem;
+      setForm({ ...form, items });
+    } else {
+      setForm({ ...form, items: [...form.items, newItem] });
+    }
+    toast.success(`${product.name} adicionado!`);
+  };
+
   // Load order to auto-fill
   const loadOrderData = async (orderId: string) => {
     if (!orderId) return;
@@ -195,31 +449,39 @@ export default function AdminFiscalNotes() {
       const { data: order } = await supabase.from("orders").select("*, order_items(*, products(*))").eq("id", orderId).single();
       if (!order) { toast.error("Pedido não encontrado"); return; }
 
-      // Load profile
       const { data: profile } = await supabase.from("profiles").select("*").eq("user_id", order.user_id).single();
 
-      const isCnpj = (order.customer_cpf?.replace(/\D/g, "")?.length || 0) > 11;
+      // Check if B2B customer
+      const cleanDoc = order.customer_cpf?.replace(/\D/g, "") || "";
+      const isCnpj = cleanDoc.length > 11;
+      let b2bData: any = null;
+      if (isCnpj) {
+        const { data } = await supabase.from("b2b_customers").select("*").eq("user_id", order.user_id).limit(1).maybeSingle();
+        b2bData = data;
+      }
+
       setForm(prev => ({
         ...prev,
         orderId,
-        cpfCnpj: order.customer_cpf?.replace(/\D/g, "") || "",
-        nomeCliente: order.customer_name || profile?.full_name || "",
+        cpfCnpj: cleanDoc,
+        nomeCliente: isCnpj ? (b2bData?.company_name || order.customer_name || "") : (order.customer_name || profile?.full_name || ""),
         email: order.customer_email || profile?.email || "",
         telefone: profile?.phone?.replace(/\D/g, "") || "",
         consumidorFinal: !isCnpj,
-        indicadorIe: isCnpj ? 1 : 9,
-        cep: order.shipping_cep || profile?.address_cep || "",
-        logradouro: order.shipping_address || profile?.address_street || "",
-        numero: order.shipping_number || profile?.address_number || "",
-        bairro: order.shipping_neighborhood || profile?.address_neighborhood || "",
-        municipio: order.shipping_city || profile?.address_city || "",
-        uf: order.shipping_state || profile?.address_state || "",
-        complemento: order.shipping_complement || profile?.address_complement || "",
+        indicadorIe: isCnpj ? (b2bData?.indicador_ie ?? 1) : 9,
+        inscricaoEstadual: isCnpj ? (b2bData?.state_registration || "") : "",
+        cep: order.shipping_cep || (isCnpj ? b2bData?.address_cep : profile?.address_cep) || "",
+        logradouro: order.shipping_address || (isCnpj ? b2bData?.address_street : profile?.address_street) || "",
+        numero: order.shipping_number || (isCnpj ? b2bData?.address_number : profile?.address_number) || "",
+        bairro: order.shipping_neighborhood || (isCnpj ? b2bData?.address_neighborhood : profile?.address_neighborhood) || "",
+        municipio: order.shipping_city || (isCnpj ? b2bData?.address_city : profile?.address_city) || "",
+        uf: order.shipping_state || (isCnpj ? b2bData?.address_state : profile?.address_state) || "",
+        complemento: order.shipping_complement || (isCnpj ? b2bData?.address_complement : profile?.address_complement) || "",
         valorPago: Number(order.total) || 0,
         faturaValor: Number(order.total) || 0,
         faturaValorLiquido: Number(order.total) || 0,
         items: (order.order_items || []).map((oi: any, idx: number) => ({
-          code: String(idx + 1).padStart(4, "0"),
+          code: oi.products?.fiscal_product_code || String(idx + 1).padStart(4, "0"),
           name: oi.product_name,
           quantity: oi.quantity,
           price: Number(oi.unit_price),
@@ -231,17 +493,18 @@ export default function AdminFiscalNotes() {
           cstIcms: oi.products?.cod_situacao_tributaria_icms || "102",
           cstPis: oi.products?.cod_situacao_tributaria_pis || "07",
           cstCofins: oi.products?.cod_situacao_tributaria_cofins || "07",
+          ean: oi.products?.ean || "",
+          cest: oi.products?.cest || "",
         })),
       }));
       toast.success("Dados do pedido carregados!");
-    } catch (e) {
+    } catch {
       toast.error("Erro ao carregar pedido");
     } finally {
       setLoadingOrder(false);
     }
   };
 
-  // Search orders for dropdown
   const searchOrders = async () => {
     const { data } = await supabase.from("orders").select("id, customer_name, total, created_at").order("created_at", { ascending: false }).limit(50);
     setOrders(data || []);
@@ -258,6 +521,7 @@ export default function AdminFiscalNotes() {
   };
 
   const handleEmit = async () => {
+    if (!form.cpfCnpj.trim()) { toast.error("Preencha o CPF/CNPJ do destinatário"); return; }
     if (form.items.some(i => !i.name.trim())) { toast.error("Preencha o nome de todos os itens"); return; }
     if (total <= 0) { toast.error("O total deve ser maior que zero"); return; }
 
@@ -315,7 +579,7 @@ export default function AdminFiscalNotes() {
       {/* ─── EMISSION FORM ─── */}
       {showForm && (
         <div className="bg-card border border-border rounded-xl p-4 sm:p-6 mb-6 space-y-4">
-          {/* Top bar: Model toggle + Natureza + Finalidade */}
+          {/* Top bar */}
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2 bg-primary/10 rounded-full px-4 py-2">
               <button type="button" onClick={() => setForm({ ...form, modeloDocumento: 55 })} className={`text-xs font-bold px-3 py-1 rounded-full transition-colors ${form.modeloDocumento === 55 ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}>NF-e</button>
@@ -341,19 +605,31 @@ export default function AdminFiscalNotes() {
 
           {/* ─── DESTINATÁRIO ─── */}
           <Section title="Informações do Destinatário" icon="ℹ️" defaultOpen={true}>
-            <div className="flex items-center gap-4 mb-3">
+            <ClientSearchInput onSelect={applyClientSelection} />
+
+            <div className="flex items-center gap-4 mt-3 mb-3">
               <label className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={form.consumidorFinal} onChange={e => setForm({ ...form, consumidorFinal: e.target.checked })} className="rounded" />
+                <input type="checkbox" checked={form.consumidorFinal} onChange={e => {
+                  const val = e.target.checked;
+                  setForm({ ...form, consumidorFinal: val, indicadorIe: val ? 9 : 1 });
+                }} className="rounded" />
                 Consumidor Final?
               </label>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
               <div>
                 <label className="block text-xs font-medium mb-1">CNPJ/CPF</label>
-                <input type="text" value={form.cpfCnpj} onChange={e => setForm({ ...form, cpfCnpj: e.target.value })} className={inputClass} placeholder="CPF ou CNPJ" />
+                <input type="text" value={form.cpfCnpj} onChange={e => {
+                  const v = e.target.value.replace(/\D/g, "");
+                  setForm({ ...form, cpfCnpj: v, consumidorFinal: v.length <= 11, indicadorIe: v.length > 11 ? 1 : 9 });
+                }} className={inputClass} placeholder="CPF ou CNPJ" />
+                {form.cpfCnpj.length > 11 && (
+                  <span className="text-[10px] text-blue-600 font-bold mt-0.5 block">CNPJ detectado — preencha a IE</span>
+                )}
               </div>
               <div>
-                <label className="block text-xs font-medium mb-1">Nome</label>
+                <label className="block text-xs font-medium mb-1">Nome / Razão Social</label>
                 <input type="text" value={form.nomeCliente} onChange={e => setForm({ ...form, nomeCliente: e.target.value })} className={inputClass} />
               </div>
               <div>
@@ -366,9 +642,13 @@ export default function AdminFiscalNotes() {
               </div>
               <div>
                 <label className="block text-xs font-medium mb-1">IE (Inscrição Estadual)</label>
-                <input type="text" value={form.inscricaoEstadual} onChange={e => setForm({ ...form, inscricaoEstadual: e.target.value })} className={inputClass} placeholder="ISENTO" />
+                <input type="text" value={form.inscricaoEstadual} onChange={e => setForm({ ...form, inscricaoEstadual: e.target.value })} className={inputClass} placeholder={form.indicadorIe === 2 ? "ISENTO" : "Número da IE"} disabled={form.indicadorIe === 9} />
+                {form.cpfCnpj.length > 11 && form.indicadorIe === 1 && !form.inscricaoEstadual && (
+                  <span className="text-[10px] text-destructive mt-0.5 block">⚠️ IE obrigatória para contribuinte ICMS</span>
+                )}
               </div>
             </div>
+
             {/* Endereço */}
             <h4 className="text-xs font-bold text-primary mt-4 mb-2 flex items-center gap-1">🏠 Endereço</h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -420,7 +700,9 @@ export default function AdminFiscalNotes() {
 
           {/* ─── PRODUTOS ─── */}
           <Section title="Produtos" icon="📦" defaultOpen={true}>
-            <div className="space-y-3">
+            <ProductSearchInput onSelect={addProductFromSearch} />
+
+            <div className="space-y-3 mt-3">
               {form.items.map((item, idx) => (
                 <div key={idx} className="border border-border rounded-lg p-3 space-y-2">
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -455,7 +737,7 @@ export default function AdminFiscalNotes() {
               ))}
             </div>
             <button type="button" onClick={addItem} className="text-xs font-bold text-primary hover:underline flex items-center gap-1 mt-2">
-              <Plus className="w-3.5 h-3.5" /> Adicionar produto
+              <Plus className="w-3.5 h-3.5" /> Adicionar produto manualmente
             </button>
             <div className="flex justify-end mt-3">
               <div className="bg-foreground text-background rounded-xl px-5 py-3">
