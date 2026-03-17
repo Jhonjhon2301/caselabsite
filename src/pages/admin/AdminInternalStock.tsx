@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Package, Pencil, Plus, Save, Trash2 } from "lucide-react";
+import { AlertTriangle, ImagePlus, Package, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 
 import { InternalStockColorQuantitiesEditor } from "@/components/admin/internal-stock/InternalStockColorQuantitiesEditor";
 import type {
@@ -38,6 +38,7 @@ const emptyForm = {
   sales_note: "",
   height_cm: "",
   circumference_cm: "",
+  image_url: "",
 };
 
 const normalizeColorRows = (rows: EditableColorQuantity[]) =>
@@ -66,6 +67,7 @@ export default function AdminInternalStock() {
   const [filter, setFilter] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [colorRows, setColorRows] = useState<EditableColorQuantity[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -82,6 +84,7 @@ export default function AdminInternalStock() {
       color_quantities: Array.isArray(item.color_quantities) ? item.color_quantities : [],
       sales_note: item.sales_note ?? null,
       product_id: item.product_id ?? null,
+      image_url: item.image_url ?? null,
     })) as InternalStockItem[];
 
     const normalizedProducts = ((productOptions ?? []) as unknown as Array<Record<string, any>>).map(
@@ -175,6 +178,7 @@ export default function AdminInternalStock() {
       sales_note: item.sales_note || "",
       height_cm: item.height_cm != null ? String(item.height_cm) : "",
       circumference_cm: item.circumference_cm != null ? String(item.circumference_cm) : "",
+      image_url: item.image_url || "",
     });
     setColorRows(toEditableRows(item.color_quantities));
     setDialogOpen(true);
@@ -205,6 +209,7 @@ export default function AdminInternalStock() {
       height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
       circumference_cm: form.circumference_cm ? parseFloat(form.circumference_cm) : null,
       color_quantities: normalizedColors,
+      image_url: form.image_url.trim() || null,
     };
 
     if (editing) {
@@ -332,7 +337,14 @@ export default function AdminInternalStock() {
                       className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors"
                     >
                       <td className="px-4 py-3">
-                        <div className="flex items-start gap-2">
+                        <div className="flex items-start gap-3">
+                          {item.image_url ? (
+                            <img
+                              src={item.image_url}
+                              alt={item.name}
+                              className="h-10 w-10 shrink-0 rounded-lg border border-border object-cover"
+                            />
+                          ) : null}
                           {isLow ? <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" /> : null}
                           <div className="space-y-1">
                             <span className="font-medium">{item.name}</span>
@@ -420,6 +432,62 @@ export default function AdminInternalStock() {
           </DialogHeader>
 
           <div className="space-y-4 pr-1">
+            {/* Foto do item */}
+            <div>
+              <Label>Foto do item</Label>
+              <div className="mt-1 flex items-center gap-4">
+                {form.image_url ? (
+                  <div className="relative h-24 w-24 overflow-hidden rounded-lg border border-border">
+                    <img
+                      src={form.image_url}
+                      alt="Foto do item"
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, image_url: "" })}
+                      className="absolute right-1 top-1 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary hover:text-primary">
+                    <ImagePlus className="h-6 w-6" />
+                    <span className="text-[10px]">Adicionar</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploading}
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setUploading(true);
+                        const ext = file.name.split(".").pop();
+                        const path = `internal-stock/${Date.now()}.${ext}`;
+                        const { error } = await supabase.storage
+                          .from("product-images")
+                          .upload(path, file, { upsert: true });
+                        if (error) {
+                          toast.error("Erro ao enviar imagem");
+                          setUploading(false);
+                          return;
+                        }
+                        const { data: urlData } = supabase.storage
+                          .from("product-images")
+                          .getPublicUrl(path);
+                        setForm((prev) => ({ ...prev, image_url: urlData.publicUrl }));
+                        setUploading(false);
+                        toast.success("Imagem enviada!");
+                      }}
+                    />
+                  </label>
+                )}
+                {uploading && <span className="text-xs text-muted-foreground">Enviando...</span>}
+              </div>
+            </div>
+
             <div>
               <Label>Vincular produto</Label>
               <select
