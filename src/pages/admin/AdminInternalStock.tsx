@@ -84,6 +84,7 @@ export default function AdminInternalStock() {
       color_quantities: Array.isArray(item.color_quantities) ? item.color_quantities : [],
       sales_note: item.sales_note ?? null,
       product_id: item.product_id ?? null,
+      image_url: item.image_url ?? null,
     })) as InternalStockItem[];
 
     const normalizedProducts = ((productOptions ?? []) as unknown as Array<Record<string, any>>).map(
