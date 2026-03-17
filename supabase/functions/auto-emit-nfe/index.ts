@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
 
     const { data: items } = await supabaseAdmin
       .from("order_items")
-      .select("*, products(ncm, cfop, cest, ean, unidade_comercial, origem_produto, cod_situacao_tributaria_icms, cod_situacao_tributaria_pis, cod_situacao_tributaria_cofins)")
+      .select("*, products(ncm, cfop, cest, ean, unidade_comercial, origem_produto, cod_situacao_tributaria_icms, cod_situacao_tributaria_pis, cod_situacao_tributaria_cofins, fiscal_product_code)")
       .eq("order_id", order_id);
 
     if (!items || items.length === 0) throw new Error("Pedido sem itens");
@@ -62,8 +62,85 @@ Deno.serve(async (req) => {
       .update({ payment_status: "paid", status: "confirmed" })
       .eq("id", order_id);
 
-    const internalRef = `PEDIDO-${order_id.slice(0, 8).toUpperCase()}`;
+    // Fetch profile data
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("*")
+      .eq("user_id", order.user_id)
+      .maybeSingle();
+
+    // Detect CPF vs CNPJ
     const cleanCpf = order.customer_cpf?.replace(/\D/g, "") || "";
+    const isCnpj = cleanCpf.length > 11;
+
+    // Fetch B2B data if CNPJ
+    let b2bData: any = null;
+    if (isCnpj) {
+      const { data } = await supabaseAdmin
+        .from("b2b_customers")
+        .select("*")
+        .eq("user_id", order.user_id)
+        .maybeSingle();
+      b2bData = data;
+    }
+
+    const internalRef = `PEDIDO-${order_id.slice(0, 8).toUpperCase()}`;
+
+    // Build Cliente object with full data
+    const cliente: Record<string, any> = {
+      NmCliente: isCnpj
+        ? (b2bData?.company_name || order.customer_name || "CONSUMIDOR FINAL")
+        : (order.customer_name || profile?.full_name || "CONSUMIDOR FINAL"),
+      IndicadorIe: isCnpj ? (b2bData?.indicador_ie ?? 1) : 9,
+    };
+
+    if (cleanCpf) {
+      cliente.CpfCnpj = cleanCpf;
+    }
+
+    // IE for CNPJ
+    if (isCnpj && b2bData?.state_registration) {
+      cliente.Ie = b2bData.state_registration;
+    }
+
+    // ConsumidorFinal
+    const consumidorFinal = !isCnpj;
+
+    // Build address from order shipping or B2B/profile fallback
+    const addr = {
+      logradouro: order.shipping_address || (isCnpj ? b2bData?.address_street : profile?.address_street) || "",
+      numero: order.shipping_number || (isCnpj ? b2bData?.address_number : profile?.address_number) || "S/N",
+      bairro: order.shipping_neighborhood || (isCnpj ? b2bData?.address_neighborhood : profile?.address_neighborhood) || "",
+      municipio: order.shipping_city || (isCnpj ? b2bData?.address_city : profile?.address_city) || "",
+      uf: order.shipping_state || (isCnpj ? b2bData?.address_state : profile?.address_state) || "",
+      cep: (order.shipping_cep || (isCnpj ? b2bData?.address_cep : profile?.address_cep) || "").replace(/\D/g, ""),
+      complemento: order.shipping_complement || (isCnpj ? b2bData?.address_complement : profile?.address_complement) || "",
+    };
+
+    if (addr.logradouro) {
+      cliente.Endereco = {
+        Logradouro: addr.logradouro,
+        Numero: addr.numero,
+        Bairro: addr.bairro,
+        Municipio: addr.municipio,
+        Uf: addr.uf,
+        Cep: addr.cep,
+        ...(addr.complemento && { Complemento: addr.complemento }),
+        CodPais: 1058,
+        Pais: "BRASIL",
+      };
+    }
+
+    // Contact
+    const contactEmail = order.customer_email || (isCnpj ? b2bData?.contact_email : profile?.email) || "";
+    const contactPhone = (isCnpj ? b2bData?.contact_phone : profile?.phone)?.replace(/\D/g, "") || "";
+
+    if (contactEmail || contactPhone) {
+      cliente.Contato = {
+        ...(contactEmail && { Email: contactEmail }),
+        ...(contactPhone && { Telefone: contactPhone }),
+      };
+    }
 
     // Build payload following official Brasil NFe API docs
     const nfePayload: Record<string, any> = {
@@ -71,16 +148,13 @@ Deno.serve(async (req) => {
       ModeloDocumento: 55,
       NaturezaOperacao: "Venda de mercadoria",
       Finalidade: 1,
-      ConsumidorFinal: true,
+      ConsumidorFinal: consumidorFinal,
       IndicadorPresenca: 2,
       CalcularIBPT: true,
       IdentificadorInterno: internalRef,
-      Cliente: {
-        NmCliente: order.customer_name || "CONSUMIDOR FINAL",
-        IndicadorIe: 9,
-      },
+      Cliente: cliente,
       Produtos: items.map((item: any, idx: number) => ({
-        CodProdutoServico: String(idx + 1).padStart(4, "0"),
+        CodProdutoServico: item.products?.fiscal_product_code || String(idx + 1).padStart(4, "0"),
         NmProduto: item.product_name,
         Quantidade: item.quantity,
         ValorUnitario: Number(item.unit_price),
@@ -104,33 +178,13 @@ Deno.serve(async (req) => {
           VlPago: Number(order.total),
         },
       ],
+      Transporte: {
+        ModalidadeFrete: 9,
+      },
     };
 
-    // Set CPF/CNPJ
-    if (cleanCpf) {
-      nfePayload.Cliente.CpfCnpj = cleanCpf;
-    }
-
-    // Contact info
-    if (order.customer_email) {
-      nfePayload.Cliente.Contato = {
-        Email: order.customer_email,
-      };
-    }
-
-    // Shipping address
-    if (order.shipping_address) {
-      nfePayload.Cliente.Endereco = {
-        Logradouro: order.shipping_address,
-        Numero: order.shipping_number || "S/N",
-        Bairro: order.shipping_neighborhood || "",
-        Municipio: order.shipping_city || "",
-        Uf: order.shipping_state || "",
-        Cep: order.shipping_cep?.replace(/\D/g, "") || "",
-      };
-    }
-
     console.log("Emitting NF-e via Brasil NFe for order:", order_id);
+    console.log("Payload:", JSON.stringify(nfePayload));
 
     const brasilRes = await fetch(`${BRASILNFE_BASE_URL}/EnviarNotaFiscal`, {
       method: "POST",
@@ -151,7 +205,6 @@ Deno.serve(async (req) => {
     const errorMessage = brasilResult?.Error || (!brasilRes.ok ? (returnNF?.DsStatusRespostaSefaz || JSON.stringify(brasilResult)) : null);
 
     let pdfUrl: string | null = null;
-
     if (brasilResult?.Base64File) {
       try {
         const pdfBytes = Uint8Array.from(atob(brasilResult.Base64File), c => c.charCodeAt(0));
@@ -167,19 +220,36 @@ Deno.serve(async (req) => {
       }
     }
 
+    let xmlUrl: string | null = null;
+    if (brasilResult?.Base64Xml) {
+      try {
+        const xmlBytes = Uint8Array.from(atob(brasilResult.Base64Xml), c => c.charCodeAt(0));
+        const xmlPath = `nfe-xmls/${order_id}.xml`;
+        await supabaseAdmin.storage.from("designer-files").upload(xmlPath, xmlBytes, {
+          contentType: "application/xml",
+          upsert: true,
+        });
+        const { data: { publicUrl } } = supabaseAdmin.storage.from("designer-files").getPublicUrl(xmlPath);
+        xmlUrl = publicUrl;
+      } catch (e) {
+        console.error("Error storing XML:", e);
+      }
+    }
+
     await supabaseAdmin.from("fiscal_notes").insert({
       order_id,
       type: "nfe",
       status,
       focus_ref: internalRef,
-      customer_name: order.customer_name,
-      customer_cpf: order.customer_cpf,
-      customer_email: order.customer_email,
+      customer_name: cliente.NmCliente,
+      customer_cpf: cleanCpf || null,
+      customer_email: contactEmail || null,
       total: order.total,
       number: returnNF?.Numero?.toString() || null,
       series: returnNF?.Serie?.toString() || null,
       access_key: returnNF?.ChaveNF || null,
       pdf_url: pdfUrl,
+      xml_url: xmlUrl,
       items: items.map((i: any) => ({
         name: i.product_name,
         quantity: i.quantity,
