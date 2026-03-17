@@ -67,6 +67,7 @@ export default function AdminInternalStock() {
   const [filter, setFilter] = useState("");
   const [form, setForm] = useState(emptyForm);
   const [colorRows, setColorRows] = useState<EditableColorQuantity[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
