@@ -178,6 +178,7 @@ export default function AdminInternalStock() {
       sales_note: item.sales_note || "",
       height_cm: item.height_cm != null ? String(item.height_cm) : "",
       circumference_cm: item.circumference_cm != null ? String(item.circumference_cm) : "",
+      image_url: item.image_url || "",
     });
     setColorRows(toEditableRows(item.color_quantities));
     setDialogOpen(true);
