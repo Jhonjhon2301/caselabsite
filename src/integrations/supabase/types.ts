@@ -783,6 +783,7 @@ export type Database = {
           description: string | null
           height_cm: number | null
           id: string
+          image_url: string | null
           location: string | null
           min_quantity: number
           name: string
@@ -803,6 +804,7 @@ export type Database = {
           description?: string | null
           height_cm?: number | null
           id?: string
+          image_url?: string | null
           location?: string | null
           min_quantity?: number
           name: string
@@ -823,6 +825,7 @@ export type Database = {
           description?: string | null
           height_cm?: number | null
           id?: string
+          image_url?: string | null
           location?: string | null
           min_quantity?: number
           name?: string
