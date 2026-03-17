@@ -209,6 +209,7 @@ export default function AdminInternalStock() {
       height_cm: form.height_cm ? parseFloat(form.height_cm) : null,
       circumference_cm: form.circumference_cm ? parseFloat(form.circumference_cm) : null,
       color_quantities: normalizedColors,
+      image_url: form.image_url.trim() || null,
     };
 
     if (editing) {
