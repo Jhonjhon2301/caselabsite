@@ -1,0 +1,1 @@
+UPDATE public.custom_positions SET permissions = array_replace(permissions, 'internal-stock', 'internal_stock') WHERE name = 'ceo' AND 'internal-stock' = ANY(permissions);
