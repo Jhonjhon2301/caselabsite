@@ -1,22 +1,18 @@
 #!/bin/bash
-# Script para fazer deploy de todas as Edge Functions no Supabase
-# Execute: chmod +x deploy-functions.sh && ./deploy-functions.sh
-
 SUPABASE_ACCESS_TOKEN="sbp_c2b3eb20ebf4393a3c4b1e7715a16590fc2cabf0"
 PROJECT_ID="hdeyegqokbtvbvptbuga"
 
-echo "🚀 Iniciando deploy das Edge Functions..."
-echo ""
+echo "📦 Instalando Supabase CLI via npm..."
+npm install -g supabase 2>/dev/null || npx --yes supabase --version
 
-# Login
 export SUPABASE_ACCESS_TOKEN
 
-supabase login --token $SUPABASE_ACCESS_TOKEN 2>/dev/null || true
+echo "🔗 Linkando projeto..."
+npx supabase login --token $SUPABASE_ACCESS_TOKEN
+npx supabase link --project-ref $PROJECT_ID
 
-# Link project
-supabase link --project-ref $PROJECT_ID
+echo "🚀 Iniciando deploy das Edge Functions..."
 
-# Deploy all functions
 FUNCTIONS=(
   "auto-emit-nfe"
   "calculate-shipping"
@@ -37,8 +33,8 @@ FUNCTIONS=(
 
 for func in "${FUNCTIONS[@]}"; do
   echo "📦 Deployando: $func"
-  supabase functions deploy $func --no-verify-jwt 2>&1 | tail -2
+  npx supabase functions deploy $func --no-verify-jwt 2>&1 | tail -3
+  echo "---"
 done
 
-echo ""
 echo "✅ Deploy concluído!"
