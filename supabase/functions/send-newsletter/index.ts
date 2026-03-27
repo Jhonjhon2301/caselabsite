@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
         },
         body: JSON.stringify(
           batch.map((email) => ({
-            from: "Case Lab <onboarding@resend.dev>",
+            from: "Case Lab <no-reply@caselab.site>",
             to: [email],
             subject,
             html,
