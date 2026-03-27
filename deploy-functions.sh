@@ -1,15 +1,15 @@
 #!/bin/bash
 SUPABASE_ACCESS_TOKEN="sbp_c2b3eb20ebf4393a3c4b1e7715a16590fc2cabf0"
 PROJECT_ID="hdeyegqokbtvbvptbuga"
-
-echo "📦 Instalando Supabase CLI via npm..."
-npm install -g supabase 2>/dev/null || npx --yes supabase --version
+CLI=~/supabase
 
 export SUPABASE_ACCESS_TOKEN
 
+echo "🔑 Fazendo login..."
+$CLI login --token $SUPABASE_ACCESS_TOKEN
+
 echo "🔗 Linkando projeto..."
-npx supabase login --token $SUPABASE_ACCESS_TOKEN
-npx supabase link --project-ref $PROJECT_ID
+$CLI link --project-ref $PROJECT_ID --password ""
 
 echo "🚀 Iniciando deploy das Edge Functions..."
 
@@ -33,7 +33,7 @@ FUNCTIONS=(
 
 for func in "${FUNCTIONS[@]}"; do
   echo "📦 Deployando: $func"
-  npx supabase functions deploy $func --no-verify-jwt 2>&1 | tail -3
+  $CLI functions deploy $func --project-ref $PROJECT_ID --no-verify-jwt 2>&1 | tail -3
   echo "---"
 done
 
