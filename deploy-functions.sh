@@ -1,9 +1,7 @@
 #!/bin/bash
-SUPABASE_ACCESS_TOKEN="sbp_0723a6c53fb56c80e3551c70657c4af0e7a7c901"
+export SUPABASE_ACCESS_TOKEN="sbp_505e198eba8ef835622c5941b0709a7d98cb2ad6"
 PROJECT_ID="hdeyegqokbtvbvptbuga"
 CLI=~/supabase
-
-export SUPABASE_ACCESS_TOKEN
 
 echo "🔑 Fazendo login..."
 $CLI login --token $SUPABASE_ACCESS_TOKEN
