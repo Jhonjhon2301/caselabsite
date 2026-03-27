@@ -1,5 +1,5 @@
 #!/bin/bash
-SUPABASE_ACCESS_TOKEN="sbp_c2b3eb20ebf4393a3c4b1e7715a16590fc2cabf0"
+SUPABASE_ACCESS_TOKEN="sbp_0723a6c53fb56c80e3551c70657c4af0e7a7c901"
 PROJECT_ID="hdeyegqokbtvbvptbuga"
 CLI=~/supabase
 
@@ -7,9 +7,6 @@ export SUPABASE_ACCESS_TOKEN
 
 echo "🔑 Fazendo login..."
 $CLI login --token $SUPABASE_ACCESS_TOKEN
-
-echo "🔗 Linkando projeto..."
-$CLI link --project-ref $PROJECT_ID --password ""
 
 echo "🚀 Iniciando deploy das Edge Functions..."
 
@@ -33,7 +30,7 @@ FUNCTIONS=(
 
 for func in "${FUNCTIONS[@]}"; do
   echo "📦 Deployando: $func"
-  $CLI functions deploy $func --project-ref $PROJECT_ID --no-verify-jwt 2>&1 | tail -3
+  $CLI functions deploy $func --project-ref $PROJECT_ID --no-verify-jwt 2>&1 | tail -2
   echo "---"
 done
 
